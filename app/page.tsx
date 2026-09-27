@@ -13,8 +13,6 @@ const hourLabels = [
   "10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00",
   "19:00","20:00","21:00","22:00","23:00","0:00","1:00","2:00","3:00","4:00"
 ];
-const areas = ["エリアA","エリアB","エリアC","エリアD","エリアE","エリアF"];
-
 const statusLabels: Record<CastStatus,string> = {
   waiting:"待機", moving:"移動中", serving:"接客中", off:"退勤"
 };
@@ -60,7 +58,6 @@ export default function DashboardPage(){
   const [castList,setCastList] = useState<Cast[]>(defaultCasts);
   const [hotelList,setHotelList] = useState<Hotel[]>(defaultHotels);
   const [now,setNow] = useState<Date|null>(null);
-  const [area,setArea] = useState("エリアA");
   const [date,setDate] = useState(()=>dateInputValue(new Date()));
   const [zoom,setZoom] = useState(120);
 
@@ -103,8 +100,8 @@ export default function DashboardPage(){
   );
   const selectableCasts = useMemo(()=>workingCasts.filter(c=>c.status!=="off"),[workingCasts]);
   const availableHotels = useMemo(
-    ()=>hotelList.filter(h=>h.visible!==false && h.area===area),
-    [hotelList,area]
+    ()=>hotelList.filter(h=>h.visible!==false),
+    [hotelList]
   );
 
   useEffect(()=>{
@@ -191,7 +188,6 @@ export default function DashboardPage(){
 
   return <div className="deskDashboard">
     <section className="deskKpis">
-      <div><span>エリア</span><strong>{area}</strong></div>
       <div><span>本日出勤</span><strong>{workingCasts.length}人</strong></div>
       <div><span>待機</span><strong>{waitingCount}人</strong></div>
       <div><span>稼働中</span><strong>{activeOrders.length}件</strong></div>
@@ -201,12 +197,7 @@ export default function DashboardPage(){
     <div className="deskColumns">
       <aside className="deskLeft">
         <section className="deskPanel">
-          <h2>エリア・日付</h2>
-          <div className="fieldLabel">エリア</div>
-          <div className="areaGrid">
-            {areas.map(item=><button key={item} className={area===item?"active":""} onClick={()=>setArea(item)}>{item}</button>)}
-          </div>
-          <div className="fieldLabel">日付</div>
+          <h2>日付</h2>
           <input type="date" value={date} onChange={e=>setDate(e.target.value)}/>
           <div className="dateButtons">
             <button onClick={()=>shiftDate(-1)}>前日</button>
@@ -270,16 +261,11 @@ export default function DashboardPage(){
               </div>
             </div>}
 
-            <div className="workGrid two">
-              <label>店舗
-                <select defaultValue="サンプル店舗A"><option>サンプル店舗A</option><option>サンプル店舗B</option><option>サンプル店舗C</option></select>
-              </label>
-              <label>指名区分
-                <select value={nominationType} onChange={e=>setNominationType(e.target.value as typeof nominationType)}>
-                  <option value="free">フリー</option><option value="photo">写真指名</option><option value="repeat">本指名</option>
-                </select>
-              </label>
-            </div>
+            <label>指名区分
+              <select value={nominationType} onChange={e=>setNominationType(e.target.value as typeof nominationType)}>
+                <option value="free">フリー</option><option value="photo">写真指名</option><option value="repeat">本指名</option>
+              </select>
+            </label>
 
             <label>料金コース
               <div className="courseChips">
@@ -290,7 +276,7 @@ export default function DashboardPage(){
             <div className="workGrid two">
               <label>ホテル名
                 <select value={locationName} onChange={e=>selectHotel(e.target.value)} disabled={!availableHotels.length}>
-                  {availableHotels.length===0 && <option value="">このエリアのホテル未登録</option>}
+                  {availableHotels.length===0 && <option value="">ホテル未登録</option>}
                   {availableHotels.map(hotel=><option key={hotel.id} value={hotel.name}>{hotel.name}</option>)}
                 </select>
               </label>
@@ -345,7 +331,7 @@ export default function DashboardPage(){
 
     <section className="boardSection">
       <div className="boardSectionHead">
-        <div><h2>配車ボード</h2><span>{area} / {date}</span></div>
+        <div><h2>配車ボード</h2><span>{date}</span></div>
         <div className="boardLegend">
           <span><i className="legend accepted"/>受付済</span>
           <span><i className="legend dispatching"/>配車中</span>
