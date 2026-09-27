@@ -26,8 +26,8 @@ export type Cast = {
 };
 export type Driver = { id:string; name:string; active:boolean; };
 export type Course = { id:string; minutes:number; price:number; };
-export type Hotel = { id:string; name:string; area:string; travelFee:number; visible?:boolean; };
-export type Staff = { id:string; name:string; displayName:string; loginId:string; shop:string; area:string; notes?:string; active?:boolean; };
+export type Hotel = { id:string; name:string; travelFee:number; visible?:boolean; };
+export type Staff = { id:string; name:string; displayName:string; loginId:string; notes?:string; active?:boolean; };
 export type Order = {
   id:string; createdAt:string; customerPhone:string; locationType:"hotel"|"home";
   locationName:string; room?:string; castId:string; castName:string; driverId?:string; driverName?:string;
