@@ -4,32 +4,36 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const nav = [
-  ["/", "配車ボード"],
-  ["/casts", "キャスト管理"],
+  ["/", "配車管理"],
+  ["/casts", "キャスト"],
   ["/orders/new", "新規受付"],
-  ["/orders", "オーダー一覧"],
-  ["/settings", "店舗設定"],
+  ["/orders", "予約一覧"],
+  ["/settings", "設定"],
 ] as const;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   return (
-    <div className="shell">
-      <aside className="sidebar">
-        <div className="brand">
+    <div className="appFrame">
+      <header className="topConsoleBar">
+        <Link href="/" className="consoleBrand">
           <span className="brandMark">N</span>
-          <div><strong>NIGHT DESK</strong><small>Front Operations</small></div>
-        </div>
-        <nav>
-          {nav.map(([href, label]) => (
-            <Link key={href} href={href} className={pathname === href ? "active" : ""}>{label}</Link>
+          <div>
+            <strong>NIGHT DESK</strong>
+            <small>配車管理システム</small>
+          </div>
+        </Link>
+        <nav className="topConsoleNav">
+          {nav.map(([href,label])=>(
+            <Link key={href} href={href} className={pathname===href?"active":""}>{label}</Link>
           ))}
         </nav>
-        <div className="shopCard">
-          <small>現在の店舗</small><strong>DEMO STORE</strong><span>営業中</span>
+        <div className="consoleShop">
+          <span className="onlineDot"/>
+          <div><small>店舗</small><strong>DEMO STORE</strong></div>
         </div>
-      </aside>
-      <main className="main">{children}</main>
+      </header>
+      <main className="consoleMain">{children}</main>
     </div>
   );
 }
