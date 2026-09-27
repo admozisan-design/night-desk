@@ -7,10 +7,6 @@ import type { Cast } from "@/lib/types";
 
 const optionChoices = ["オプションA","オプションB","オプションC","オプションD"];
 
-function formatPrice(value:number){
-  return new Intl.NumberFormat("ja-JP").format(value);
-}
-
 export default function CastsPage(){
   const [casts,setCasts] = useState<Cast[]>(
     defaultCasts.map(c=>({
@@ -68,6 +64,7 @@ export default function CastsPage(){
       availableOptions:[],
       notes:""
     }];
+
     commit(next);
     e.currentTarget.reset();
   }
@@ -109,31 +106,27 @@ export default function CastsPage(){
       </form>
     </section>
 
-    <section className="castList">
-      {casts.map(cast=><article key={cast.id} className={`castManageCard castProfileCard ${cast.visible===false?"isHidden":""}`}>
-        <div className="castManageMain castMasterHeader">
-          <div className="castNameEdit">
-            <input value={cast.name} onChange={e=>patch(cast.id,{name:e.target.value})}/>
-          </div>
-
-          <div className="castPriceSummary">
-            <div><small>フリー</small><strong>{formatPrice(cast.freeUnitPrice??0)}円</strong></div>
-            <div><small>写真指名</small><strong>{formatPrice(cast.photoUnitPrice??0)}円</strong></div>
-            <div><small>本指名</small><strong>{formatPrice(cast.repeatUnitPrice??0)}円</strong></div>
-          </div>
-
-          <label className="switchLabel castVisibleSwitch">
-            <input type="checkbox" checked={cast.visible!==false} onChange={e=>patch(cast.id,{visible:e.target.checked})}/>
+    <section className="castCardGrid">
+      {casts.map(cast=><article key={cast.id} className={`castVerticalCard ${cast.visible===false?"isHidden":""}`}>
+        <div className="castVerticalHeader">
+          <input
+            className="castVerticalName"
+            value={cast.name}
+            onChange={e=>patch(cast.id,{name:e.target.value})}
+          />
+          <label className="switchLabel">
+            <input
+              type="checkbox"
+              checked={cast.visible!==false}
+              onChange={e=>patch(cast.id,{visible:e.target.checked})}
+            />
             <span>表示</span>
           </label>
         </div>
 
-        <div className="castRateSection">
-          <div className="castOperationalHeading">
-            <strong>単価設定</strong>
-            <span>指名区分ごとの単価</span>
-          </div>
-          <div className="castRateGrid">
+        <div className="castVerticalSection">
+          <div className="castVerticalSectionTitle">単価設定</div>
+          <div className="castVerticalRates">
             <label>フリー
               <input
                 type="number"
@@ -164,48 +157,43 @@ export default function CastsPage(){
           </div>
         </div>
 
-        <div className="castOperationalSection">
-          <div className="castOperationalHeading">
-            <strong>受付用情報</strong>
-            <span>受付時に確認する内容</span>
+        <div className="castVerticalSection">
+          <label className="castVerticalField">NG内容
+            <textarea
+              rows={4}
+              value={cast.ngDetails??""}
+              onChange={e=>patch(cast.id,{ngDetails:e.target.value})}
+              placeholder="例：サンプルNG内容"
+            />
+          </label>
+        </div>
+
+        <div className="castVerticalSection">
+          <div className="castVerticalFieldLabel">可能オプション</div>
+          <div className="castVerticalOptions">
+            {optionChoices.map(option=>{
+              const checked=(cast.availableOptions??[]).includes(option);
+              return <label key={option} className={`castOptionChip ${checked?"active":""}`}>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={()=>toggleOption(cast,option)}
+                />
+                <span>{option}</span>
+              </label>
+            })}
           </div>
+        </div>
 
-          <div className="castOperationalGrid">
-            <label className="castNgField">NG内容
-              <textarea
-                rows={4}
-                value={cast.ngDetails??""}
-                onChange={e=>patch(cast.id,{ngDetails:e.target.value})}
-                placeholder="例：サンプルNG内容"
-              />
-            </label>
-
-            <div className="castOptionField">
-              <span>可能オプション</span>
-              <div className="castOptionChoices">
-                {optionChoices.map(option=>{
-                  const checked=(cast.availableOptions??[]).includes(option);
-                  return <label key={option} className={`castOptionChip ${checked?"active":""}`}>
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={()=>toggleOption(cast,option)}
-                    />
-                    <span>{option}</span>
-                  </label>
-                })}
-              </div>
-            </div>
-
-            <label className="castNotesField">備考
-              <textarea
-                rows={4}
-                value={cast.notes??""}
-                onChange={e=>patch(cast.id,{notes:e.target.value})}
-                placeholder="受付時に共有したい内容"
-              />
-            </label>
-          </div>
+        <div className="castVerticalSection">
+          <label className="castVerticalField">備考
+            <textarea
+              rows={4}
+              value={cast.notes??""}
+              onChange={e=>patch(cast.id,{notes:e.target.value})}
+              placeholder="受付時に共有したい内容"
+            />
+          </label>
         </div>
       </article>)}
     </section>
