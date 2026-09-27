@@ -32,9 +32,9 @@ export const casts: Cast[] = [
 ];
 
 export const drivers: Driver[] = [
-  { id:"d1", name:"ドライバー01", active:true },
-  { id:"d2", name:"ドライバー02", active:true },
-  { id:"d3", name:"ドライバー03", active:true },
+  { id:"d1", name:"ドライバー01", phone:"090-0000-0001", vehicle:"サンプル車A", plate:"00-01", notes:"", active:true },
+  { id:"d2", name:"ドライバー02", phone:"090-0000-0002", vehicle:"サンプル車B", plate:"00-02", notes:"夜帯メイン", active:true },
+  { id:"d3", name:"ドライバー03", phone:"090-0000-0003", vehicle:"サンプル車C", plate:"00-03", notes:"", active:true },
 ];
 
 export const courses: Course[] = [
