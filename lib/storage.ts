@@ -1,10 +1,11 @@
-import type { Cast, Driver, Hotel, Order, Staff } from "./types";
+import type { Cast, Driver, Hotel, Order, Staff, StoreOption } from "./types";
 
 const ORDER_KEY = "night-desk-orders-sample-v02";
 const CAST_KEY = "night-desk-casts-sample-v03";
 const HOTEL_KEY = "night-desk-hotels-sample-v01";
 const STAFF_KEY = "night-desk-staff-sample-v01";
 const DRIVER_KEY = "night-desk-drivers-sample-v01";
+const OPTION_KEY = "night-desk-options-sample-v01";
 
 export function loadOrders():Order[] {
   if (typeof window === "undefined") return [];
@@ -156,4 +157,33 @@ export function saveDrivers(drivers:Driver[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(DRIVER_KEY, JSON.stringify(drivers.map(normalizeDriver)));
   window.dispatchEvent(new Event("nightdesk:drivers"));
+}
+
+
+function normalizeOption(option:StoreOption):StoreOption {
+  return {
+    ...option,
+    name: option.name ?? "",
+    price: option.price ?? 0,
+    notes: option.notes ?? "",
+    active: option.active ?? true,
+  };
+}
+
+export function loadOptions(defaultOptions:StoreOption[]):StoreOption[] {
+  if (typeof window === "undefined") return defaultOptions.map(normalizeOption);
+  try {
+    const raw = localStorage.getItem(OPTION_KEY);
+    if (!raw) return defaultOptions.map(normalizeOption);
+    const parsed = JSON.parse(raw) as StoreOption[];
+    return parsed.map(normalizeOption);
+  } catch {
+    return defaultOptions.map(normalizeOption);
+  }
+}
+
+export function saveOptions(options:StoreOption[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(OPTION_KEY, JSON.stringify(options.map(normalizeOption)));
+  window.dispatchEvent(new Event("nightdesk:options"));
 }
