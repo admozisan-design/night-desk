@@ -296,11 +296,6 @@ export default function DashboardPage(){
             </div>
           </form>
         </section>
-
-        <section className="deskPanel reservationSearch">
-          <h2>予約番号検索</h2>
-          <div><input placeholder="電話番号を入力"/><button>検索</button><button>解除</button></div>
-        </section>
       </main>
 
       <aside className="deskRight">
