@@ -11,7 +11,7 @@ function cloneOption(option:StoreOption):StoreOption{
 
 export default function OptionsPage(){
   const [options,setOptions]=useState<StoreOption[]>(defaultOptions);
-  const [editing,setEditing]=useState<Record<string,boolean>>({});
+  const [isEditing,setIsEditing]=useState(false);
   const [drafts,setDrafts]=useState<Record<string,StoreOption>>({});
   const [addOpen,setAddOpen]=useState(false);
   const [saved,setSaved]=useState(false);
@@ -25,9 +25,9 @@ export default function OptionsPage(){
     window.setTimeout(()=>setSaved(false),1200);
   }
 
-  function startEdit(option:StoreOption){
-    setDrafts(prev=>({...prev,[option.id]:cloneOption(option)}));
-    setEditing(prev=>({...prev,[option.id]:true}));
+  function startEdit(){
+    setDrafts(Object.fromEntries(options.map(option=>[option.id,cloneOption(option)])));
+    setIsEditing(true);
   }
 
   function updateDraft(id:string,changes:Partial<StoreOption>){
@@ -37,16 +37,11 @@ export default function OptionsPage(){
     });
   }
 
-  function saveCard(id:string){
-    const draft=drafts[id];
-    if(!draft) return;
-    commit(options.map(option=>option.id===id?cloneOption(draft):option));
-    setEditing(prev=>({...prev,[id]:false}));
-    setDrafts(prev=>{
-      const next={...prev};
-      delete next[id];
-      return next;
-    });
+  function saveAll(){
+    const next=options.map(option=>drafts[option.id]?cloneOption(drafts[option.id]):option);
+    commit(next);
+    setIsEditing(false);
+    setDrafts({});
   }
 
   function addOption(e:FormEvent<HTMLFormElement>){
@@ -75,8 +70,10 @@ export default function OptionsPage(){
         <h1>オプション管理</h1>
         <p>受付で使用するオプション名と料金を管理します。料金0円で無料オプションとして登録できます。</p>
       </div>
-      <div className="optionHeaderActions">
+      <div className="optionHeaderActions masterPageActions">
         {saved && <span className="saveToast">保存しました</span>}
+        <button className="masterEditButton" type="button" disabled={isEditing} onClick={startEdit}>編集</button>
+        <button className="masterSaveButton" type="button" disabled={!isEditing} onClick={saveAll}>保存</button>
         <button className="primaryButton" type="button" onClick={()=>setAddOpen(true)}>＋ オプション追加</button>
       </div>
     </header>
@@ -89,7 +86,6 @@ export default function OptionsPage(){
 
     <section className="optionCardGrid">
       {options.map(option=>{
-        const isEditing=!!editing[option.id];
         const current=isEditing ? (drafts[option.id]??option) : option;
 
         return <article key={option.id} className={`optionCard ${current.active===false?"isInactive":""} ${isEditing?"isEditing":""}`}>
@@ -130,10 +126,6 @@ export default function OptionsPage(){
             </label>
           </div>
 
-          <div className="optionCardActions">
-            <button type="button" className="castEditButton" disabled={isEditing} onClick={()=>startEdit(option)}>編集</button>
-            <button type="button" className="castSaveButton" disabled={!isEditing} onClick={()=>saveCard(option.id)}>保存</button>
-          </div>
         </article>
       })}
     </section>
