@@ -1668,3 +1668,143 @@ button:disabled{opacity:.45;cursor:not-allowed}
 }
 
 /* redeploy trigger 2026-09-28 */
+
+
+/* ===== Remaining management pages ===== */
+.masterEmpty{
+  grid-column:1/-1;
+  padding:28px;
+  border:1px dashed #cfd7de;
+  border-radius:12px;
+  background:#fff;
+  color:#87919b;
+  text-align:center;
+  font-size:13px;
+}
+.masterEmpty.compact{padding:18px}
+
+/* Customer */
+.customerManagementPage,.salesManagementPage,.pricingManagementPage,.permissionManagementPage,.logManagementPage{max-width:none;width:100%}
+.customerRegistryHeader,.pricingRegistryHeader,.permissionRegistryHeader{align-items:center}
+.customerHeaderActions,.pricingHeaderActions,.permissionHeaderActions{display:flex;align-items:center;gap:8px}
+.customerToolbar,.logToolbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:16px;
+}
+.customerToolbar input,.logToolbar input{
+  width:min(520px,100%);
+  min-height:44px;
+  padding:10px 13px;
+  font-size:14px;
+}
+.customerToolbar span{font-size:12px;color:#7c8792;font-weight:800}
+.customerCardGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.customerCard{background:#fff;border:1px solid #dbe1e6;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(25,35,45,.04)}
+.customerCard.isInactive{opacity:.55}
+.customerCard.isEditing{border-color:#9bc75a;box-shadow:0 0 0 2px rgba(132,204,22,.12)}
+.customerCardHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 15px;border-bottom:1px solid #e7ebee;background:#fbfcfd}
+.customerCardHeader strong,.customerCardHeader small{display:block}
+.customerCardHeader strong{font-size:17px}
+.customerCardHeader small{margin-top:3px;font-size:11px;color:#87919b}
+.customerUsage{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #edf0f3}
+.customerUsage>div{padding:11px 15px}
+.customerUsage>div+div{border-left:1px solid #edf0f3}
+.customerUsage span,.customerUsage strong{display:block}
+.customerUsage span{font-size:10px;color:#8a949e}
+.customerUsage strong{margin-top:3px;font-size:14px}
+.customerCardBody{display:grid;gap:12px;padding:15px}
+.customerCardBody label{display:grid;gap:6px;font-size:12px;font-weight:800;color:#606c78}
+.customerCardBody input,.customerCardBody textarea{min-height:43px;padding:9px 11px;font-size:14px}
+.customerCardBody textarea{min-height:78px;resize:vertical}
+.customerCard:not(.isEditing) input:disabled,.customerCard:not(.isEditing) textarea:disabled{background:#f6f8f9;color:#3f4a55;border-color:#e0e5e9;opacity:1}
+.customerAddModal{width:min(620px,96vw);background:#fff;border:1px solid #d9e0e6;border-radius:16px;box-shadow:0 24px 70px rgba(20,30,40,.24);overflow:hidden}
+.customerAddForm{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:20px 22px 22px}
+.customerAddForm label{display:grid;gap:7px;font-size:13px;font-weight:800;color:#5e6a76}
+.customerAddForm label:nth-child(n+3){grid-column:1/-1}
+.customerAddForm input,.customerAddForm textarea{min-height:46px;padding:11px 13px;font-size:15px}
+.customerAddForm .castAddModalActions{grid-column:1/-1}
+
+/* Sales */
+.salesFilter{display:flex;align-items:center;gap:8px}
+.salesFilter input,.salesFilter button{min-height:42px;border:1px solid #d5dce2;border-radius:8px;background:#fff;padding:8px 11px}
+.salesFilter button{font-weight:900;color:#5c6874;cursor:pointer}
+.salesFilter button.active{background:#eef7df;border-color:#9ec568;color:#4f731c}
+.salesKpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.salesKpis>div{background:#fff;border:1px solid #dbe1e6;border-radius:11px;padding:14px 16px}
+.salesKpis span,.salesKpis strong{display:block}
+.salesKpis span{font-size:11px;color:#87919b}
+.salesKpis strong{margin-top:5px;font-size:22px}
+.salesGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.salesPanel{padding:0;overflow:hidden}
+.salesPanelHead{display:flex;align-items:center;justify-content:space-between;padding:15px 17px;border-bottom:1px solid #e7ebee}
+.salesPanelHead h2{margin:0;font-size:17px}
+.salesPanelHead span{font-size:11px;color:#87919b}
+.salesTable{display:grid}
+.salesTableRow{display:grid;grid-template-columns:1fr 90px 130px;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #edf0f3;text-align:left}
+.salesTableHeader{background:#f7f9fa;color:#7a8590;font-size:10px;font-weight:900}
+.salesTableRow>*:nth-child(2),.salesTableRow>*:nth-child(3){text-align:right}
+.salesDateRow{width:100%;border:0;border-bottom:1px solid #edf0f3;background:#fff;cursor:pointer;font:inherit;color:inherit}
+.salesDateRow:hover{background:#f9fbf6}
+
+/* Pricing */
+.pricingSection{padding:0;margin-bottom:14px;overflow:hidden}
+.pricingSectionHead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid #e7ebee}
+.pricingSectionHead h2{margin:0;font-size:18px}
+.pricingSectionHead p{margin:4px 0 0;font-size:11px;color:#87919b}
+.pricingCourseGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:16px 18px}
+.pricingCourseCard{position:relative;display:grid;gap:10px;padding:14px;border:1px solid #dce2e7;border-radius:10px;background:#fbfcfd}
+.pricingCourseCard.isEditing{border-color:#a9cd73;background:#fbfff6}
+.pricingCourseCard label,.pricingSettingsGrid label{display:grid;gap:6px;font-size:12px;font-weight:800;color:#606c78}
+.pricingUnitInput{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px}
+.pricingUnitInput input{min-height:43px;padding:9px 11px;font-size:14px}
+.pricingUnitInput input:disabled{background:#f3f5f6;color:#3f4a55;opacity:1}
+.pricingUnitInput span{font-size:11px;color:#87919b;font-weight:800}
+.pricingRemoveButton{border:1px solid #edc2c8;border-radius:7px;background:#fff4f5;color:#a64656;padding:7px;font-size:11px;font-weight:900;cursor:pointer}
+.pricingSettingsGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;padding:16px 18px}
+
+/* Permissions */
+.permissionPanel{padding:0;overflow:hidden}
+.permissionTable{display:grid}
+.permissionRow{display:grid;grid-template-columns:minmax(220px,1.5fr) repeat(4,minmax(110px,1fr));align-items:center;min-height:62px;border-bottom:1px solid #edf0f3}
+.permissionRow>span,.permissionStaff,.permissionToggle{padding:11px 14px}
+.permissionHead{min-height:42px;background:#f6f8f9;color:#7b8691;font-size:10px;font-weight:900}
+.permissionStaff strong,.permissionStaff small{display:block}
+.permissionStaff small{margin-top:3px;color:#8a949e;font-size:10px}
+.permissionToggle{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:#66727e}
+.permissionToggle input{width:17px;height:17px}
+.permissionToggle input:disabled{opacity:.65}
+
+/* Logs */
+.logCount{display:flex;align-items:baseline;gap:4px;padding:10px 14px;border:1px solid #dce2e7;border-radius:10px;background:#fff}
+.logCount strong{font-size:22px}
+.logCount span{font-size:11px;color:#87919b}
+.logPanel{padding:0;overflow:auto}
+.logTable{min-width:900px}
+.logRow{display:grid;grid-template-columns:170px 120px 110px 180px minmax(250px,1fr);align-items:center;border-bottom:1px solid #edf0f3}
+.logRow>*{padding:11px 13px;font-size:11px}
+.logHead{background:#f6f8f9;color:#7b8691;font-weight:900}
+.logCategory{display:inline-flex!important;width:max-content;margin-left:12px;padding:5px 8px!important;border-radius:999px;background:#eef3f6;color:#62717f;font-weight:900}
+
+@media(max-width:1200px){
+  .customerCardGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pricingCourseGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .pricingSettingsGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .permissionRow{grid-template-columns:minmax(180px,1.4fr) repeat(4,minmax(90px,1fr))}
+}
+@media(max-width:800px){
+  .salesKpis{grid-template-columns:1fr 1fr}
+  .salesGrid{grid-template-columns:1fr}
+  .customerCardGrid{grid-template-columns:1fr}
+  .pricingCourseGrid,.pricingSettingsGrid{grid-template-columns:1fr 1fr}
+  .permissionPanel{overflow:auto}
+  .permissionTable{min-width:760px}
+}
+@media(max-width:600px){
+  .customerAddForm{grid-template-columns:1fr}
+  .customerAddForm label:nth-child(n+3),.customerAddForm .castAddModalActions{grid-column:auto}
+  .pricingCourseGrid,.pricingSettingsGrid{grid-template-columns:1fr}
+  .salesKpis{grid-template-columns:1fr}
+  .salesFilter{width:100%;flex-wrap:wrap}
+}
