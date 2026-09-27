@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="consoleShop">
           <span className="onlineDot"/>
-          <div><small>店舗</small><strong>DEMO STORE</strong></div>
+          <div><small>サンプルデータ</small><strong>サンプル店舗A</strong></div>
         </div>
       </header>
       <main className="consoleMain">{children}</main>
