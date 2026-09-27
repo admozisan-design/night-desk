@@ -1602,3 +1602,67 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .optionHeaderActions{width:100%;justify-content:space-between}
   .optionCardGrid{grid-template-columns:1fr}
 }
+
+
+/* ===== Shared master page edit / save actions ===== */
+.masterPageActions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.masterEditButton,
+.masterSaveButton{
+  min-height:42px;
+  min-width:82px;
+  padding:9px 15px;
+  border-radius:9px;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.masterEditButton{
+  border:1px solid #cfd7de;
+  background:#f4f6f8;
+  color:#46535f;
+}
+
+.masterSaveButton{
+  border:1px solid #79b91c;
+  background:#84cc16;
+  color:#17200b;
+}
+
+.masterEditButton:hover:not(:disabled){
+  background:#eaf0f4;
+  border-color:#b8c3cc;
+}
+
+.masterSaveButton:hover:not(:disabled){
+  background:#78bd12;
+}
+
+.masterEditButton:disabled,
+.masterSaveButton:disabled{
+  opacity:.38;
+  cursor:not-allowed;
+}
+
+@media(max-width:650px){
+  .masterPageActions{
+    width:100%;
+    justify-content:stretch;
+  }
+
+  .masterPageActions .masterEditButton,
+  .masterPageActions .masterSaveButton{
+    flex:1;
+  }
+
+  .masterPageActions .primaryButton{
+    width:100%;
+  }
+}
