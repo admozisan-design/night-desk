@@ -11,7 +11,7 @@ function cloneDriver(driver:Driver):Driver{
 
 export default function DriversPage(){
   const [drivers,setDrivers]=useState<Driver[]>(defaultDrivers);
-  const [editing,setEditing]=useState<Record<string,boolean>>({});
+  const [isEditing,setIsEditing]=useState(false);
   const [drafts,setDrafts]=useState<Record<string,Driver>>({});
   const [addOpen,setAddOpen]=useState(false);
   const [saved,setSaved]=useState(false);
@@ -25,9 +25,9 @@ export default function DriversPage(){
     window.setTimeout(()=>setSaved(false),1200);
   }
 
-  function startEdit(driver:Driver){
-    setDrafts(prev=>({...prev,[driver.id]:cloneDriver(driver)}));
-    setEditing(prev=>({...prev,[driver.id]:true}));
+  function startEdit(){
+    setDrafts(Object.fromEntries(drivers.map(driver=>[driver.id,cloneDriver(driver)])));
+    setIsEditing(true);
   }
 
   function updateDraft(id:string,changes:Partial<Driver>){
@@ -37,16 +37,11 @@ export default function DriversPage(){
     });
   }
 
-  function saveCard(id:string){
-    const draft=drafts[id];
-    if(!draft) return;
-    commit(drivers.map(driver=>driver.id===id?cloneDriver(draft):driver));
-    setEditing(prev=>({...prev,[id]:false}));
-    setDrafts(prev=>{
-      const next={...prev};
-      delete next[id];
-      return next;
-    });
+  function saveAll(){
+    const next=drivers.map(driver=>drafts[driver.id]?cloneDriver(drafts[driver.id]):driver);
+    commit(next);
+    setIsEditing(false);
+    setDrafts({});
   }
 
   function addDriver(e:FormEvent<HTMLFormElement>){
@@ -77,8 +72,10 @@ export default function DriversPage(){
         <h1>ドライバー登録</h1>
         <p>送迎ドライバーの基本情報を管理します。</p>
       </div>
-      <div className="driverHeaderActions">
+      <div className="driverHeaderActions masterPageActions">
         {saved && <span className="saveToast">保存しました</span>}
+        <button className="masterEditButton" type="button" disabled={isEditing} onClick={startEdit}>編集</button>
+        <button className="masterSaveButton" type="button" disabled={!isEditing} onClick={saveAll}>保存</button>
         <button className="primaryButton" type="button" onClick={()=>setAddOpen(true)}>＋ ドライバー追加</button>
       </div>
     </header>
@@ -90,7 +87,6 @@ export default function DriversPage(){
 
     <section className="driverCardGrid">
       {drivers.map(driver=>{
-        const isEditing=!!editing[driver.id];
         const current=isEditing ? (drafts[driver.id]??driver) : driver;
 
         return <article key={driver.id} className={`driverCard ${current.active===false?"isInactive":""} ${isEditing?"isEditing":""}`}>
@@ -138,10 +134,6 @@ export default function DriversPage(){
             </label>
           </div>
 
-          <div className="driverCardActions">
-            <button type="button" className="castEditButton" disabled={isEditing} onClick={()=>startEdit(driver)}>編集</button>
-            <button type="button" className="castSaveButton" disabled={!isEditing} onClick={()=>saveCard(driver.id)}>保存</button>
-          </div>
         </article>
       })}
     </section>
