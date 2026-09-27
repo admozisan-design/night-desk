@@ -125,11 +125,28 @@ export default function NewOrderPage(){
           <label>コース<select value={courseId} onChange={e=>setCourseId(e.target.value)}>{courses.map(c=><option key={c.id} value={c.id}>{c.minutes}分 / {formatYen(c.price)}</option>)}</select></label>
           <label>指名<select value={nominationType} onChange={e=>setNominationType(e.target.value as typeof nominationType)}><option value="free">フリー</option><option value="photo">写真指名</option><option value="repeat">本指名</option></select></label>
           <label>ドライバー<select value={driverId} onChange={e=>setDriverId(e.target.value)}>{availableDrivers.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
-          <label>オプション合計<input type="number" value={optionsTotal} onChange={e=>setOptionsTotal(Number(e.target.value))} min="0" step="500"/></label>
           <label>交通費<input type="number" value={travelFee} onChange={e=>setTravelFee(Number(e.target.value))} min="0" step="500"/></label>
           <label>割引<input type="number" value={discount} onChange={e=>setDiscount(Number(e.target.value))} min="0" step="500"/></label>
           <label>手動調整<input type="number" value={adjustment} onChange={e=>setAdjustment(Number(e.target.value))} step="500"/></label>
         </div>
+
+        <div className="orderOptionPicker detailedOptionPicker">
+          <div className="orderOptionPickerHead">
+            <span>オプション</span>
+            <strong>{formatYen(optionsTotal)}</strong>
+          </div>
+          <div className="orderOptionChoices">
+            {selectableOptions.map(option=>{
+              const checked=selectedOptionIds.includes(option.id);
+              return <button key={option.id} type="button" className={checked?"active":""} onClick={()=>toggleOption(option.id)}>
+                <span>{option.name}</span>
+                <small>{option.price===0?"無料":formatYen(option.price)}</small>
+              </button>
+            })}
+            {selectedCast && selectableOptions.length===0 && <span className="orderOptionEmpty">このキャストの対応可能オプションはありません</span>}
+          </div>
+        </div>
+
         <label className="fullLabel">備考<textarea name="note" rows={4} placeholder="入館方法、注意事項、引継ぎなど"/></label>
       </section>
       <aside className="panel summaryPanel">
