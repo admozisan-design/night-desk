@@ -11,7 +11,7 @@ const operationItems = [
   { title:"顧客管理", description:"電話番号、利用履歴、注意事項、NG情報を確認", href:"#customers", action:"準備中" },
   { title:"売上管理", description:"日別・キャスト別の売上と本数を集計", href:"#sales", action:"準備中" },
   { title:"料金登録", description:"コース料金、指名料、交通費、延長料金を設定", href:"#pricing", action:"準備中" },
-  { title:"オプション・割引", description:"有料OP、無料OP、キャンペーン、割引ルールを設定", href:"#options", action:"準備中" },
+  { title:"オプション管理", description:"オプション名、料金、有効状態を管理", href:"/options", action:"管理する" },
 ];
 
 const systemItems = [
