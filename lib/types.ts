@@ -29,6 +29,30 @@ export type Course = { id:string; minutes:number; price:number; };
 export type Hotel = { id:string; name:string; travelFee:number; visible?:boolean; };
 export type Staff = { id:string; name:string; displayName:string; loginId:string; notes?:string; active?:boolean; };
 export type StoreOption = { id:string; name:string; price:number; notes?:string; active?:boolean; };
+export type Customer = { id:string; phone:string; name?:string; notes?:string; ngInfo?:string; active?:boolean; };
+export type PricingConfig = {
+  courses:Course[];
+  photoNominationFee:number;
+  repeatNominationFee:number;
+  defaultTravelFee:number;
+  extensionMinutes:number;
+  extensionPrice:number;
+};
+export type StaffPermission = {
+  staffId:string;
+  reception:boolean;
+  orders:boolean;
+  sales:boolean;
+  settings:boolean;
+};
+export type AuditLog = {
+  id:string;
+  createdAt:string;
+  actor:string;
+  category:string;
+  action:string;
+  detail?:string;
+};
 export type Order = {
   id:string; createdAt:string; customerPhone:string; locationType:"hotel"|"home";
   locationName:string; room?:string; castId:string; castName:string; driverId?:string; driverName?:string;
