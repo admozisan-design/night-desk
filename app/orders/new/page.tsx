@@ -2,10 +2,10 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { casts as defaultCasts, courses, drivers as defaultDrivers, options as defaultOptions, pricingSettings } from "@/lib/mock-data";
+import { casts as defaultCasts, defaultPricingConfig, drivers as defaultDrivers, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { loadCasts, loadDrivers, loadOptions, saveOrder } from "@/lib/storage";
-import type { Cast, Driver, Order, StoreOption } from "@/lib/types";
+import { loadCasts, loadDrivers, loadOptions, loadPricing, saveOrder } from "@/lib/storage";
+import type { Cast, Driver, Order, PricingConfig, StoreOption } from "@/lib/types";
 
 function addMinutes(time:string, minutes:number){
   const [h,m] = time.split(":").map(Number);
@@ -21,16 +21,17 @@ export default function NewOrderPage(){
   const [castList,setCastList] = useState<Cast[]>(initialCasts);
   const [driverList,setDriverList] = useState<Driver[]>(defaultDrivers);
   const [optionList,setOptionList] = useState<StoreOption[]>(defaultOptions);
-  const [courseId,setCourseId] = useState("60");
+  const [pricing,setPricing] = useState<PricingConfig>(defaultPricingConfig);
+  const [courseId,setCourseId] = useState(defaultPricingConfig.courses[0]?.id ?? "");
   const [nominationType,setNominationType] = useState<"free"|"photo"|"repeat">("free");
   const [selectedOptionIds,setSelectedOptionIds] = useState<string[]>([]);
-  const [travelFee,setTravelFee] = useState(pricingSettings.defaultTravelFee);
+  const [travelFee,setTravelFee] = useState(defaultPricingConfig.defaultTravelFee);
   const [discount,setDiscount] = useState(0);
   const [adjustment,setAdjustment] = useState(0);
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
   const [scheduledStart,setScheduledStart] = useState(defaultTime);
-  const course = courses.find(c=>c.id===courseId);
+  const course = pricing.courses.find(c=>c.id===courseId);
 
   const availableCasts = useMemo(
     ()=>castList.filter(c=>c.visible!==false && c.scheduledToday!==false && c.status!=="off"),
@@ -46,6 +47,9 @@ export default function NewOrderPage(){
     setCastList(stored);
     setDriverList(loadDrivers(defaultDrivers));
     setOptionList(loadOptions(defaultOptions));
+    const loadedPricing=loadPricing(defaultPricingConfig);
+    setPricing(loadedPricing);
+    setTravelFee(loadedPricing.defaultTravelFee);
   },[]);
 
   useEffect(()=>{
@@ -59,6 +63,12 @@ export default function NewOrderPage(){
       setDriverId(availableDrivers[0]?.id ?? "");
     }
   },[availableDrivers,driverId]);
+
+  useEffect(()=>{
+    if(!pricing.courses.some(course=>course.id===courseId)){
+      setCourseId(pricing.courses[0]?.id ?? "");
+    }
+  },[pricing.courses,courseId]);
 
   const selectedCast=availableCasts.find(c=>c.id===castId);
   const selectableOptions=useMemo(
@@ -75,7 +85,7 @@ export default function NewOrderPage(){
     setSelectedOptionIds(current=>current.filter(id=>allowed.has(id)));
   },[selectableOptions]);
 
-  const total = useMemo(()=>calculateOrderTotal({course,nominationType,...pricingSettings,optionsTotal,travelFee,discount,adjustment}),[course,nominationType,optionsTotal,travelFee,discount,adjustment]);
+  const total = useMemo(()=>calculateOrderTotal({course,nominationType,photoNominationFee:pricing.photoNominationFee,repeatNominationFee:pricing.repeatNominationFee,optionsTotal,travelFee,discount,adjustment}),[course,nominationType,optionsTotal,travelFee,discount,adjustment,pricing.photoNominationFee,pricing.repeatNominationFee]);
 
   function toggleOption(id:string){
     setSelectedOptionIds(current=>current.includes(id)
@@ -122,7 +132,7 @@ export default function NewOrderPage(){
               {availableCasts.map(c=><option key={c.id} value={c.id}>{c.name} / {c.status==="waiting"?"待機":c.status==="moving"?"移動中":"接客中"}</option>)}
             </select>
           </label>
-          <label>コース<select value={courseId} onChange={e=>setCourseId(e.target.value)}>{courses.map(c=><option key={c.id} value={c.id}>{c.minutes}分 / {formatYen(c.price)}</option>)}</select></label>
+          <label>コース<select value={courseId} onChange={e=>setCourseId(e.target.value)}>{pricing.courses.map(c=><option key={c.id} value={c.id}>{c.minutes}分 / {formatYen(c.price)}</option>)}</select></label>
           <label>指名<select value={nominationType} onChange={e=>setNominationType(e.target.value as typeof nominationType)}><option value="free">フリー</option><option value="photo">写真指名</option><option value="repeat">本指名</option></select></label>
           <label>ドライバー<select value={driverId} onChange={e=>setDriverId(e.target.value)}>{availableDrivers.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
           <label>交通費<input type="number" value={travelFee} onChange={e=>setTravelFee(Number(e.target.value))} min="0" step="500"/></label>
@@ -153,7 +163,7 @@ export default function NewOrderPage(){
         <p className="eyebrow">PRICE</p><h2>料金確認</h2>
         <dl className="priceList">
           <div><dt>基本料金</dt><dd>{formatYen(course?.price??0)}</dd></div>
-          <div><dt>指名料</dt><dd>{formatYen(nominationType==="photo"?pricingSettings.photoNominationFee:nominationType==="repeat"?pricingSettings.repeatNominationFee:0)}</dd></div>
+          <div><dt>指名料</dt><dd>{formatYen(nominationType==="photo"?pricing.photoNominationFee:nominationType==="repeat"?pricing.repeatNominationFee:0)}</dd></div>
           <div><dt>オプション</dt><dd>{formatYen(optionsTotal)}</dd></div>
           <div><dt>交通費</dt><dd>{formatYen(travelFee)}</dd></div>
           <div><dt>割引</dt><dd>-{formatYen(discount)}</dd></div>
