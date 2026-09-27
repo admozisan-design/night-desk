@@ -69,7 +69,7 @@ export default function CastsPage(){
         <h2>キャスト追加</h2>
       </div>
       <form onSubmit={addCast} className="addCastForm">
-        <label>源氏名<input name="name" required placeholder="例：てぃあ"/></label>
+        <label>源氏名<input name="name" required placeholder="例：サンプルE"/></label>
         <label>出勤<input name="shiftStart" type="time" defaultValue="18:00"/></label>
         <label>上り<input name="shiftEnd" type="time" defaultValue="04:00"/></label>
         <button className="primaryButton" type="submit">＋ 追加</button>
