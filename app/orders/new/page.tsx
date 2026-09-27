@@ -2,10 +2,10 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { casts as defaultCasts, courses, drivers as defaultDrivers, pricingSettings } from "@/lib/mock-data";
+import { casts as defaultCasts, courses, drivers as defaultDrivers, options as defaultOptions, pricingSettings } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { loadCasts, loadDrivers, saveOrder } from "@/lib/storage";
-import type { Cast, Driver, Order } from "@/lib/types";
+import { loadCasts, loadDrivers, loadOptions, saveOrder } from "@/lib/storage";
+import type { Cast, Driver, Order, StoreOption } from "@/lib/types";
 
 function addMinutes(time:string, minutes:number){
   const [h,m] = time.split(":").map(Number);
@@ -20,9 +20,10 @@ export default function NewOrderPage(){
   const initialCasts = defaultCasts.map(c=>({...c,scheduledToday:true,visible:true}));
   const [castList,setCastList] = useState<Cast[]>(initialCasts);
   const [driverList,setDriverList] = useState<Driver[]>(defaultDrivers);
+  const [optionList,setOptionList] = useState<StoreOption[]>(defaultOptions);
   const [courseId,setCourseId] = useState("60");
   const [nominationType,setNominationType] = useState<"free"|"photo"|"repeat">("free");
-  const [optionsTotal,setOptionsTotal] = useState(0);
+  const [selectedOptionIds,setSelectedOptionIds] = useState<string[]>([]);
   const [travelFee,setTravelFee] = useState(pricingSettings.defaultTravelFee);
   const [discount,setDiscount] = useState(0);
   const [adjustment,setAdjustment] = useState(0);
@@ -44,6 +45,7 @@ export default function NewOrderPage(){
     const stored=loadCasts(defaultCasts);
     setCastList(stored);
     setDriverList(loadDrivers(defaultDrivers));
+    setOptionList(loadOptions(defaultOptions));
   },[]);
 
   useEffect(()=>{
