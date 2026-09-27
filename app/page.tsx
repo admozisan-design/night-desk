@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { casts } from "@/lib/mock-data";
-import { loadOrders } from "@/lib/storage";
-import type { CastStatus, Order, OrderStatus } from "@/lib/types";
+import { casts as defaultCasts } from "@/lib/mock-data";
+import { loadCasts, loadOrders } from "@/lib/storage";
+import type { Cast, CastStatus, Order, OrderStatus } from "@/lib/types";
 import { formatYen } from "@/lib/pricing";
 
 const BOARD_START = 19 * 60;
@@ -42,18 +42,33 @@ function currentTimePosition(now:Date){
 
 export default function DashboardPage(){
   const [orders,setOrders] = useState<Order[]>([]);
+  const [castList,setCastList] = useState<Cast[]>(defaultCasts);
   const [now,setNow] = useState<Date|null>(null);
 
   useEffect(()=>{
-    setOrders(loadOrders());
+    const refresh=()=>{
+      setOrders(loadOrders());
+      setCastList(loadCasts(defaultCasts));
+    };
+    refresh();
     setNow(new Date());
     const timer = window.setInterval(()=>setNow(new Date()),60000);
-    return ()=>window.clearInterval(timer);
+    window.addEventListener("storage",refresh);
+    window.addEventListener("nightdesk:casts",refresh);
+    return ()=>{
+      window.clearInterval(timer);
+      window.removeEventListener("storage",refresh);
+      window.removeEventListener("nightdesk:casts",refresh);
+    };
   },[]);
 
+  const workingCasts = useMemo(
+    ()=>castList.filter(c=>c.visible!==false && c.scheduledToday!==false),
+    [castList]
+  );
   const activeOrders = useMemo(()=>orders.filter(o=>o.status!=="completed"&&o.status!=="cancelled"),[orders]);
   const todaySales = useMemo(()=>orders.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+o.total,0),[orders]);
-  const waitingCount = casts.filter(c=>c.status==="waiting").length;
+  const waitingCount = workingCasts.filter(c=>c.status==="waiting").length;
   const nowPosition = now ? currentTimePosition(now) : null;
 
   return <div>
@@ -61,13 +76,17 @@ export default function DashboardPage(){
       <div>
         <p className="eyebrow">DISPATCH BOARD</p>
         <h1>配車ボード</h1>
-        <p>キャストの出勤時間・本数・オーダー予定を横並びで確認できます。</p>
+        <p>キャスト管理で登録した本日の出勤者だけを表示しています。</p>
       </div>
-      <Link className="primaryButton" href="/orders/new">＋ 新規受付</Link>
+      <div className="headerActions">
+        <Link className="secondaryButton" href="/casts">出勤を編集</Link>
+        <Link className="primaryButton" href="/orders/new">＋ 新規受付</Link>
+      </div>
     </header>
 
     <section className="boardSummary">
       <div><span>稼働中</span><strong>{activeOrders.length}</strong><small>件</small></div>
+      <div><span>本日出勤</span><strong>{workingCasts.length}</strong><small>人</small></div>
       <div><span>待機</span><strong>{waitingCount}</strong><small>人</small></div>
       <div><span>本日受付</span><strong>{orders.length}</strong><small>件</small></div>
       <div className="sales"><span>本日売上</span><strong>{formatYen(todaySales)}</strong></div>
@@ -98,7 +117,14 @@ export default function DashboardPage(){
             {nowPosition && <span className="nowLine" style={{left:nowPosition}}><b>現在</b></span>}
           </div>
 
-          {casts.map(cast=>{
+          {workingCasts.length===0 && <>
+            <div className="dispatchName noCastCell"><strong>出勤者なし</strong></div>
+            <div className="dispatchShift noCastCell"><span>キャスト管理から登録</span></div>
+            <div className="dispatchCount noCastCell"><strong>0</strong><span>人</span></div>
+            <div className="timelineCell noCastTimeline"><Link href="/casts">本日の出勤を登録する →</Link></div>
+          </>}
+
+          {workingCasts.map(cast=>{
             const castOrders = orders.filter(o=>o.castId===cast.id && o.status!=="cancelled");
             const visibleOrders = castOrders.filter(o=>eventPosition(o));
             return <div className="dispatchRowContents" key={cast.id}>
@@ -127,7 +153,7 @@ export default function DashboardPage(){
           })}
 
           <div className="dispatchName totalCell"><strong>合計</strong></div>
-          <div className="dispatchShift totalCell"><strong>{casts.length}人</strong></div>
+          <div className="dispatchShift totalCell"><strong>{workingCasts.length}人</strong></div>
           <div className="dispatchCount totalCell"><strong>{orders.filter(o=>o.status!=="cancelled").length}</strong><span>本</span></div>
           <div className="timelineCell totalTimeline">{nowPosition && <span className="nowLine" style={{left:nowPosition}}/>}</div>
         </div>
