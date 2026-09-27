@@ -7,6 +7,14 @@ import type { Cast } from "@/lib/types";
 
 const optionChoices = ["オプションA","オプションB","オプションC","オプションD"];
 
+function cloneCast(cast:Cast):Cast{
+  return {
+    ...cast,
+    ngDetails:[...(cast.ngDetails??[])],
+    availableOptions:[...(cast.availableOptions??[])]
+  };
+}
+
 export default function CastsPage(){
   const [casts,setCasts] = useState<Cast[]>(
     defaultCasts.map(c=>({
@@ -27,6 +35,8 @@ export default function CastsPage(){
       cupSize:c.cupSize??""
     }))
   );
+  const [editing,setEditing] = useState<Record<string,boolean>>({});
+  const [drafts,setDrafts] = useState<Record<string,Cast>>({});
   const [ngDrafts,setNgDrafts] = useState<Record<string,string>>({});
   const [saved,setSaved] = useState(false);
   const [addOpen,setAddOpen] = useState(false);
@@ -43,19 +53,42 @@ export default function CastsPage(){
     window.setTimeout(()=>setSaved(false),1200);
   }
 
-  function patch(id:string,changes:Partial<Cast>){
-    commit(casts.map(c=>c.id===id?{...c,...changes}:c));
+  function startEdit(cast:Cast){
+    setDrafts(prev=>({...prev,[cast.id]:cloneCast(cast)}));
+    setEditing(prev=>({...prev,[cast.id]:true}));
+  }
+
+  function updateDraft(id:string,changes:Partial<Cast>){
+    setDrafts(prev=>{
+      const base=prev[id] ?? cloneCast(casts.find(c=>c.id===id)!);
+      return {...prev,[id]:{...base,...changes}};
+    });
+  }
+
+  function saveCard(id:string){
+    const draft=drafts[id];
+    if(!draft) return;
+    commit(casts.map(c=>c.id===id?cloneCast(draft):c));
+    setEditing(prev=>({...prev,[id]:false}));
+    setDrafts(prev=>{
+      const next={...prev};
+      delete next[id];
+      return next;
+    });
+    setNgDrafts(prev=>({...prev,[id]:""}));
   }
 
   function toggleOption(cast:Cast, option:string){
+    if(!editing[cast.id]) return;
     const current = cast.availableOptions ?? [];
     const next = current.includes(option)
       ? current.filter(item=>item!==option)
       : [...current,option];
-    patch(cast.id,{availableOptions:next});
+    updateDraft(cast.id,{availableOptions:next});
   }
 
   function addNg(cast:Cast){
+    if(!editing[cast.id]) return;
     const value=(ngDrafts[cast.id]??"").trim();
     if(!value) return;
     const current=cast.ngDetails??[];
@@ -63,12 +96,13 @@ export default function CastsPage(){
       setNgDrafts(prev=>({...prev,[cast.id]:""}));
       return;
     }
-    patch(cast.id,{ngDetails:[...current,value]});
+    updateDraft(cast.id,{ngDetails:[...current,value]});
     setNgDrafts(prev=>({...prev,[cast.id]:""}));
   }
 
   function removeNg(cast:Cast, item:string){
-    patch(cast.id,{ngDetails:(cast.ngDetails??[]).filter(value=>value!==item)});
+    if(!editing[cast.id]) return;
+    updateDraft(cast.id,{ngDetails:(cast.ngDetails??[]).filter(value=>value!==item)});
   }
 
   function handleNgKeyDown(e:KeyboardEvent<HTMLInputElement>,cast:Cast){
@@ -141,7 +175,7 @@ export default function CastsPage(){
       <div>
         <p className="eyebrow">CAST MANAGEMENT</p>
         <h1>キャスト登録</h1>
-        <p>キャストごとの単価、NG内容、可能オプション、備考を管理します。</p>
+        <p>キャストごとの単価、スペック、面接評価、NG内容、可能オプション、備考を管理します。</p>
       </div>
       <div className="castHeaderActions">
         {saved && <span className="saveToast">保存しました</span>}
@@ -155,119 +189,133 @@ export default function CastsPage(){
     </section>
 
     <section className="castCardGrid">
-      {casts.map(cast=><article key={cast.id} className={`castVerticalCard ${cast.visible===false?"isHidden":""}`}>
-        <div className="castVerticalHeader">
-          <input
-            className="castVerticalName"
-            value={cast.name}
-            onChange={e=>patch(cast.id,{name:e.target.value})}
-          />
-          <label className="switchLabel">
+      {casts.map(cast=>{
+        const isEditing=!!editing[cast.id];
+        const current=isEditing ? (drafts[cast.id] ?? cloneCast(cast)) : cast;
+
+        return <article key={cast.id} className={`castVerticalCard ${current.visible===false?"isHidden":""} ${isEditing?"isEditing":""}`}>
+          <div className="castVerticalHeader">
             <input
-              type="checkbox"
-              checked={cast.visible!==false}
-              onChange={e=>patch(cast.id,{visible:e.target.checked})}
+              className="castVerticalName"
+              value={current.name}
+              disabled={!isEditing}
+              onChange={e=>updateDraft(cast.id,{name:e.target.value})}
             />
-            <span>表示</span>
-          </label>
-        </div>
-
-        <div className="castVerticalSection">
-          <div className="castVerticalSectionTitle">単価設定</div>
-          <div className="castVerticalRates">
-            <label>フリー
-              <input type="number" min="0" step="500" value={cast.freeUnitPrice??0}
-                onChange={e=>patch(cast.id,{freeUnitPrice:Number(e.target.value)})}/>
-            </label>
-            <label>写真指名
-              <input type="number" min="0" step="500" value={cast.photoUnitPrice??0}
-                onChange={e=>patch(cast.id,{photoUnitPrice:Number(e.target.value)})}/>
-            </label>
-            <label>本指名
-              <input type="number" min="0" step="500" value={cast.repeatUnitPrice??0}
-                onChange={e=>patch(cast.id,{repeatUnitPrice:Number(e.target.value)})}/>
-            </label>
-          </div>
-        </div>
-
-        <div className="castVerticalSection">
-          <div className="castVerticalSectionTitle">スペック</div>
-          <div className="castSpecGrid">
-            <label>年齢
-              <input type="number" min="18" value={cast.age || ""} placeholder="例：26"
-                onChange={e=>patch(cast.id,{age:e.target.value===""?0:Number(e.target.value)})}/>
-            </label>
-            <label>身長
-              <div className="castSpecInputUnit"><input type="number" min="0" value={cast.heightCm || ""} placeholder="例：158"
-                onChange={e=>patch(cast.id,{heightCm:e.target.value===""?0:Number(e.target.value)})}/><span>cm</span></div>
-            </label>
-            <label>B
-              <div className="castSpecInputUnit"><input type="number" min="0" value={cast.bustCm || ""} placeholder="例：86"
-                onChange={e=>patch(cast.id,{bustCm:e.target.value===""?0:Number(e.target.value)})}/><span>cm</span></div>
-            </label>
-            <label>W
-              <div className="castSpecInputUnit"><input type="number" min="0" value={cast.waistCm || ""} placeholder="例：58"
-                onChange={e=>patch(cast.id,{waistCm:e.target.value===""?0:Number(e.target.value)})}/><span>cm</span></div>
-            </label>
-            <label>H
-              <div className="castSpecInputUnit"><input type="number" min="0" value={cast.hipCm || ""} placeholder="例：85"
-                onChange={e=>patch(cast.id,{hipCm:e.target.value===""?0:Number(e.target.value)})}/><span>cm</span></div>
-            </label>
-            <label>カップ
-              <input value={cast.cupSize??""} onChange={e=>patch(cast.id,{cupSize:e.target.value})} placeholder="例：D"/>
-            </label>
-          </div>
-        </div>
-
-        <div className="castVerticalSection">
-          <label className="castVerticalField">面接評価
-            <textarea rows={4} value={cast.interviewEvaluation??""}
-              onChange={e=>patch(cast.id,{interviewEvaluation:e.target.value})}
-              placeholder="面接時の印象・接客適性など"/>
-          </label>
-        </div>
-
-        <div className="castVerticalSection">
-          <div className="castVerticalFieldLabel">NG内容</div>
-          <div className="castNgTags">
-            {(cast.ngDetails??[]).map(item=><span key={item} className="castNgTag">
-              {item}
-              <button type="button" onClick={()=>removeNg(cast,item)} aria-label={`${item}を削除`}>×</button>
-            </span>)}
-            {(cast.ngDetails??[]).length===0 && <span className="castNgEmpty">NG登録なし</span>}
-          </div>
-          <div className="castNgAddRow">
-            <input
-              value={ngDrafts[cast.id]??""}
-              onChange={e=>setNgDrafts(prev=>({...prev,[cast.id]:e.target.value}))}
-              onKeyDown={e=>handleNgKeyDown(e,cast)}
-              placeholder="NG内容を入力"
-            />
-            <button type="button" onClick={()=>addNg(cast)}>追加</button>
-          </div>
-        </div>
-
-        <div className="castVerticalSection">
-          <div className="castVerticalFieldLabel">可能オプション</div>
-          <div className="castVerticalOptions">
-            {optionChoices.map(option=>{
-              const checked=(cast.availableOptions??[]).includes(option);
-              return <label key={option} className={`castOptionChip ${checked?"active":""}`}>
-                <input type="checkbox" checked={checked} onChange={()=>toggleOption(cast,option)}/>
-                <span>{option}</span>
+            <div className="castCardHeaderRight">
+              <label className="switchLabel">
+                <input
+                  type="checkbox"
+                  checked={current.visible!==false}
+                  disabled={!isEditing}
+                  onChange={e=>updateDraft(cast.id,{visible:e.target.checked})}
+                />
+                <span>表示</span>
               </label>
-            })}
+              <div className="castCardActions">
+                <button type="button" className="castEditButton" disabled={isEditing} onClick={()=>startEdit(cast)}>編集</button>
+                <button type="button" className="castSaveButton" disabled={!isEditing} onClick={()=>saveCard(cast.id)}>保存</button>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="castVerticalSection">
-          <label className="castVerticalField">備考
-            <textarea rows={4} value={cast.notes??""}
-              onChange={e=>patch(cast.id,{notes:e.target.value})}
-              placeholder="受付時に共有したい内容"/>
-          </label>
-        </div>
-      </article>)}
+          <div className="castVerticalSection">
+            <div className="castVerticalSectionTitle">単価設定</div>
+            <div className="castVerticalRates">
+              <label>フリー
+                <input type="number" min="0" step="500" value={current.freeUnitPrice??0} disabled={!isEditing}
+                  onChange={e=>updateDraft(cast.id,{freeUnitPrice:Number(e.target.value)})}/>
+              </label>
+              <label>写真指名
+                <input type="number" min="0" step="500" value={current.photoUnitPrice??0} disabled={!isEditing}
+                  onChange={e=>updateDraft(cast.id,{photoUnitPrice:Number(e.target.value)})}/>
+              </label>
+              <label>本指名
+                <input type="number" min="0" step="500" value={current.repeatUnitPrice??0} disabled={!isEditing}
+                  onChange={e=>updateDraft(cast.id,{repeatUnitPrice:Number(e.target.value)})}/>
+              </label>
+            </div>
+          </div>
+
+          <div className="castVerticalSection">
+            <div className="castVerticalSectionTitle">スペック</div>
+            <div className="castSpecGrid">
+              <label>年齢
+                <input type="number" min="18" value={current.age || ""} placeholder="例：26" disabled={!isEditing}
+                  onChange={e=>updateDraft(cast.id,{age:e.target.value===""?0:Number(e.target.value)})}/>
+              </label>
+              <label>身長
+                <div className="castSpecInputUnit"><input type="number" min="0" value={current.heightCm || ""} placeholder="例：158" disabled={!isEditing}
+                  onChange={e=>updateDraft(cast.id,{heightCm:e.target.value===""?0:Number(e.target.value)})}/><span>cm</span></div>
+              </label>
+              <label>B
+                <div className="castSpecInputUnit"><input type="number" min="0" value={current.bustCm || ""} placeholder="例：86" disabled={!isEditing}
+                  onChange={e=>updateDraft(cast.id,{bustCm:e.target.value===""?0:Number(e.target.value)})}/><span>cm</span></div>
+              </label>
+              <label>W
+                <div className="castSpecInputUnit"><input type="number" min="0" value={current.waistCm || ""} placeholder="例：58" disabled={!isEditing}
+                  onChange={e=>updateDraft(cast.id,{waistCm:e.target.value===""?0:Number(e.target.value)})}/><span>cm</span></div>
+              </label>
+              <label>H
+                <div className="castSpecInputUnit"><input type="number" min="0" value={current.hipCm || ""} placeholder="例：85" disabled={!isEditing}
+                  onChange={e=>updateDraft(cast.id,{hipCm:e.target.value===""?0:Number(e.target.value)})}/><span>cm</span></div>
+              </label>
+              <label>カップ
+                <input value={current.cupSize??""} disabled={!isEditing}
+                  onChange={e=>updateDraft(cast.id,{cupSize:e.target.value})} placeholder="例：D"/>
+              </label>
+            </div>
+          </div>
+
+          <div className="castVerticalSection">
+            <label className="castVerticalField">面接評価
+              <textarea rows={4} value={current.interviewEvaluation??""} disabled={!isEditing}
+                onChange={e=>updateDraft(cast.id,{interviewEvaluation:e.target.value})}
+                placeholder="面接時の印象・接客適性など"/>
+            </label>
+          </div>
+
+          <div className="castVerticalSection">
+            <div className="castVerticalFieldLabel">NG内容</div>
+            <div className="castNgTags">
+              {(current.ngDetails??[]).map(item=><span key={item} className="castNgTag">
+                {item}
+                {isEditing && <button type="button" onClick={()=>removeNg(current,item)} aria-label={`${item}を削除`}>×</button>}
+              </span>)}
+              {(current.ngDetails??[]).length===0 && <span className="castNgEmpty">NG登録なし</span>}
+            </div>
+            {isEditing && <div className="castNgAddRow">
+              <input
+                value={ngDrafts[cast.id]??""}
+                onChange={e=>setNgDrafts(prev=>({...prev,[cast.id]:e.target.value}))}
+                onKeyDown={e=>handleNgKeyDown(e,current)}
+                placeholder="NG内容を入力"
+              />
+              <button type="button" onClick={()=>addNg(current)}>追加</button>
+            </div>}
+          </div>
+
+          <div className="castVerticalSection">
+            <div className="castVerticalFieldLabel">可能オプション</div>
+            <div className="castVerticalOptions">
+              {optionChoices.map(option=>{
+                const checked=(current.availableOptions??[]).includes(option);
+                return <label key={option} className={`castOptionChip ${checked?"active":""} ${!isEditing?"isLocked":""}`}>
+                  <input type="checkbox" checked={checked} disabled={!isEditing} onChange={()=>toggleOption(current,option)}/>
+                  <span>{option}</span>
+                </label>
+              })}
+            </div>
+          </div>
+
+          <div className="castVerticalSection">
+            <label className="castVerticalField">備考
+              <textarea rows={4} value={current.notes??""} disabled={!isEditing}
+                onChange={e=>updateDraft(cast.id,{notes:e.target.value})}
+                placeholder="受付時に共有したい内容"/>
+            </label>
+          </div>
+        </article>
+      })}
     </section>
 
     {addOpen && <div className="castModalBackdrop" onMouseDown={e=>{if(e.currentTarget===e.target) closeAddModal();}}>
@@ -300,24 +348,12 @@ export default function CastsPage(){
           <div className="castAddField">
             <span>スペック</span>
             <div className="castAddSpecGrid">
-              <label>年齢
-                <input name="age" type="number" min="18" placeholder="24"/>
-              </label>
-              <label>身長
-                <input name="heightCm" type="number" min="0" placeholder="158"/>
-              </label>
-              <label>B
-                <input name="bustCm" type="number" min="0" placeholder="86"/>
-              </label>
-              <label>W
-                <input name="waistCm" type="number" min="0" placeholder="58"/>
-              </label>
-              <label>H
-                <input name="hipCm" type="number" min="0" placeholder="85"/>
-              </label>
-              <label>カップ
-                <input name="cupSize" placeholder="D"/>
-              </label>
+              <label>年齢<input name="age" type="number" min="18" placeholder="24"/></label>
+              <label>身長<input name="heightCm" type="number" min="0" placeholder="158"/></label>
+              <label>B<input name="bustCm" type="number" min="0" placeholder="86"/></label>
+              <label>W<input name="waistCm" type="number" min="0" placeholder="58"/></label>
+              <label>H<input name="hipCm" type="number" min="0" placeholder="85"/></label>
+              <label>カップ<input name="cupSize" placeholder="D"/></label>
             </div>
           </div>
 
