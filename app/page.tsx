@@ -234,7 +234,7 @@ export default function DashboardPage(){
               </div>
               <div>
                 <span>NG内容</span>
-                <strong>{selectedCast.ngDetails || "なし"}</strong>
+                <strong>{(selectedCast.ngDetails??[]).length ? (selectedCast.ngDetails??[]).join(" / ") : "なし"}</strong>
               </div>
               <div>
                 <span>可能OP</span>
