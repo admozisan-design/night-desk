@@ -73,7 +73,6 @@ function normalizeHotel(hotel:Hotel):Hotel {
   return {
     ...hotel,
     name: hotel.name ?? "",
-    area: hotel.area ?? "エリアA",
     travelFee: hotel.travelFee ?? 0,
     visible: hotel.visible ?? true,
   };
@@ -104,8 +103,6 @@ function normalizeStaff(staff:Staff):Staff {
     name: staff.name ?? "",
     displayName: staff.displayName ?? staff.name ?? "",
     loginId: staff.loginId ?? "",
-    shop: staff.shop ?? "サンプル店舗A",
-    area: staff.area ?? "エリアA",
     notes: staff.notes ?? "",
     active: staff.active ?? true,
   };
