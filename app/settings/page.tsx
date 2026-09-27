@@ -2,16 +2,14 @@ import Link from "next/link";
 
 const masterItems = [
   { title:"キャスト登録", description:"キャスト情報、単価、スペック、NG、可能OPを管理", href:"/casts", action:"管理する" },
-  { title:"スタッフ登録", description:"スタッフ名、表示名、ログインID、所属店舗、担当エリアを管理", href:"/staff", action:"管理する" },
-  { title:"ドライバー登録", description:"送迎ドライバー、稼働状態、担当エリアを管理", href:"#drivers", action:"準備中" },
-  { title:"店舗登録", description:"店舗名、営業時間、電話番号、所属エリアを管理", href:"#shops", action:"準備中" },
-  { title:"エリア登録", description:"営業エリアと店舗・ホテルの紐付けを管理", href:"#areas", action:"準備中" },
-  { title:"ホテル登録", description:"ホテル名、エリア、交通費を管理", href:"/hotels", action:"管理する" },
+  { title:"スタッフ登録", description:"スタッフ名、表示名、ログインIDを管理", href:"/staff", action:"管理する" },
+  { title:"ドライバー登録", description:"送迎ドライバーと稼働状態を管理", href:"#drivers", action:"準備中" },
+  { title:"ホテル登録", description:"ホテル名と交通費を管理", href:"/hotels", action:"管理する" },
 ];
 
 const operationItems = [
   { title:"顧客管理", description:"電話番号、利用履歴、注意事項、NG情報を確認", href:"#customers", action:"準備中" },
-  { title:"売上管理", description:"日別・店舗別・キャスト別の売上と本数を集計", href:"#sales", action:"準備中" },
+  { title:"売上管理", description:"日別・キャスト別の売上と本数を集計", href:"#sales", action:"準備中" },
   { title:"料金登録", description:"コース料金、指名料、交通費、延長料金を設定", href:"#pricing", action:"準備中" },
   { title:"オプション・割引", description:"有料OP、無料OP、キャンペーン、割引ルールを設定", href:"#options", action:"準備中" },
 ];
