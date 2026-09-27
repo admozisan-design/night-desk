@@ -9,6 +9,10 @@ export type Cast = {
   shiftEnd?:string;
   scheduledToday?:boolean;
   visible?:boolean;
+  unitPrice?:number;
+  ngDetails?:string;
+  availableOptions?:string[];
+  notes?:string;
 };
 export type Driver = { id:string; name:string; active:boolean; };
 export type Course = { id:string; minutes:number; price:number; };
