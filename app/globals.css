@@ -1016,3 +1016,97 @@ button:disabled{opacity:.45;cursor:not-allowed}
     align-self:flex-start;
   }
 }
+
+
+/* ===== Cast NG tag editor ===== */
+.castNgTags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  min-height:34px;
+  margin-bottom:9px;
+}
+
+.castNgTag{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 9px 7px 11px;
+  border:1px solid #efb2bb;
+  border-radius:999px;
+  background:#fff2f4;
+  color:#a93b4e;
+  font-size:12px;
+  font-weight:900;
+}
+
+.castNgTag button{
+  width:19px;
+  height:19px;
+  display:grid;
+  place-items:center;
+  border:0;
+  border-radius:50%;
+  background:#f7cbd1;
+  color:#8f2e40;
+  padding:0;
+  font-size:13px;
+  font-weight:900;
+  line-height:1;
+  cursor:pointer;
+}
+
+.castNgTag button:hover{
+  background:#efb4be;
+}
+
+.castNgEmpty{
+  align-self:center;
+  color:#9aa3ad;
+  font-size:11px;
+}
+
+.castNgAddRow{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:7px;
+}
+
+.castNgAddRow input{
+  min-height:40px;
+  padding:9px 10px;
+  font-size:13px;
+}
+
+.castNgAddRow button{
+  min-width:64px;
+  border:1px solid #d5dce2;
+  border-radius:8px;
+  background:#f2f5f7;
+  color:#4f5c68;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.castNgAddRow button:hover{
+  border-color:#a9c879;
+  background:#f3f8ea;
+  color:#4d7218;
+}
+
+@media (min-width:1600px){
+  .castNgTag{
+    padding:8px 10px 8px 12px;
+    font-size:13px;
+  }
+
+  .castNgAddRow input{
+    min-height:44px;
+    font-size:14px;
+  }
+
+  .castNgAddRow button{
+    min-width:70px;
+    font-size:13px;
+  }
+}
