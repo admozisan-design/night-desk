@@ -75,7 +75,6 @@ export default function DashboardPage(){
   const [travelFee,setTravelFee] = useState(pricingSettings.defaultTravelFee);
   const [discount,setDiscount] = useState(0);
   const [optionsTotal,setOptionsTotal] = useState(0);
-  const [copied,setCopied] = useState(false);
 
   useEffect(()=>{
     const refresh=()=>{
@@ -118,22 +117,6 @@ export default function DashboardPage(){
     discount,
     adjustment:0
   }),[course,nominationType,optionsTotal,travelFee,discount]);
-
-  const linePreview = useMemo(()=>{
-    const nomination = nominationType==="free"?"フリー":nominationType==="photo"?"写真指名":"本指名";
-    const castName = selectedCast?.name ?? "未選択";
-    const driverName = selectedDriver?.name ?? "未選択";
-    return [
-      "【仕事登録】",
-      `${scheduledStart}〜 ${course?.minutes??60}分`,
-      `${castName} / ${nomination}`,
-      locationName ? `${locationName}${room ? ` ${room}号室` : ""}` : "場所未入力",
-      `送迎：${driverName}`,
-      `料金：${formatYen(total)}`,
-      phone ? `TEL：${phone}` : "",
-      note ? `備考：${note}` : ""
-    ].filter(Boolean).join("\n");
-  },[scheduledStart,course,selectedCast,nominationType,locationName,room,selectedDriver,total,phone,note]);
 
   const activeOrders = useMemo(()=>orders.filter(o=>o.status!=="completed"&&o.status!=="cancelled"),[orders]);
   const todaySales = useMemo(()=>orders.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+o.total,0),[orders]);
@@ -180,14 +163,6 @@ export default function DashboardPage(){
     setNote("サンプル備考");
     setOptionsTotal(0);
     setDiscount(0);
-  }
-
-  async function copyPreview(){
-    try{
-      await navigator.clipboard.writeText(linePreview);
-      setCopied(true);
-      window.setTimeout(()=>setCopied(false),1200);
-    }catch{}
   }
 
   return <div className="deskDashboard">
@@ -290,7 +265,6 @@ export default function DashboardPage(){
               <div className="workButtons">
                 <button className="registerBtn" type="submit" disabled={!selectedCast}>仕事を入れる</button>
                 <Link href="/orders/new">詳細入力</Link>
-                <button type="button" onClick={copyPreview}>LINEコピー</button>
                 <button type="reset">クリア</button>
               </div>
             </div>
@@ -299,14 +273,6 @@ export default function DashboardPage(){
       </main>
 
       <aside className="deskRight">
-        <section className="deskPanel previewPanel">
-          <div className="panelTitleRow">
-            <h2>LINE送信プレビュー</h2>
-            <button onClick={copyPreview}>{copied?"コピー済み":"プレビューをコピー"}</button>
-          </div>
-          <pre>{linePreview}</pre>
-        </section>
-
         <section className="deskPanel">
           <div className="panelTitleRow">
             <h2>本日の予約一覧</h2>
