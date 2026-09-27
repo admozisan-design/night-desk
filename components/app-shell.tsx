@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const nav = [
   ["/", "配車ボード"],
+  ["/casts", "キャスト管理"],
   ["/orders/new", "新規受付"],
   ["/orders", "オーダー一覧"],
   ["/settings", "店舗設定"],
