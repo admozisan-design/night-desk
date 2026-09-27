@@ -1,8 +1,9 @@
-import type { Cast, Hotel, Order } from "./types";
+import type { Cast, Hotel, Order, Staff } from "./types";
 
 const ORDER_KEY = "night-desk-orders-sample-v02";
 const CAST_KEY = "night-desk-casts-sample-v03";
 const HOTEL_KEY = "night-desk-hotels-sample-v01";
+const STAFF_KEY = "night-desk-staff-sample-v01";
 
 export function loadOrders():Order[] {
   if (typeof window === "undefined") return [];
@@ -94,4 +95,36 @@ export function saveHotels(hotels:Hotel[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(HOTEL_KEY, JSON.stringify(hotels.map(normalizeHotel)));
   window.dispatchEvent(new Event("nightdesk:hotels"));
+}
+
+
+function normalizeStaff(staff:Staff):Staff {
+  return {
+    ...staff,
+    name: staff.name ?? "",
+    displayName: staff.displayName ?? staff.name ?? "",
+    loginId: staff.loginId ?? "",
+    shop: staff.shop ?? "サンプル店舗A",
+    area: staff.area ?? "エリアA",
+    notes: staff.notes ?? "",
+    active: staff.active ?? true,
+  };
+}
+
+export function loadStaff(defaultStaff:Staff[]):Staff[] {
+  if (typeof window === "undefined") return defaultStaff.map(normalizeStaff);
+  try {
+    const raw = localStorage.getItem(STAFF_KEY);
+    if (!raw) return defaultStaff.map(normalizeStaff);
+    const parsed = JSON.parse(raw) as Staff[];
+    return parsed.map(normalizeStaff);
+  } catch {
+    return defaultStaff.map(normalizeStaff);
+  }
+}
+
+export function saveStaff(staff:Staff[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STAFF_KEY, JSON.stringify(staff.map(normalizeStaff)));
+  window.dispatchEvent(new Event("nightdesk:staff"));
 }
