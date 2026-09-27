@@ -1,4 +1,4 @@
-import type { Cast, Course, Driver, Hotel, Staff, StoreOption } from "./types";
+import type { Cast, Course, Driver, Hotel, PricingConfig, Staff, StoreOption } from "./types";
 
 export const casts: Cast[] = [
   {
@@ -47,6 +47,15 @@ export const pricingSettings = {
   photoNominationFee:1000,
   repeatNominationFee:1000,
   defaultTravelFee:1000
+};
+
+export const defaultPricingConfig: PricingConfig = {
+  courses,
+  photoNominationFee:1000,
+  repeatNominationFee:1000,
+  defaultTravelFee:1000,
+  extensionMinutes:10,
+  extensionPrice:2000
 };
 
 
