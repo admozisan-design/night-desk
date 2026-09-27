@@ -16,6 +16,13 @@ export type Cast = {
   ngDetails?:string[];
   availableOptions?:string[];
   notes?:string;
+  interviewEvaluation?:string;
+  age?:number;
+  heightCm?:number;
+  bustCm?:number;
+  waistCm?:number;
+  hipCm?:number;
+  cupSize?:string;
 };
 export type Driver = { id:string; name:string; active:boolean; };
 export type Course = { id:string; minutes:number; price:number; };
