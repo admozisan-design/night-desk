@@ -1265,3 +1265,69 @@ button:disabled{opacity:.45;cursor:not-allowed}
     width:100%;
   }
 }
+
+
+/* ===== Cast specs & interview evaluation ===== */
+.castSpecGrid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+}
+
+.castSpecGrid label{
+  display:grid;
+  gap:6px;
+  font-size:12px;
+  font-weight:800;
+  color:#606c78;
+}
+
+.castSpecGrid input{
+  min-height:40px;
+  padding:8px 10px;
+  font-size:13px;
+}
+
+.castSpecInputUnit{
+  display:grid;
+  grid-template-columns:1fr auto;
+  align-items:center;
+  gap:6px;
+}
+
+.castSpecInputUnit span{
+  font-size:11px;
+  color:#89939e;
+  font-weight:800;
+}
+
+.castAddSpecGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+
+.castAddSpecGrid label{
+  display:grid;
+  gap:6px;
+  font-size:12px;
+  font-weight:800;
+  color:#606c78;
+}
+
+@media(min-width:1600px){
+  .castSpecGrid{
+    gap:10px;
+  }
+
+  .castSpecGrid input{
+    min-height:44px;
+    font-size:14px;
+  }
+}
+
+@media(max-width:700px){
+  .castAddSpecGrid{
+    grid-template-columns:1fr 1fr;
+  }
+}
