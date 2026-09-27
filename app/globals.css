@@ -498,3 +498,16 @@ button:disabled{opacity:.45;cursor:not-allowed}
     font-size: 11px;
   }
 }
+
+
+/* ===== Settings hub ===== */
+.settingsHub{max-width:1500px;margin:0 auto}
+.settingsHubHeader{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}.settingsHubHeader h1{margin:3px 0 6px;font-size:28px}.settingsHubHeader p:not(.eyebrow){margin:0;color:#75808d}
+.settingsGroup{margin-top:18px}.settingsGroupTitle{display:flex;align-items:baseline;gap:10px;margin-bottom:9px;padding:0 2px}.settingsGroupTitle h2{margin:0;font-size:17px}.settingsGroupTitle span{font-size:11px;color:#8a949f}
+.settingsHubGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.settingsHubCard{min-height:132px;background:#fff;border:1px solid #dbe1e6;border-radius:10px;padding:15px;display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;transition:.15s ease;box-shadow:0 1px 2px rgba(25,35,45,.03)}
+.settingsHubCard:hover{border-color:#a9c879;box-shadow:0 4px 12px rgba(25,35,45,.07);transform:translateY(-1px)}
+.settingsHubCard strong{font-size:16px}.settingsHubCard p{margin:7px 0 0;color:#7a8591;font-size:12px;line-height:1.6}.settingsHubCard span{margin-top:12px;font-size:11px;font-weight:900;color:#87919b}
+.settingsHubCard.isActive{border-color:#c9df9f;background:#fbfff6}.settingsHubCard.isActive span{color:#5d8122}
+@media(max-width:1000px){.settingsHubGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.settingsHubGrid{grid-template-columns:1fr}.settingsGroupTitle{align-items:flex-start;flex-direction:column;gap:3px}}
