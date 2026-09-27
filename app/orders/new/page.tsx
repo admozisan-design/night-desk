@@ -2,10 +2,10 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { casts as defaultCasts, courses, drivers, pricingSettings } from "@/lib/mock-data";
+import { casts as defaultCasts, courses, drivers as defaultDrivers, pricingSettings } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { loadCasts, saveOrder } from "@/lib/storage";
-import type { Cast, Order } from "@/lib/types";
+import { loadCasts, loadDrivers, saveOrder } from "@/lib/storage";
+import type { Cast, Driver, Order } from "@/lib/types";
 
 function addMinutes(time:string, minutes:number){
   const [h,m] = time.split(":").map(Number);
@@ -19,6 +19,7 @@ export default function NewOrderPage(){
   const defaultTime = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
   const initialCasts = defaultCasts.map(c=>({...c,scheduledToday:true,visible:true}));
   const [castList,setCastList] = useState<Cast[]>(initialCasts);
+  const [driverList,setDriverList] = useState<Driver[]>(defaultDrivers);
   const [courseId,setCourseId] = useState("60");
   const [nominationType,setNominationType] = useState<"free"|"photo"|"repeat">("free");
   const [optionsTotal,setOptionsTotal] = useState(0);
@@ -26,7 +27,7 @@ export default function NewOrderPage(){
   const [discount,setDiscount] = useState(0);
   const [adjustment,setAdjustment] = useState(0);
   const [castId,setCastId] = useState("");
-  const [driverId,setDriverId] = useState(drivers[0].id);
+  const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
   const [scheduledStart,setScheduledStart] = useState(defaultTime);
   const course = courses.find(c=>c.id===courseId);
 
@@ -34,10 +35,15 @@ export default function NewOrderPage(){
     ()=>castList.filter(c=>c.visible!==false && c.scheduledToday!==false && c.status!=="off"),
     [castList]
   );
+  const availableDrivers = useMemo(
+    ()=>driverList.filter(d=>d.active!==false),
+    [driverList]
+  );
 
   useEffect(()=>{
     const stored=loadCasts(defaultCasts);
     setCastList(stored);
+    setDriverList(loadDrivers(defaultDrivers));
   },[]);
 
   useEffect(()=>{
@@ -46,6 +52,12 @@ export default function NewOrderPage(){
     }
   },[availableCasts,castId]);
 
+  useEffect(()=>{
+    if(!availableDrivers.some(d=>d.id===driverId)){
+      setDriverId(availableDrivers[0]?.id ?? "");
+    }
+  },[availableDrivers,driverId]);
+
   const total = useMemo(()=>calculateOrderTotal({course,nominationType,...pricingSettings,optionsTotal,travelFee,discount,adjustment}),[course,nominationType,optionsTotal,travelFee,discount,adjustment]);
 
   function submit(e:FormEvent<HTMLFormElement>){
@@ -53,7 +65,7 @@ export default function NewOrderPage(){
     const fd = new FormData(e.currentTarget);
     const cast = availableCasts.find(c=>c.id===castId);
     if(!cast) return;
-    const driver = drivers.find(d=>d.id===driverId);
+    const driver = availableDrivers.find(d=>d.id===driverId);
     const order:Order = {
       id:crypto.randomUUID(), createdAt:new Date().toISOString(),
       customerPhone:String(fd.get("phone")||""), locationType:fd.get("locationType") as "hotel"|"home",
@@ -86,7 +98,7 @@ export default function NewOrderPage(){
           </label>
           <label>コース<select value={courseId} onChange={e=>setCourseId(e.target.value)}>{courses.map(c=><option key={c.id} value={c.id}>{c.minutes}分 / {formatYen(c.price)}</option>)}</select></label>
           <label>指名<select value={nominationType} onChange={e=>setNominationType(e.target.value as typeof nominationType)}><option value="free">フリー</option><option value="photo">写真指名</option><option value="repeat">本指名</option></select></label>
-          <label>ドライバー<select value={driverId} onChange={e=>setDriverId(e.target.value)}>{drivers.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
+          <label>ドライバー<select value={driverId} onChange={e=>setDriverId(e.target.value)}>{availableDrivers.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
           <label>オプション合計<input type="number" value={optionsTotal} onChange={e=>setOptionsTotal(Number(e.target.value))} min="0" step="500"/></label>
           <label>交通費<input type="number" value={travelFee} onChange={e=>setTravelFee(Number(e.target.value))} min="0" step="500"/></label>
           <label>割引<input type="number" value={discount} onChange={e=>setDiscount(Number(e.target.value))} min="0" step="500"/></label>
