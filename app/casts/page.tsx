@@ -22,6 +22,10 @@ export default function CastsPage(){
   );
   const [ngDrafts,setNgDrafts] = useState<Record<string,string>>({});
   const [saved,setSaved] = useState(false);
+  const [addOpen,setAddOpen] = useState(false);
+  const [newNgDraft,setNewNgDraft] = useState("");
+  const [newNgItems,setNewNgItems] = useState<string[]>([]);
+  const [newOptions,setNewOptions] = useState<string[]>([]);
 
   useEffect(()=>setCasts(loadCasts(defaultCasts)),[]);
 
@@ -67,6 +71,30 @@ export default function CastsPage(){
     }
   }
 
+  function addNewNg(){
+    const value=newNgDraft.trim();
+    if(!value || newNgItems.includes(value)) {
+      setNewNgDraft("");
+      return;
+    }
+    setNewNgItems(prev=>[...prev,value]);
+    setNewNgDraft("");
+  }
+
+  function toggleNewOption(option:string){
+    setNewOptions(prev=>prev.includes(option)
+      ? prev.filter(item=>item!==option)
+      : [...prev,option]
+    );
+  }
+
+  function closeAddModal(){
+    setAddOpen(false);
+    setNewNgDraft("");
+    setNewNgItems([]);
+    setNewOptions([]);
+  }
+
   function addCast(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
     const fd=new FormData(e.currentTarget);
@@ -84,50 +112,32 @@ export default function CastsPage(){
       freeUnitPrice:Number(fd.get("freeUnitPrice")||0),
       photoUnitPrice:Number(fd.get("photoUnitPrice")||0),
       repeatUnitPrice:Number(fd.get("repeatUnitPrice")||0),
-      ngDetails:[],
-      availableOptions:[],
-      notes:""
+      ngDetails:newNgItems,
+      availableOptions:newOptions,
+      notes:String(fd.get("notes")||"").trim()
     }];
 
     commit(next);
     e.currentTarget.reset();
+    closeAddModal();
   }
 
   return <div className="castManagementPage">
-    <header className="pageHeader">
+    <header className="pageHeader castRegistryHeader">
       <div>
         <p className="eyebrow">CAST MANAGEMENT</p>
         <h1>キャスト登録</h1>
         <p>キャストごとの単価、NG内容、可能オプション、備考を管理します。</p>
       </div>
-      {saved && <span className="saveToast">保存しました</span>}
+      <div className="castHeaderActions">
+        {saved && <span className="saveToast">保存しました</span>}
+        <button className="primaryButton castAddTrigger" type="button" onClick={()=>setAddOpen(true)}>＋ キャスト追加</button>
+      </div>
     </header>
 
     <section className="castSummary">
       <div><span>登録</span><strong>{casts.length}</strong><small>人</small></div>
       <div><span>表示中</span><strong>{casts.filter(c=>c.visible!==false).length}</strong><small>人</small></div>
-    </section>
-
-    <section className="panel addCastPanel castMasterAddPanel">
-      <div>
-        <p className="eyebrow">ADD CAST</p>
-        <h2>キャスト追加</h2>
-      </div>
-      <form onSubmit={addCast} className="addCastForm addCastMasterForm">
-        <label>源氏名
-          <input name="name" required placeholder="例：サンプルE"/>
-        </label>
-        <label>フリー単価
-          <input name="freeUnitPrice" type="number" min="0" step="500" defaultValue="5000"/>
-        </label>
-        <label>写真指名単価
-          <input name="photoUnitPrice" type="number" min="0" step="500" defaultValue="6000"/>
-        </label>
-        <label>本指名単価
-          <input name="repeatUnitPrice" type="number" min="0" step="500" defaultValue="7000"/>
-        </label>
-        <button className="primaryButton" type="submit">＋ 追加</button>
-      </form>
     </section>
 
     <section className="castCardGrid">
@@ -152,31 +162,16 @@ export default function CastsPage(){
           <div className="castVerticalSectionTitle">単価設定</div>
           <div className="castVerticalRates">
             <label>フリー
-              <input
-                type="number"
-                min="0"
-                step="500"
-                value={cast.freeUnitPrice??0}
-                onChange={e=>patch(cast.id,{freeUnitPrice:Number(e.target.value)})}
-              />
+              <input type="number" min="0" step="500" value={cast.freeUnitPrice??0}
+                onChange={e=>patch(cast.id,{freeUnitPrice:Number(e.target.value)})}/>
             </label>
             <label>写真指名
-              <input
-                type="number"
-                min="0"
-                step="500"
-                value={cast.photoUnitPrice??0}
-                onChange={e=>patch(cast.id,{photoUnitPrice:Number(e.target.value)})}
-              />
+              <input type="number" min="0" step="500" value={cast.photoUnitPrice??0}
+                onChange={e=>patch(cast.id,{photoUnitPrice:Number(e.target.value)})}/>
             </label>
             <label>本指名
-              <input
-                type="number"
-                min="0"
-                step="500"
-                value={cast.repeatUnitPrice??0}
-                onChange={e=>patch(cast.id,{repeatUnitPrice:Number(e.target.value)})}
-              />
+              <input type="number" min="0" step="500" value={cast.repeatUnitPrice??0}
+                onChange={e=>patch(cast.id,{repeatUnitPrice:Number(e.target.value)})}/>
             </label>
           </div>
         </div>
@@ -207,11 +202,7 @@ export default function CastsPage(){
             {optionChoices.map(option=>{
               const checked=(cast.availableOptions??[]).includes(option);
               return <label key={option} className={`castOptionChip ${checked?"active":""}`}>
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={()=>toggleOption(cast,option)}
-                />
+                <input type="checkbox" checked={checked} onChange={()=>toggleOption(cast,option)}/>
                 <span>{option}</span>
               </label>
             })}
@@ -220,15 +211,84 @@ export default function CastsPage(){
 
         <div className="castVerticalSection">
           <label className="castVerticalField">備考
-            <textarea
-              rows={4}
-              value={cast.notes??""}
+            <textarea rows={4} value={cast.notes??""}
               onChange={e=>patch(cast.id,{notes:e.target.value})}
-              placeholder="受付時に共有したい内容"
-            />
+              placeholder="受付時に共有したい内容"/>
           </label>
         </div>
       </article>)}
     </section>
+
+    {addOpen && <div className="castModalBackdrop" onMouseDown={e=>{if(e.currentTarget===e.target) closeAddModal();}}>
+      <div className="castAddModal" role="dialog" aria-modal="true" aria-labelledby="cast-add-title">
+        <div className="castAddModalHeader">
+          <div>
+            <p className="eyebrow">ADD CAST</p>
+            <h2 id="cast-add-title">キャスト追加</h2>
+          </div>
+          <button type="button" className="castModalClose" onClick={closeAddModal} aria-label="閉じる">×</button>
+        </div>
+
+        <form onSubmit={addCast} className="castAddModalForm">
+          <label className="castAddFull">源氏名
+            <input name="name" required autoFocus placeholder="例：サンプルE"/>
+          </label>
+
+          <div className="castAddRates">
+            <label>フリー単価
+              <input name="freeUnitPrice" type="number" min="0" step="500" defaultValue="5000"/>
+            </label>
+            <label>写真指名単価
+              <input name="photoUnitPrice" type="number" min="0" step="500" defaultValue="6000"/>
+            </label>
+            <label>本指名単価
+              <input name="repeatUnitPrice" type="number" min="0" step="500" defaultValue="7000"/>
+            </label>
+          </div>
+
+          <div className="castAddField">
+            <span>NG内容</span>
+            <div className="castNgTags castAddNgTags">
+              {newNgItems.map(item=><span key={item} className="castNgTag">
+                {item}
+                <button type="button" onClick={()=>setNewNgItems(prev=>prev.filter(value=>value!==item))}>×</button>
+              </span>)}
+              {newNgItems.length===0 && <span className="castNgEmpty">NG登録なし</span>}
+            </div>
+            <div className="castNgAddRow">
+              <input
+                value={newNgDraft}
+                onChange={e=>setNewNgDraft(e.target.value)}
+                onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();addNewNg();}}}
+                placeholder="NG内容を入力"
+              />
+              <button type="button" onClick={addNewNg}>追加</button>
+            </div>
+          </div>
+
+          <div className="castAddField">
+            <span>可能オプション</span>
+            <div className="castVerticalOptions castAddOptions">
+              {optionChoices.map(option=>{
+                const checked=newOptions.includes(option);
+                return <label key={option} className={`castOptionChip ${checked?"active":""}`}>
+                  <input type="checkbox" checked={checked} onChange={()=>toggleNewOption(option)}/>
+                  <span>{option}</span>
+                </label>
+              })}
+            </div>
+          </div>
+
+          <label className="castAddFull">備考
+            <textarea name="notes" rows={4} placeholder="受付時に共有したい内容"/>
+          </label>
+
+          <div className="castAddModalActions">
+            <button type="button" className="secondaryButton" onClick={closeAddModal}>キャンセル</button>
+            <button type="submit" className="primaryButton">キャストを登録</button>
+          </div>
+        </form>
+      </div>
+    </div>}
   </div>
 }
