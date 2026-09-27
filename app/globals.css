@@ -855,3 +855,164 @@ button:disabled{opacity:.45;cursor:not-allowed}
     font-size:16px;
   }
 }
+
+
+/* ===== Vertical cast card grid ===== */
+.castCardGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;
+  align-items:start;
+}
+
+.castVerticalCard{
+  background:#fff;
+  border:1px solid #dbe1e6;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 1px 3px rgba(25,35,45,.04);
+  transition:.15s ease;
+}
+
+.castVerticalCard:hover{
+  border-color:#b9cc9b;
+  box-shadow:0 5px 16px rgba(25,35,45,.08);
+}
+
+.castVerticalCard.isHidden{
+  opacity:.5;
+}
+
+.castVerticalHeader{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:15px;
+  border-bottom:1px solid #e6eaee;
+  background:#fbfcfd;
+}
+
+.castVerticalName{
+  min-width:0;
+  flex:1;
+  min-height:44px;
+  font-size:18px;
+  font-weight:900;
+  padding:9px 11px;
+}
+
+.castVerticalSection{
+  padding:14px 15px;
+  border-bottom:1px solid #edf0f3;
+}
+
+.castVerticalSection:last-child{
+  border-bottom:0;
+}
+
+.castVerticalSectionTitle,
+.castVerticalFieldLabel{
+  margin-bottom:9px;
+  font-size:12px;
+  font-weight:900;
+  color:#5d6874;
+}
+
+.castVerticalRates{
+  display:grid;
+  gap:9px;
+}
+
+.castVerticalRates label,
+.castVerticalField{
+  display:grid;
+  gap:6px;
+  font-size:12px;
+  font-weight:800;
+  color:#606c78;
+}
+
+.castVerticalRates input{
+  min-height:42px;
+  padding:9px 11px;
+  font-size:14px;
+}
+
+.castVerticalField textarea{
+  min-height:98px;
+  resize:vertical;
+  padding:10px 11px;
+  font-size:13px;
+  line-height:1.5;
+}
+
+.castVerticalOptions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.castVerticalOptions .castOptionChip{
+  padding:7px 10px;
+}
+
+.castVerticalOptions .castOptionChip span{
+  font-size:11px;
+}
+
+@media (min-width:1600px){
+  .castCardGrid{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:18px;
+  }
+
+  .castVerticalHeader{
+    padding:17px;
+  }
+
+  .castVerticalName{
+    min-height:48px;
+    font-size:19px;
+  }
+
+  .castVerticalSection{
+    padding:16px 17px;
+  }
+
+  .castVerticalRates input{
+    min-height:46px;
+    font-size:15px;
+  }
+
+  .castVerticalField textarea{
+    min-height:112px;
+    font-size:14px;
+  }
+}
+
+@media (max-width:1450px){
+  .castCardGrid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+
+@media (max-width:1050px){
+  .castCardGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width:680px){
+  .castCardGrid{
+    grid-template-columns:1fr;
+  }
+
+  .castVerticalHeader{
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  .castVerticalHeader .switchLabel{
+    align-self:flex-start;
+  }
+}
