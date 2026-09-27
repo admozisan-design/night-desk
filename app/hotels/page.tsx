@@ -5,8 +5,6 @@ import { hotels as defaultHotels } from "@/lib/mock-data";
 import { loadHotels, saveHotels } from "@/lib/storage";
 import type { Hotel } from "@/lib/types";
 
-const areas=["エリアA","エリアB","エリアC","エリアD","エリアE","エリアF"];
-
 export default function HotelsPage(){
   const [hotels,setHotels]=useState<Hotel[]>(defaultHotels);
   const [editing,setEditing]=useState<Record<string,boolean>>({});
@@ -56,7 +54,6 @@ export default function HotelsPage(){
     const hotel:Hotel={
       id:crypto.randomUUID(),
       name,
-      area:String(fd.get("area")||"エリアA"),
       travelFee:Number(fd.get("travelFee")||0),
       visible:true
     };
@@ -71,7 +68,7 @@ export default function HotelsPage(){
       <div>
         <p className="eyebrow">HOTEL MANAGEMENT</p>
         <h1>ホテル登録</h1>
-        <p>ホテル名・エリア・交通費を登録します。</p>
+        <p>ホテル名と交通費を登録します。</p>
       </div>
       <div className="hotelHeaderActions">
         {saved && <span className="saveToast">保存しました</span>}
@@ -112,16 +109,6 @@ export default function HotelsPage(){
               />
             </label>
 
-            <label>エリア
-              <select
-                value={current.area}
-                disabled={!isEditing}
-                onChange={e=>updateDraft(hotel.id,{area:e.target.value})}
-              >
-                {areas.map(area=><option key={area}>{area}</option>)}
-              </select>
-            </label>
-
             <label>交通費
               <div className="hotelFeeInput">
                 <input
@@ -158,13 +145,7 @@ export default function HotelsPage(){
         <form className="hotelAddForm" onSubmit={addHotel}>
           <label>ホテル名
             <input name="name" required autoFocus placeholder="例：サンプルホテルE"/>
-          </label>
-          <label>エリア
-            <select name="area" defaultValue="エリアA">
-              {areas.map(area=><option key={area}>{area}</option>)}
-            </select>
-          </label>
-          <label>交通費
+          </label>          <label>交通費
             <input name="travelFee" type="number" min="0" step="500" defaultValue="1000"/>
           </label>
 
