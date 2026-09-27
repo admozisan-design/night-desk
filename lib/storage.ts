@@ -24,6 +24,10 @@ function normalizeCast(cast:Cast):Cast {
     ...cast,
     scheduledToday: cast.scheduledToday ?? true,
     visible: cast.visible ?? true,
+    unitPrice: cast.unitPrice ?? 0,
+    ngDetails: cast.ngDetails ?? "",
+    availableOptions: cast.availableOptions ?? [],
+    notes: cast.notes ?? "",
   };
 }
 
