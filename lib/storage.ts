@@ -1,9 +1,10 @@
-import type { Cast, Hotel, Order, Staff } from "./types";
+import type { Cast, Driver, Hotel, Order, Staff } from "./types";
 
 const ORDER_KEY = "night-desk-orders-sample-v02";
 const CAST_KEY = "night-desk-casts-sample-v03";
 const HOTEL_KEY = "night-desk-hotels-sample-v01";
 const STAFF_KEY = "night-desk-staff-sample-v01";
+const DRIVER_KEY = "night-desk-drivers-sample-v01";
 
 export function loadOrders():Order[] {
   if (typeof window === "undefined") return [];
@@ -124,4 +125,35 @@ export function saveStaff(staff:Staff[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(STAFF_KEY, JSON.stringify(staff.map(normalizeStaff)));
   window.dispatchEvent(new Event("nightdesk:staff"));
+}
+
+
+function normalizeDriver(driver:Driver):Driver {
+  return {
+    ...driver,
+    name: driver.name ?? "",
+    phone: driver.phone ?? "",
+    vehicle: driver.vehicle ?? "",
+    plate: driver.plate ?? "",
+    notes: driver.notes ?? "",
+    active: driver.active ?? true,
+  };
+}
+
+export function loadDrivers(defaultDrivers:Driver[]):Driver[] {
+  if (typeof window === "undefined") return defaultDrivers.map(normalizeDriver);
+  try {
+    const raw = localStorage.getItem(DRIVER_KEY);
+    if (!raw) return defaultDrivers.map(normalizeDriver);
+    const parsed = JSON.parse(raw) as Driver[];
+    return parsed.map(normalizeDriver);
+  } catch {
+    return defaultDrivers.map(normalizeDriver);
+  }
+}
+
+export function saveDrivers(drivers:Driver[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(DRIVER_KEY, JSON.stringify(drivers.map(normalizeDriver)));
+  window.dispatchEvent(new Event("nightdesk:drivers"));
 }
