@@ -38,6 +38,13 @@ function normalizeCast(cast:Cast):Cast {
     ngDetails: normalizedNg,
     availableOptions: cast.availableOptions ?? [],
     notes: cast.notes ?? "",
+    interviewEvaluation: cast.interviewEvaluation ?? "",
+    age: cast.age ?? 0,
+    heightCm: cast.heightCm ?? 0,
+    bustCm: cast.bustCm ?? 0,
+    waistCm: cast.waistCm ?? 0,
+    hipCm: cast.hipCm ?? 0,
+    cupSize: cast.cupSize ?? "",
   };
 }
 
