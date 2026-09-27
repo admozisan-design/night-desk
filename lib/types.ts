@@ -13,7 +13,7 @@ export type Cast = {
   freeUnitPrice?:number;
   photoUnitPrice?:number;
   repeatUnitPrice?:number;
-  ngDetails?:string;
+  ngDetails?:string[];
   availableOptions?:string[];
   notes?:string;
 };
