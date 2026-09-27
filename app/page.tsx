@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { casts as defaultCasts, courses, drivers, pricingSettings } from "@/lib/mock-data";
+import { casts as defaultCasts, courses, drivers, hotels as defaultHotels, pricingSettings } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { loadCasts, loadOrders, saveOrder } from "@/lib/storage";
-import type { Cast, CastStatus, Order, OrderStatus } from "@/lib/types";
+import { loadCasts, loadHotels, loadOrders, saveOrder } from "@/lib/storage";
+import type { Cast, CastStatus, Hotel, Order, OrderStatus } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
 const BOARD_MINUTES = 19 * 60;
@@ -58,6 +58,7 @@ function dateInputValue(date:Date){
 export default function DashboardPage(){
   const [orders,setOrders] = useState<Order[]>([]);
   const [castList,setCastList] = useState<Cast[]>(defaultCasts);
+  const [hotelList,setHotelList] = useState<Hotel[]>(defaultHotels);
   const [now,setNow] = useState<Date|null>(null);
   const [area,setArea] = useState("エリアA");
   const [date,setDate] = useState(()=>dateInputValue(new Date()));
@@ -68,7 +69,7 @@ export default function DashboardPage(){
   const [courseId,setCourseId] = useState("60");
   const [nominationType,setNominationType] = useState<"free"|"photo"|"repeat">("free");
   const [scheduledStart,setScheduledStart] = useState("13:30");
-  const [locationName,setLocationName] = useState("サンプルホテル");
+  const [locationName,setLocationName] = useState("");
   const [room,setRoom] = useState("101");
   const [phone,setPhone] = useState("090-0000-0000");
   const [note,setNote] = useState("サンプル備考");
@@ -80,16 +81,19 @@ export default function DashboardPage(){
     const refresh=()=>{
       setOrders(loadOrders());
       setCastList(loadCasts(defaultCasts));
+      setHotelList(loadHotels(defaultHotels));
     };
     refresh();
     setNow(new Date());
     const timer = window.setInterval(()=>setNow(new Date()),60000);
     window.addEventListener("storage",refresh);
     window.addEventListener("nightdesk:casts",refresh);
+    window.addEventListener("nightdesk:hotels",refresh);
     return ()=>{
       window.clearInterval(timer);
       window.removeEventListener("storage",refresh);
       window.removeEventListener("nightdesk:casts",refresh);
+      window.removeEventListener("nightdesk:hotels",refresh);
     };
   },[]);
 
@@ -98,10 +102,22 @@ export default function DashboardPage(){
     [castList]
   );
   const selectableCasts = useMemo(()=>workingCasts.filter(c=>c.status!=="off"),[workingCasts]);
+  const availableHotels = useMemo(
+    ()=>hotelList.filter(h=>h.visible!==false && h.area===area),
+    [hotelList,area]
+  );
 
   useEffect(()=>{
     if(!selectableCasts.some(c=>c.id===castId)) setCastId(selectableCasts[0]?.id ?? "");
   },[selectableCasts,castId]);
+
+  useEffect(()=>{
+    if(!availableHotels.some(h=>h.name===locationName)){
+      const first=availableHotels[0];
+      setLocationName(first?.name ?? "");
+      setTravelFee(first?.travelFee ?? 0);
+    }
+  },[availableHotels,locationName]);
 
   const course = courses.find(c=>c.id===courseId);
   const selectedCast = selectableCasts.find(c=>c.id===castId);
@@ -127,6 +143,12 @@ export default function DashboardPage(){
     const base = new Date(date+"T12:00:00");
     base.setDate(base.getDate()+days);
     setDate(dateInputValue(base));
+  }
+
+  function selectHotel(name:string){
+    setLocationName(name);
+    const hotel=availableHotels.find(h=>h.name===name);
+    if(hotel) setTravelFee(hotel.travelFee);
   }
 
   function registerOrder(e:FormEvent<HTMLFormElement>){
@@ -157,7 +179,9 @@ export default function DashboardPage(){
     };
     saveOrder(order);
     setOrders(loadOrders());
-    setLocationName("サンプルホテル");
+    const firstHotel=availableHotels[0];
+    setLocationName(firstHotel?.name ?? "");
+    setTravelFee(firstHotel?.travelFee ?? 0);
     setRoom("101");
     setPhone("090-0000-0000");
     setNote("サンプル備考");
@@ -265,7 +289,10 @@ export default function DashboardPage(){
 
             <div className="workGrid two">
               <label>ホテル名
-                <input value={locationName} onChange={e=>setLocationName(e.target.value)} placeholder="例：サンプルホテル"/>
+                <select value={locationName} onChange={e=>selectHotel(e.target.value)} disabled={!availableHotels.length}>
+                  {availableHotels.length===0 && <option value="">このエリアのホテル未登録</option>}
+                  {availableHotels.map(hotel=><option key={hotel.id} value={hotel.name}>{hotel.name}</option>)}
+                </select>
               </label>
               <label>部屋番号
                 <input value={room} onChange={e=>setRoom(e.target.value)} placeholder="例：101"/>
