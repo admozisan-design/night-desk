@@ -65,3 +65,436 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .boardZoomWrap{max-height:440px}.wideBoard{grid-template-columns:150px 145px 65px minmax(2050px,1fr);min-width:2410px;transform-origin:left top}.wideBoard .timelineHeader{grid-template-columns:repeat(19,1fr)}.wideBoard .timelineCell{background-size:5.263157% 100%,1.315789% 100%}.wideBoard .dispatchName,.wideBoard .dispatchShift,.wideBoard .dispatchCount,.wideBoard .timelineCell{min-height:72px}.wideBoard .timelineOrder{top:7px;bottom:7px}
 @media(max-width:1200px){.deskColumns{grid-template-columns:230px minmax(480px,1fr)}.deskRight{grid-column:1/-1;grid-template-columns:1fr 1fr 1fr}.consoleShop{display:none}}
 @media(max-width:850px){.topConsoleBar{height:auto;align-items:flex-start;flex-wrap:wrap}.topConsoleNav{order:3;width:100%;overflow:auto}.consoleBrand{min-width:auto}.deskKpis{grid-template-columns:repeat(2,1fr)}.deskColumns{grid-template-columns:1fr}.deskRight{grid-template-columns:1fr}.workGrid.two,.workGrid.three{grid-template-columns:1fr}.consoleMain{padding:8px}.workFooter{align-items:stretch;flex-direction:column}.workButtons{justify-content:flex-start}}
+
+
+/* ===== Larger desktop readability ===== */
+@media (min-width: 1201px) {
+  .topConsoleBar {
+    min-height: 68px;
+    height: 68px;
+    padding: 9px 20px;
+    gap: 22px;
+  }
+
+  .consoleBrand {
+    min-width: 245px;
+    gap: 11px;
+  }
+
+  .consoleBrand .brandMark {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .consoleBrand strong {
+    font-size: 17px;
+  }
+
+  .consoleBrand small {
+    font-size: 11px;
+  }
+
+  .topConsoleNav a {
+    font-size: 14px;
+    padding: 11px 15px;
+  }
+
+  .consoleShop {
+    padding-left: 18px;
+  }
+
+  .consoleShop small {
+    font-size: 10px;
+  }
+
+  .consoleShop strong {
+    font-size: 13px;
+  }
+
+  .consoleMain {
+    padding: 18px 20px 36px;
+  }
+
+  .deskDashboard {
+    max-width: 1920px;
+  }
+
+  .deskKpis {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .deskKpis > div {
+    min-height: 56px;
+    padding: 11px 15px;
+    border-radius: 9px;
+  }
+
+  .deskKpis span {
+    font-size: 12px;
+  }
+
+  .deskKpis strong {
+    font-size: 20px;
+  }
+
+  .deskColumns {
+    grid-template-columns: 320px minmax(720px, 1fr) 330px;
+    gap: 12px;
+  }
+
+  .deskLeft,
+  .deskCenter,
+  .deskRight {
+    gap: 12px;
+  }
+
+  .deskPanel {
+    padding: 13px;
+    border-radius: 10px;
+  }
+
+  .deskPanel h2 {
+    margin-bottom: 11px;
+    padding-left: 9px;
+    border-left-width: 4px;
+    font-size: 15px;
+  }
+
+  .panelTitleRow > a,
+  .panelTitleRow > button,
+  .panelTitleRow > span {
+    font-size: 11px;
+  }
+
+  .panelTitleRow > button {
+    padding: 7px 10px;
+  }
+
+  .fieldLabel,
+  .compactSearch {
+    font-size: 11px;
+    margin: 11px 0 6px;
+  }
+
+  .areaGrid {
+    gap: 7px;
+  }
+
+  .areaGrid button,
+  .dateButtons button {
+    min-height: 38px;
+    padding: 9px 7px;
+    font-size: 12px;
+  }
+
+  .dateButtons {
+    gap: 7px;
+    margin-top: 8px;
+  }
+
+  .deskPanel > input,
+  .deskPanel > select,
+  .deskPanel > textarea,
+  .workRegister input,
+  .workRegister select,
+  .workRegister textarea,
+  .reservationSearch input {
+    min-height: 42px;
+    padding: 10px 11px;
+    font-size: 13px;
+  }
+
+  .castMiniList {
+    max-height: 215px;
+    gap: 4px;
+    margin: 9px 0;
+  }
+
+  .castMiniList > div {
+    min-height: 43px;
+    padding: 7px 5px;
+    gap: 8px;
+  }
+
+  .castMiniList strong {
+    font-size: 12px;
+  }
+
+  .castMiniList small {
+    font-size: 10px;
+  }
+
+  .castMiniList em {
+    font-size: 10px;
+  }
+
+  .castStateDot {
+    width: 10px;
+    height: 10px;
+  }
+
+  .deskAction {
+    min-height: 40px;
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .driverMiniList {
+    gap: 6px;
+    margin-bottom: 9px;
+  }
+
+  .driverMiniList > div {
+    min-height: 39px;
+    padding: 8px;
+  }
+
+  .driverMiniList strong {
+    font-size: 12px;
+  }
+
+  .driverMiniList span {
+    font-size: 10px;
+  }
+
+  .zoomControls {
+    grid-template-columns: 42px 1fr 42px auto;
+    gap: 7px;
+  }
+
+  .zoomControls button {
+    min-height: 38px;
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .zoomControls strong {
+    font-size: 13px;
+  }
+
+  .workRegister {
+    padding: 13px 14px;
+  }
+
+  .pasteHint {
+    padding: 9px 10px;
+    font-size: 11px;
+    margin-bottom: 10px;
+  }
+
+  .workRegister form {
+    gap: 10px;
+  }
+
+  .workRegister label {
+    gap: 5px;
+    font-size: 11px;
+  }
+
+  .workGrid {
+    gap: 9px;
+  }
+
+  .courseChips {
+    gap: 6px;
+    padding: 7px;
+  }
+
+  .courseChips button {
+    min-height: 34px;
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+
+  .workFooter {
+    gap: 14px;
+    padding-top: 11px;
+  }
+
+  .workFooter small {
+    font-size: 10px;
+  }
+
+  .workFooter strong {
+    font-size: 27px;
+  }
+
+  .workButtons {
+    gap: 6px;
+  }
+
+  .workButtons button,
+  .workButtons a {
+    min-height: 38px;
+    padding: 9px 12px;
+    font-size: 11px;
+  }
+
+  .reservationSearch > div {
+    gap: 6px;
+  }
+
+  .reservationSearch button {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+
+  .previewPanel pre {
+    min-height: 225px;
+    padding: 13px;
+    font-size: 12px;
+    line-height: 1.65;
+  }
+
+  .todayOrders {
+    max-height: 280px;
+    gap: 7px;
+    margin-top: 10px;
+  }
+
+  .todayOrders a {
+    padding: 9px;
+  }
+
+  .todayOrders strong,
+  .todayOrders span {
+    font-size: 12px;
+  }
+
+  .todayOrders small {
+    font-size: 10px;
+    margin-top: 4px;
+  }
+
+  .boardOps {
+    gap: 7px;
+  }
+
+  .boardOps button,
+  .boardOps a {
+    min-height: 39px;
+    padding: 9px 8px;
+    font-size: 11px;
+  }
+
+  .boardSection {
+    margin-top: 12px;
+  }
+
+  .boardSectionHead {
+    height: 48px;
+    padding: 8px 12px;
+  }
+
+  .boardSectionHead h2 {
+    font-size: 15px;
+  }
+
+  .boardSectionHead span,
+  .boardLegend span {
+    font-size: 11px;
+  }
+
+  .legend {
+    width: 11px;
+    height: 11px;
+  }
+
+  .boardZoomWrap {
+    max-height: 520px;
+  }
+
+  .wideBoard {
+    grid-template-columns: 180px 175px 78px minmax(2460px, 1fr);
+    min-width: 2893px;
+  }
+
+  .dispatchNameHead {
+    left: 0;
+  }
+
+  .dispatchShiftHead {
+    left: 180px;
+  }
+
+  .dispatchCountHead {
+    left: 355px;
+  }
+
+  .wideBoard .dispatchName {
+    left: 0;
+    padding: 12px 14px;
+  }
+
+  .wideBoard .dispatchShift {
+    left: 180px;
+    padding: 10px 13px;
+  }
+
+  .wideBoard .dispatchCount {
+    left: 355px;
+  }
+
+  .dispatchHeader,
+  .timelineHeader {
+    height: 46px;
+  }
+
+  .dispatchHeader,
+  .timelineHeader div {
+    font-size: 13px;
+  }
+
+  .wideBoard .dispatchName,
+  .wideBoard .dispatchShift,
+  .wideBoard .dispatchCount,
+  .wideBoard .timelineCell {
+    min-height: 92px;
+  }
+
+  .dispatchName strong {
+    font-size: 15px;
+  }
+
+  .dispatchName small {
+    font-size: 11px;
+  }
+
+  .dispatchShift span {
+    font-size: 12px;
+  }
+
+  .dispatchCount strong {
+    font-size: 21px;
+  }
+
+  .dispatchCount span {
+    font-size: 11px;
+  }
+
+  .wideBoard .timelineOrder {
+    top: 9px;
+    bottom: 9px;
+    padding: 9px 11px;
+  }
+
+  .timelineOrder strong {
+    font-size: 13px;
+  }
+
+  .timelineOrder span {
+    font-size: 12px;
+  }
+
+  .timelineOrder small {
+    font-size: 10px;
+  }
+
+  .emptyTimeline,
+  .holdHint {
+    font-size: 11px;
+  }
+}
