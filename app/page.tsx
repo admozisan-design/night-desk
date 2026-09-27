@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { casts as defaultCasts, courses, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions, pricingSettings } from "@/lib/mock-data";
+import { casts as defaultCasts, defaultPricingConfig, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, saveOrder } from "@/lib/storage";
-import type { Cast, CastStatus, Driver, Hotel, Order, OrderStatus, StoreOption } from "@/lib/types";
+import { loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, saveOrder } from "@/lib/storage";
+import type { Cast, CastStatus, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
 const BOARD_MINUTES = 19 * 60;
@@ -59,20 +59,21 @@ export default function DashboardPage(){
   const [hotelList,setHotelList] = useState<Hotel[]>(defaultHotels);
   const [driverList,setDriverList] = useState<Driver[]>(defaultDrivers);
   const [optionList,setOptionList] = useState<StoreOption[]>(defaultOptions);
+  const [pricing,setPricing] = useState<PricingConfig>(defaultPricingConfig);
   const [now,setNow] = useState<Date|null>(null);
   const [date,setDate] = useState(()=>dateInputValue(new Date()));
   const [zoom,setZoom] = useState(120);
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
-  const [courseId,setCourseId] = useState("60");
+  const [courseId,setCourseId] = useState(defaultPricingConfig.courses[0]?.id ?? "");
   const [nominationType,setNominationType] = useState<"free"|"photo"|"repeat">("free");
   const [scheduledStart,setScheduledStart] = useState("13:30");
   const [locationName,setLocationName] = useState("");
   const [room,setRoom] = useState("101");
   const [phone,setPhone] = useState("090-0000-0000");
   const [note,setNote] = useState("サンプル備考");
-  const [travelFee,setTravelFee] = useState(pricingSettings.defaultTravelFee);
+  const [travelFee,setTravelFee] = useState(defaultPricingConfig.defaultTravelFee);
   const [discount,setDiscount] = useState(0);
   const [selectedOptionIds,setSelectedOptionIds] = useState<string[]>([]);
 
@@ -83,6 +84,7 @@ export default function DashboardPage(){
       setHotelList(loadHotels(defaultHotels));
       setDriverList(loadDrivers(defaultDrivers));
       setOptionList(loadOptions(defaultOptions));
+      setPricing(loadPricing(defaultPricingConfig));
     };
     refresh();
     setNow(new Date());
@@ -92,6 +94,7 @@ export default function DashboardPage(){
     window.addEventListener("nightdesk:hotels",refresh);
     window.addEventListener("nightdesk:drivers",refresh);
     window.addEventListener("nightdesk:options",refresh);
+    window.addEventListener("nightdesk:pricing",refresh);
     return ()=>{
       window.clearInterval(timer);
       window.removeEventListener("storage",refresh);
@@ -99,6 +102,7 @@ export default function DashboardPage(){
       window.removeEventListener("nightdesk:hotels",refresh);
       window.removeEventListener("nightdesk:drivers",refresh);
       window.removeEventListener("nightdesk:options",refresh);
+      window.removeEventListener("nightdesk:pricing",refresh);
     };
   },[]);
 
@@ -125,6 +129,12 @@ export default function DashboardPage(){
   },[availableDrivers,driverId]);
 
   useEffect(()=>{
+    if(!pricing.courses.some(course=>course.id===courseId)){
+      setCourseId(pricing.courses[0]?.id ?? "");
+    }
+  },[pricing.courses,courseId]);
+
+  useEffect(()=>{
     if(!availableHotels.some(h=>h.name===locationName)){
       const first=availableHotels[0];
       setLocationName(first?.name ?? "");
@@ -132,7 +142,7 @@ export default function DashboardPage(){
     }
   },[availableHotels,locationName]);
 
-  const course = courses.find(c=>c.id===courseId);
+  const course = pricing.courses.find(c=>c.id===courseId);
   const selectedCast = selectableCasts.find(c=>c.id===castId);
   const selectedDriver = availableDrivers.find(d=>d.id===driverId);
   const selectableOptions = useMemo(
@@ -152,13 +162,13 @@ export default function DashboardPage(){
   const total = useMemo(()=>calculateOrderTotal({
     course,
     nominationType,
-    photoNominationFee:pricingSettings.photoNominationFee,
-    repeatNominationFee:pricingSettings.repeatNominationFee,
+    photoNominationFee:pricing.photoNominationFee,
+    repeatNominationFee:pricing.repeatNominationFee,
     optionsTotal,
     travelFee,
     discount,
     adjustment:0
-  }),[course,nominationType,optionsTotal,travelFee,discount]);
+  }),[course,nominationType,optionsTotal,travelFee,discount,pricing.photoNominationFee,pricing.repeatNominationFee]);
 
   const activeOrders = useMemo(()=>orders.filter(o=>o.status!=="completed"&&o.status!=="cancelled"),[orders]);
   const todaySales = useMemo(()=>orders.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+o.total,0),[orders]);
@@ -306,7 +316,7 @@ export default function DashboardPage(){
 
             <label>料金コース
               <div className="courseChips">
-                {courses.map(c=><button key={c.id} type="button" className={courseId===c.id?"active":""} onClick={()=>setCourseId(c.id)}>{c.minutes}分</button>)}
+                {pricing.courses.map(c=><button key={c.id} type="button" className={courseId===c.id?"active":""} onClick={()=>setCourseId(c.id)}>{c.minutes}分</button>)}
               </div>
             </label>
 
