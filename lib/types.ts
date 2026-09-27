@@ -1,6 +1,15 @@
 export type CastStatus = "waiting" | "moving" | "serving" | "off";
 export type OrderStatus = "accepted" | "dispatching" | "serving" | "completed" | "cancelled";
-export type Cast = { id:string; name:string; status:CastStatus; availableAt?:string; shiftStart?:string; shiftEnd?:string; };
+export type Cast = {
+  id:string;
+  name:string;
+  status:CastStatus;
+  availableAt?:string;
+  shiftStart?:string;
+  shiftEnd?:string;
+  scheduledToday?:boolean;
+  visible?:boolean;
+};
 export type Driver = { id:string; name:string; active:boolean; };
 export type Course = { id:string; minutes:number; price:number; };
 export type Order = {
