@@ -7,7 +7,7 @@ import type { Hotel } from "@/lib/types";
 
 export default function HotelsPage(){
   const [hotels,setHotels]=useState<Hotel[]>(defaultHotels);
-  const [editing,setEditing]=useState<Record<string,boolean>>({});
+  const [isEditing,setIsEditing]=useState(false);
   const [drafts,setDrafts]=useState<Record<string,Hotel>>({});
   const [addOpen,setAddOpen]=useState(false);
   const [saved,setSaved]=useState(false);
@@ -21,9 +21,9 @@ export default function HotelsPage(){
     window.setTimeout(()=>setSaved(false),1200);
   }
 
-  function startEdit(hotel:Hotel){
-    setDrafts(prev=>({...prev,[hotel.id]:{...hotel}}));
-    setEditing(prev=>({...prev,[hotel.id]:true}));
+  function startEdit(){
+    setDrafts(Object.fromEntries(hotels.map(hotel=>[hotel.id,cloneHotel(hotel)])));
+    setIsEditing(true);
   }
 
   function updateDraft(id:string,changes:Partial<Hotel>){
@@ -33,16 +33,11 @@ export default function HotelsPage(){
     });
   }
 
-  function saveCard(id:string){
-    const draft=drafts[id];
-    if(!draft) return;
-    commit(hotels.map(h=>h.id===id?{...draft}:h));
-    setEditing(prev=>({...prev,[id]:false}));
-    setDrafts(prev=>{
-      const next={...prev};
-      delete next[id];
-      return next;
-    });
+  function saveAll(){
+    const next=hotels.map(hotel=>drafts[hotel.id]?cloneHotel(drafts[hotel.id]):hotel);
+    commit(next);
+    setIsEditing(false);
+    setDrafts({});
   }
 
   function addHotel(e:FormEvent<HTMLFormElement>){
@@ -70,8 +65,10 @@ export default function HotelsPage(){
         <h1>ホテル登録</h1>
         <p>ホテル名と交通費を登録します。</p>
       </div>
-      <div className="hotelHeaderActions">
+      <div className="hotelHeaderActions masterPageActions">
         {saved && <span className="saveToast">保存しました</span>}
+        <button className="masterEditButton" type="button" disabled={isEditing} onClick={startEdit}>編集</button>
+        <button className="masterSaveButton" type="button" disabled={!isEditing} onClick={saveAll}>保存</button>
         <button className="primaryButton" type="button" onClick={()=>setAddOpen(true)}>＋ ホテル追加</button>
       </div>
     </header>
@@ -83,7 +80,6 @@ export default function HotelsPage(){
 
     <section className="hotelCardGrid">
       {hotels.map(hotel=>{
-        const isEditing=!!editing[hotel.id];
         const current=isEditing ? (drafts[hotel.id]??hotel) : hotel;
 
         return <article key={hotel.id} className={`hotelCard ${current.visible===false?"isHidden":""} ${isEditing?"isEditing":""}`}>
@@ -124,10 +120,6 @@ export default function HotelsPage(){
             </label>
           </div>
 
-          <div className="hotelCardActions">
-            <button type="button" className="castEditButton" disabled={isEditing} onClick={()=>startEdit(hotel)}>編集</button>
-            <button type="button" className="castSaveButton" disabled={!isEditing} onClick={()=>saveCard(hotel.id)}>保存</button>
-          </div>
         </article>
       })}
     </section>
