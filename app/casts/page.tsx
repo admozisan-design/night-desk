@@ -194,24 +194,24 @@ export default function CastsPage(){
           <div className="castVerticalSectionTitle">スペック</div>
           <div className="castSpecGrid">
             <label>年齢
-              <input type="number" min="18" value={cast.age??0}
-                onChange={e=>patch(cast.id,{age:Number(e.target.value)})}/>
+              <input type="number" min="18" value={cast.age || ""} placeholder="例：26"
+                onChange={e=>patch(cast.id,{age:e.target.value===""?0:Number(e.target.value)})}/>
             </label>
             <label>身長
-              <div className="castSpecInputUnit"><input type="number" min="0" value={cast.heightCm??0}
-                onChange={e=>patch(cast.id,{heightCm:Number(e.target.value)})}/><span>cm</span></div>
+              <div className="castSpecInputUnit"><input type="number" min="0" value={cast.heightCm || ""} placeholder="例：158"
+                onChange={e=>patch(cast.id,{heightCm:e.target.value===""?0:Number(e.target.value)})}/><span>cm</span></div>
             </label>
             <label>B
-              <div className="castSpecInputUnit"><input type="number" min="0" value={cast.bustCm??0}
-                onChange={e=>patch(cast.id,{bustCm:Number(e.target.value)})}/><span>cm</span></div>
+              <div className="castSpecInputUnit"><input type="number" min="0" value={cast.bustCm || ""} placeholder="例：86"
+                onChange={e=>patch(cast.id,{bustCm:e.target.value===""?0:Number(e.target.value)})}/><span>cm</span></div>
             </label>
             <label>W
-              <div className="castSpecInputUnit"><input type="number" min="0" value={cast.waistCm??0}
-                onChange={e=>patch(cast.id,{waistCm:Number(e.target.value)})}/><span>cm</span></div>
+              <div className="castSpecInputUnit"><input type="number" min="0" value={cast.waistCm || ""} placeholder="例：58"
+                onChange={e=>patch(cast.id,{waistCm:e.target.value===""?0:Number(e.target.value)})}/><span>cm</span></div>
             </label>
             <label>H
-              <div className="castSpecInputUnit"><input type="number" min="0" value={cast.hipCm??0}
-                onChange={e=>patch(cast.id,{hipCm:Number(e.target.value)})}/><span>cm</span></div>
+              <div className="castSpecInputUnit"><input type="number" min="0" value={cast.hipCm || ""} placeholder="例：85"
+                onChange={e=>patch(cast.id,{hipCm:e.target.value===""?0:Number(e.target.value)})}/><span>cm</span></div>
             </label>
             <label>カップ
               <input value={cast.cupSize??""} onChange={e=>patch(cast.id,{cupSize:e.target.value})} placeholder="例：D"/>
