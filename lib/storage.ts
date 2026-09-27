@@ -1,7 +1,7 @@
 import type { Cast, Order } from "./types";
 
-const ORDER_KEY = "night-desk-orders-v01";
-const CAST_KEY = "night-desk-casts-v02";
+const ORDER_KEY = "night-desk-orders-sample-v02";
+const CAST_KEY = "night-desk-casts-sample-v03";
 
 export function loadOrders():Order[] {
   if (typeof window === "undefined") return [];
