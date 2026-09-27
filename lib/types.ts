@@ -10,6 +10,9 @@ export type Cast = {
   scheduledToday?:boolean;
   visible?:boolean;
   unitPrice?:number;
+  freeUnitPrice?:number;
+  photoUnitPrice?:number;
+  repeatUnitPrice?:number;
   ngDetails?:string;
   availableOptions?:string[];
   notes?:string;
