@@ -1331,3 +1331,86 @@ button:disabled{opacity:.45;cursor:not-allowed}
     grid-template-columns:1fr 1fr;
   }
 }
+
+
+/* ===== Cast card edit / save locking ===== */
+.castCardHeaderRight{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-left:auto;
+}
+
+.castCardActions{
+  display:flex;
+  gap:6px;
+}
+
+.castCardActions button{
+  min-height:34px;
+  padding:7px 11px;
+  border-radius:8px;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.castEditButton{
+  border:1px solid #cfd7de;
+  background:#f4f6f8;
+  color:#4d5965;
+}
+
+.castSaveButton{
+  border:1px solid #79b91c;
+  background:#84cc16;
+  color:#17200b;
+}
+
+.castCardActions button:disabled{
+  opacity:.42;
+  cursor:not-allowed;
+}
+
+.castVerticalCard:not(.isEditing) input:disabled,
+.castVerticalCard:not(.isEditing) textarea:disabled{
+  background:#f6f8f9;
+  color:#3f4a55;
+  border-color:#e0e5e9;
+  cursor:default;
+  opacity:1;
+}
+
+.castVerticalCard:not(.isEditing) .switchLabel input:disabled{
+  cursor:not-allowed;
+}
+
+.castVerticalCard:not(.isEditing) .castOptionChip.isLocked{
+  cursor:default;
+  opacity:.9;
+}
+
+.castVerticalCard:not(.isEditing) .castOptionChip.isLocked input{
+  cursor:default;
+}
+
+.castVerticalCard.isEditing{
+  border-color:#9bc75a;
+  box-shadow:0 0 0 2px rgba(132,204,22,.12),0 5px 16px rgba(25,35,45,.08);
+}
+
+.castVerticalCard.isEditing .castVerticalHeader{
+  background:#fbfff5;
+}
+
+@media(max-width:700px){
+  .castVerticalHeader{
+    align-items:stretch;
+  }
+
+  .castCardHeaderRight{
+    margin-left:0;
+    justify-content:space-between;
+    width:100%;
+  }
+}
