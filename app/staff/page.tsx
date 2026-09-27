@@ -5,9 +5,6 @@ import { staff as defaultStaff } from "@/lib/mock-data";
 import { loadStaff, saveStaff } from "@/lib/storage";
 import type { Staff } from "@/lib/types";
 
-const areas=["エリアA","エリアB","エリアC","エリアD","エリアE","エリアF"];
-const shops=["サンプル店舗A","サンプル店舗B","サンプル店舗C"];
-
 function cloneStaff(staff:Staff):Staff{
   return {...staff};
 }
@@ -65,8 +62,6 @@ export default function StaffPage(){
       name,
       displayName,
       loginId,
-      shop:String(fd.get("shop")||"サンプル店舗A"),
-      area:String(fd.get("area")||"エリアA"),
       notes:String(fd.get("notes")||"").trim(),
       active:true
     };
@@ -132,20 +127,6 @@ export default function StaffPage(){
                 onChange={e=>updateDraft(item.id,{loginId:e.target.value})}/>
             </label>
 
-            <label>所属店舗
-              <select value={current.shop} disabled={!isEditing}
-                onChange={e=>updateDraft(item.id,{shop:e.target.value})}>
-                {shops.map(shop=><option key={shop}>{shop}</option>)}
-              </select>
-            </label>
-
-            <label>担当エリア
-              <select value={current.area} disabled={!isEditing}
-                onChange={e=>updateDraft(item.id,{area:e.target.value})}>
-                {areas.map(area=><option key={area}>{area}</option>)}
-              </select>
-            </label>
-
             <label>備考
               <textarea rows={4} value={current.notes??""} disabled={!isEditing}
                 onChange={e=>updateDraft(item.id,{notes:e.target.value})}
@@ -182,18 +163,6 @@ export default function StaffPage(){
 
           <label>ログインID
             <input name="loginId" required placeholder="例：staff-d"/>
-          </label>
-
-          <label>所属店舗
-            <select name="shop" defaultValue="サンプル店舗A">
-              {shops.map(shop=><option key={shop}>{shop}</option>)}
-            </select>
-          </label>
-
-          <label>担当エリア
-            <select name="area" defaultValue="エリアA">
-              {areas.map(area=><option key={area}>{area}</option>)}
-            </select>
           </label>
 
           <label>備考
