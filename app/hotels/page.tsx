@@ -22,7 +22,7 @@ export default function HotelsPage(){
   }
 
   function startEdit(){
-    setDrafts(Object.fromEntries(hotels.map(hotel=>[hotel.id,cloneHotel(hotel)])));
+    setDrafts(Object.fromEntries(hotels.map(hotel=>[hotel.id,{...hotel}])));
     setIsEditing(true);
   }
 
@@ -34,7 +34,7 @@ export default function HotelsPage(){
   }
 
   function saveAll(){
-    const next=hotels.map(hotel=>drafts[hotel.id]?cloneHotel(drafts[hotel.id]):hotel);
+    const next=hotels.map(hotel=>drafts[hotel.id]?{...drafts[hotel.id]}:hotel);
     commit(next);
     setIsEditing(false);
     setDrafts({});
