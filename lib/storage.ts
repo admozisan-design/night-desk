@@ -20,6 +20,13 @@ export function updateOrderStatus(id:string,status:Order["status"]){
 }
 
 function normalizeCast(cast:Cast):Cast {
+  const legacyNg = (cast as unknown as { ngDetails?: string | string[] }).ngDetails;
+  const normalizedNg = Array.isArray(legacyNg)
+    ? legacyNg
+    : typeof legacyNg === "string" && legacyNg.trim() && legacyNg !== "特になし"
+      ? [legacyNg.trim()]
+      : [];
+
   return {
     ...cast,
     scheduledToday: cast.scheduledToday ?? true,
@@ -28,7 +35,7 @@ function normalizeCast(cast:Cast):Cast {
     freeUnitPrice: cast.freeUnitPrice ?? cast.unitPrice ?? 0,
     photoUnitPrice: cast.photoUnitPrice ?? cast.unitPrice ?? 0,
     repeatUnitPrice: cast.repeatUnitPrice ?? cast.unitPrice ?? 0,
-    ngDetails: cast.ngDetails ?? "",
+    ngDetails: normalizedNg,
     availableOptions: cast.availableOptions ?? [],
     notes: cast.notes ?? "",
   };
