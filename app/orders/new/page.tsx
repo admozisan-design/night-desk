@@ -60,7 +60,29 @@ export default function NewOrderPage(){
     }
   },[availableDrivers,driverId]);
 
+  const selectedCast=availableCasts.find(c=>c.id===castId);
+  const selectableOptions=useMemo(
+    ()=>optionList.filter(option=>option.active!==false && (selectedCast?.availableOptions??[]).includes(option.name)),
+    [optionList,selectedCast]
+  );
+  const optionsTotal=useMemo(
+    ()=>selectableOptions.filter(option=>selectedOptionIds.includes(option.id)).reduce((sum,option)=>sum+option.price,0),
+    [selectableOptions,selectedOptionIds]
+  );
+
+  useEffect(()=>{
+    const allowed=new Set(selectableOptions.map(option=>option.id));
+    setSelectedOptionIds(current=>current.filter(id=>allowed.has(id)));
+  },[selectableOptions]);
+
   const total = useMemo(()=>calculateOrderTotal({course,nominationType,...pricingSettings,optionsTotal,travelFee,discount,adjustment}),[course,nominationType,optionsTotal,travelFee,discount,adjustment]);
+
+  function toggleOption(id:string){
+    setSelectedOptionIds(current=>current.includes(id)
+      ? current.filter(optionId=>optionId!==id)
+      : [...current,id]
+    );
+  }
 
   function submit(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
@@ -73,7 +95,9 @@ export default function NewOrderPage(){
       customerPhone:String(fd.get("phone")||""), locationType:fd.get("locationType") as "hotel"|"home",
       locationName:String(fd.get("locationName")||""), room:String(fd.get("room")||""),
       castId, castName:cast.name, driverId:driver?.id, driverName:driver?.name,
-      courseMinutes:course?.minutes??60, nominationType, optionsTotal, travelFee, discount, adjustment, total,
+      courseMinutes:course?.minutes??60, nominationType,
+      selectedOptions:selectableOptions.filter(option=>selectedOptionIds.includes(option.id)).map(option=>option.name),
+      optionsTotal, travelFee, discount, adjustment, total,
       status:"accepted", scheduledStart, scheduledEnd:addMinutes(scheduledStart,course?.minutes??60),
       note:String(fd.get("note")||"")
     };
