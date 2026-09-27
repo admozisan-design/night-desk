@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useState } from "react";
 import { casts as defaultCasts } from "@/lib/mock-data";
 import { loadCasts, saveCasts } from "@/lib/storage";
 import type { Cast } from "@/lib/types";
@@ -15,11 +15,12 @@ export default function CastsPage(){
       freeUnitPrice:c.freeUnitPrice??c.unitPrice??0,
       photoUnitPrice:c.photoUnitPrice??c.unitPrice??0,
       repeatUnitPrice:c.repeatUnitPrice??c.unitPrice??0,
-      ngDetails:c.ngDetails??"",
+      ngDetails:c.ngDetails??[],
       availableOptions:c.availableOptions??[],
       notes:c.notes??""
     }))
   );
+  const [ngDrafts,setNgDrafts] = useState<Record<string,string>>({});
   const [saved,setSaved] = useState(false);
 
   useEffect(()=>setCasts(loadCasts(defaultCasts)),[]);
@@ -43,6 +44,29 @@ export default function CastsPage(){
     patch(cast.id,{availableOptions:next});
   }
 
+  function addNg(cast:Cast){
+    const value=(ngDrafts[cast.id]??"").trim();
+    if(!value) return;
+    const current=cast.ngDetails??[];
+    if(current.includes(value)){
+      setNgDrafts(prev=>({...prev,[cast.id]:""}));
+      return;
+    }
+    patch(cast.id,{ngDetails:[...current,value]});
+    setNgDrafts(prev=>({...prev,[cast.id]:""}));
+  }
+
+  function removeNg(cast:Cast, item:string){
+    patch(cast.id,{ngDetails:(cast.ngDetails??[]).filter(value=>value!==item)});
+  }
+
+  function handleNgKeyDown(e:KeyboardEvent<HTMLInputElement>,cast:Cast){
+    if(e.key==="Enter"){
+      e.preventDefault();
+      addNg(cast);
+    }
+  }
+
   function addCast(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
     const fd=new FormData(e.currentTarget);
@@ -60,7 +84,7 @@ export default function CastsPage(){
       freeUnitPrice:Number(fd.get("freeUnitPrice")||0),
       photoUnitPrice:Number(fd.get("photoUnitPrice")||0),
       repeatUnitPrice:Number(fd.get("repeatUnitPrice")||0),
-      ngDetails:"",
+      ngDetails:[],
       availableOptions:[],
       notes:""
     }];
@@ -158,14 +182,23 @@ export default function CastsPage(){
         </div>
 
         <div className="castVerticalSection">
-          <label className="castVerticalField">NG内容
-            <textarea
-              rows={4}
-              value={cast.ngDetails??""}
-              onChange={e=>patch(cast.id,{ngDetails:e.target.value})}
-              placeholder="例：サンプルNG内容"
+          <div className="castVerticalFieldLabel">NG内容</div>
+          <div className="castNgTags">
+            {(cast.ngDetails??[]).map(item=><span key={item} className="castNgTag">
+              {item}
+              <button type="button" onClick={()=>removeNg(cast,item)} aria-label={`${item}を削除`}>×</button>
+            </span>)}
+            {(cast.ngDetails??[]).length===0 && <span className="castNgEmpty">NG登録なし</span>}
+          </div>
+          <div className="castNgAddRow">
+            <input
+              value={ngDrafts[cast.id]??""}
+              onChange={e=>setNgDrafts(prev=>({...prev,[cast.id]:e.target.value}))}
+              onKeyDown={e=>handleNgKeyDown(e,cast)}
+              placeholder="NG内容を入力"
             />
-          </label>
+            <button type="button" onClick={()=>addNg(cast)}>追加</button>
+          </div>
         </div>
 
         <div className="castVerticalSection">
