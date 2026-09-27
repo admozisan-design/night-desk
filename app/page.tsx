@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { casts as defaultCasts, courses, drivers as defaultDrivers, hotels as defaultHotels, pricingSettings } from "@/lib/mock-data";
+import { casts as defaultCasts, courses, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions, pricingSettings } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { loadCasts, loadDrivers, loadHotels, loadOrders, saveOrder } from "@/lib/storage";
-import type { Cast, CastStatus, Driver, Hotel, Order, OrderStatus } from "@/lib/types";
+import { loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, saveOrder } from "@/lib/storage";
+import type { Cast, CastStatus, Driver, Hotel, Order, OrderStatus, StoreOption } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
 const BOARD_MINUTES = 19 * 60;
@@ -58,6 +58,7 @@ export default function DashboardPage(){
   const [castList,setCastList] = useState<Cast[]>(defaultCasts);
   const [hotelList,setHotelList] = useState<Hotel[]>(defaultHotels);
   const [driverList,setDriverList] = useState<Driver[]>(defaultDrivers);
+  const [optionList,setOptionList] = useState<StoreOption[]>(defaultOptions);
   const [now,setNow] = useState<Date|null>(null);
   const [date,setDate] = useState(()=>dateInputValue(new Date()));
   const [zoom,setZoom] = useState(120);
@@ -73,7 +74,7 @@ export default function DashboardPage(){
   const [note,setNote] = useState("サンプル備考");
   const [travelFee,setTravelFee] = useState(pricingSettings.defaultTravelFee);
   const [discount,setDiscount] = useState(0);
-  const [optionsTotal,setOptionsTotal] = useState(0);
+  const [selectedOptionIds,setSelectedOptionIds] = useState<string[]>([]);
 
   useEffect(()=>{
     const refresh=()=>{
@@ -81,6 +82,7 @@ export default function DashboardPage(){
       setCastList(loadCasts(defaultCasts));
       setHotelList(loadHotels(defaultHotels));
       setDriverList(loadDrivers(defaultDrivers));
+      setOptionList(loadOptions(defaultOptions));
     };
     refresh();
     setNow(new Date());
@@ -89,12 +91,14 @@ export default function DashboardPage(){
     window.addEventListener("nightdesk:casts",refresh);
     window.addEventListener("nightdesk:hotels",refresh);
     window.addEventListener("nightdesk:drivers",refresh);
+    window.addEventListener("nightdesk:options",refresh);
     return ()=>{
       window.clearInterval(timer);
       window.removeEventListener("storage",refresh);
       window.removeEventListener("nightdesk:casts",refresh);
       window.removeEventListener("nightdesk:hotels",refresh);
       window.removeEventListener("nightdesk:drivers",refresh);
+      window.removeEventListener("nightdesk:options",refresh);
     };
   },[]);
 
