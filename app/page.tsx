@@ -61,7 +61,7 @@ export default function DashboardPage(){
   const [now,setNow] = useState<Date|null>(null);
   const [area,setArea] = useState("エリアA");
   const [date,setDate] = useState(()=>dateInputValue(new Date()));
-  const [zoom,setZoom] = useState(100);
+  const [zoom,setZoom] = useState(120);
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(drivers[0]?.id ?? "");
