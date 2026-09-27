@@ -11,7 +11,7 @@ function cloneStaff(staff:Staff):Staff{
 
 export default function StaffPage(){
   const [staff,setStaff]=useState<Staff[]>(defaultStaff);
-  const [editing,setEditing]=useState<Record<string,boolean>>({});
+  const [isEditing,setIsEditing]=useState(false);
   const [drafts,setDrafts]=useState<Record<string,Staff>>({});
   const [addOpen,setAddOpen]=useState(false);
   const [saved,setSaved]=useState(false);
@@ -25,9 +25,9 @@ export default function StaffPage(){
     window.setTimeout(()=>setSaved(false),1200);
   }
 
-  function startEdit(item:Staff){
-    setDrafts(prev=>({...prev,[item.id]:cloneStaff(item)}));
-    setEditing(prev=>({...prev,[item.id]:true}));
+  function startEdit(){
+    setDrafts(Object.fromEntries(staff.map(item=>[item.id,cloneStaff(item)])));
+    setIsEditing(true);
   }
 
   function updateDraft(id:string,changes:Partial<Staff>){
@@ -37,16 +37,11 @@ export default function StaffPage(){
     });
   }
 
-  function saveCard(id:string){
-    const draft=drafts[id];
-    if(!draft) return;
-    commit(staff.map(item=>item.id===id?cloneStaff(draft):item));
-    setEditing(prev=>({...prev,[id]:false}));
-    setDrafts(prev=>{
-      const next={...prev};
-      delete next[id];
-      return next;
-    });
+  function saveAll(){
+    const next=staff.map(item=>drafts[item.id]?cloneStaff(drafts[item.id]):item);
+    commit(next);
+    setIsEditing(false);
+    setDrafts({});
   }
 
   function addStaff(e:FormEvent<HTMLFormElement>){
@@ -78,8 +73,10 @@ export default function StaffPage(){
         <h1>スタッフ登録</h1>
         <p>フロントスタッフの基本情報を管理します。</p>
       </div>
-      <div className="staffHeaderActions">
+      <div className="staffHeaderActions masterPageActions">
         {saved && <span className="saveToast">保存しました</span>}
+        <button className="masterEditButton" type="button" disabled={isEditing} onClick={startEdit}>編集</button>
+        <button className="masterSaveButton" type="button" disabled={!isEditing} onClick={saveAll}>保存</button>
         <button className="primaryButton" type="button" onClick={()=>setAddOpen(true)}>＋ スタッフ追加</button>
       </div>
     </header>
@@ -91,7 +88,6 @@ export default function StaffPage(){
 
     <section className="staffCardGrid">
       {staff.map(item=>{
-        const isEditing=!!editing[item.id];
         const current=isEditing ? (drafts[item.id]??item) : item;
 
         return <article key={item.id} className={`staffCard ${current.active===false?"isInactive":""} ${isEditing?"isEditing":""}`}>
@@ -134,10 +130,6 @@ export default function StaffPage(){
             </label>
           </div>
 
-          <div className="staffCardActions">
-            <button type="button" className="castEditButton" disabled={isEditing} onClick={()=>startEdit(item)}>編集</button>
-            <button type="button" className="castSaveButton" disabled={!isEditing} onClick={()=>saveCard(item.id)}>保存</button>
-          </div>
         </article>
       })}
     </section>
