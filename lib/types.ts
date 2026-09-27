@@ -28,9 +28,10 @@ export type Driver = { id:string; name:string; phone?:string; vehicle?:string; p
 export type Course = { id:string; minutes:number; price:number; };
 export type Hotel = { id:string; name:string; travelFee:number; visible?:boolean; };
 export type Staff = { id:string; name:string; displayName:string; loginId:string; notes?:string; active?:boolean; };
+export type StoreOption = { id:string; name:string; price:number; notes?:string; active?:boolean; };
 export type Order = {
   id:string; createdAt:string; customerPhone:string; locationType:"hotel"|"home";
   locationName:string; room?:string; castId:string; castName:string; driverId?:string; driverName?:string;
-  courseMinutes:number; nominationType:"free"|"photo"|"repeat"; optionsTotal:number; travelFee:number;
+  courseMinutes:number; nominationType:"free"|"photo"|"repeat"; selectedOptions?:string[]; optionsTotal:number; travelFee:number;
   discount:number; adjustment:number; total:number; status:OrderStatus; scheduledStart:string; scheduledEnd:string; note?:string;
 };
