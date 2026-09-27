@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { casts as defaultCasts, courses, drivers, pricingSettings } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { loadCasts, loadOrders, saveOrder, updateOrderStatus } from "@/lib/storage";
+import { loadCasts, loadOrders, saveOrder } from "@/lib/storage";
 import type { Cast, CastStatus, Order, OrderStatus } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
@@ -190,12 +190,6 @@ export default function DashboardPage(){
     }catch{}
   }
 
-  function completeServing(){
-    const serving=orders.filter(o=>o.status==="serving");
-    serving.forEach(o=>updateOrderStatus(o.id,"completed"));
-    setOrders(loadOrders());
-  }
-
   return <div className="deskDashboard">
     <section className="deskKpis">
       <div><span>エリア</span><strong>{area}</strong></div>
@@ -223,32 +217,6 @@ export default function DashboardPage(){
         </section>
 
         <section className="deskPanel">
-          <div className="panelTitleRow">
-            <h2>出勤者登録（キャスト）</h2>
-            <Link href="/casts">編集</Link>
-          </div>
-          <div className="compactSearch">キャスト検索</div>
-          <input placeholder="クリックで一覧・入力で検索"/>
-          <div className="castMiniList">
-            {workingCasts.map(cast=><div key={cast.id}>
-              <span className={`castStateDot ${cast.status}`}/>
-              <div><strong>{cast.name}</strong><small>{cast.shiftStart??"--:--"} / 上り {cast.shiftEnd??"--:--"}</small></div>
-              <em>{statusLabels[cast.status]}</em>
-            </div>)}
-            {workingCasts.length===0 && <p>本日の出勤者はいません</p>}
-          </div>
-          <Link className="deskAction green" href="/casts">出勤登録を開く</Link>
-        </section>
-
-        <section className="deskPanel">
-          <h2>出勤者登録（ドライバー）</h2>
-          <div className="driverMiniList">
-            {drivers.map(driver=><div key={driver.id}><strong>{driver.name}</strong><span>稼働中</span></div>)}
-          </div>
-          <button className="deskAction blue">ドライバー登録</button>
-        </section>
-
-        <section className="deskPanel">
           <h2>ボード拡大・縮小</h2>
           <div className="zoomControls">
             <button onClick={()=>setZoom(z=>Math.max(70,z-10))}>−</button>
@@ -262,7 +230,6 @@ export default function DashboardPage(){
       <main className="deskCenter">
         <section className="deskPanel workRegister">
           <h2>仕事登録</h2>
-          <div className="pasteHint">▶ LINE文章を貼り付けて仕事情報を入力する想定</div>
           <form onSubmit={registerOrder}>
             <div className="workGrid two">
               <label>ドライバー
@@ -357,16 +324,6 @@ export default function DashboardPage(){
             </Link>)}
             {!orders.length && <p>本日の予約はありません</p>}
           </div>
-        </section>
-
-        <section className="deskPanel boardOps">
-          <h2>ボード操作</h2>
-          <button>前日の出勤者をコピー</button>
-          <button>翌日に出勤者をコピー</button>
-          <Link href="/casts">出勤時間を並び替え</Link>
-          <Link href="/orders">接客・送迎・予約順</Link>
-          <button onClick={completeServing}>接客中を全て完了</button>
-          <Link className="salesUpdate" href="/orders">売上・履歴に更新</Link>
         </section>
       </aside>
     </div>
