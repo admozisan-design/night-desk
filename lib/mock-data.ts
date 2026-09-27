@@ -1,4 +1,4 @@
-import type { Cast, Course, Driver, Hotel, Staff } from "./types";
+import type { Cast, Course, Driver, Hotel, Staff, StoreOption } from "./types";
 
 export const casts: Cast[] = [
   {
@@ -62,4 +62,12 @@ export const staff: Staff[] = [
   { id:"s1", name:"スタッフA", displayName:"フロントA", loginId:"staff-a", notes:"サンプル備考", active:true },
   { id:"s2", name:"スタッフB", displayName:"フロントB", loginId:"staff-b", notes:"", active:true },
   { id:"s3", name:"スタッフC", displayName:"フロントC", loginId:"staff-c", notes:"夜帯メイン", active:true },
+];
+
+
+export const options: StoreOption[] = [
+  { id:"op1", name:"オプションA", price:1000, notes:"サンプルオプション", active:true },
+  { id:"op2", name:"オプションB", price:2000, notes:"", active:true },
+  { id:"op3", name:"オプションC", price:3000, notes:"", active:true },
+  { id:"op4", name:"オプションD", price:0, notes:"無料設定のサンプル", active:true },
 ];
