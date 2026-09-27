@@ -24,7 +24,7 @@ export type Cast = {
   hipCm?:number;
   cupSize?:string;
 };
-export type Driver = { id:string; name:string; active:boolean; };
+export type Driver = { id:string; name:string; phone?:string; vehicle?:string; plate?:string; notes?:string; active:boolean; };
 export type Course = { id:string; minutes:number; price:number; };
 export type Hotel = { id:string; name:string; travelFee:number; visible?:boolean; };
 export type Staff = { id:string; name:string; displayName:string; loginId:string; notes?:string; active?:boolean; };
