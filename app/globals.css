@@ -551,3 +551,223 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .selectedCastInfo span,.selectedCastInfo strong{display:block}.selectedCastInfo span{font-size:9px;color:#87919b;margin-bottom:3px}.selectedCastInfo strong{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:1000px){.selectedCastInfo{grid-template-columns:1fr 1fr}.selectedCastInfo>div{border-right:0}}
 @media(max-width:600px){.selectedCastInfo{grid-template-columns:1fr}}
+
+
+/* ===== Larger cast management desktop UI ===== */
+@media (min-width: 1201px) {
+  .castManagementPage {
+    max-width: none;
+    width: 100%;
+  }
+
+  .castManagementPage .pageHeader {
+    margin-bottom: 24px;
+  }
+
+  .castManagementPage .pageHeader h1 {
+    font-size: 34px;
+    margin-bottom: 8px;
+  }
+
+  .castManagementPage .pageHeader p:not(.eyebrow) {
+    font-size: 15px;
+  }
+
+  .castManagementPage .eyebrow {
+    font-size: 12px;
+  }
+
+  .castManagementPage .castSummary {
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .castManagementPage .castSummary > div {
+    min-width: 180px;
+    min-height: 66px;
+    padding: 14px 18px;
+    border-radius: 11px;
+  }
+
+  .castManagementPage .castSummary span {
+    font-size: 13px;
+  }
+
+  .castManagementPage .castSummary strong {
+    font-size: 28px;
+  }
+
+  .castManagementPage .castSummary small {
+    font-size: 13px;
+  }
+
+  .castManagementPage .addCastPanel {
+    min-height: 112px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
+    align-items: center;
+  }
+
+  .castManagementPage .addCastPanel h2 {
+    font-size: 25px;
+    margin-top: 5px;
+  }
+
+  .castManagementPage .addCastFormWide {
+    grid-template-columns: minmax(260px,1.5fr) 170px 160px 160px 110px;
+    gap: 12px;
+    width: min(1050px, 75%);
+  }
+
+  .castManagementPage .addCastForm label,
+  .castManagementPage .castEditGrid label {
+    gap: 7px;
+    font-size: 13px;
+  }
+
+  .castManagementPage .addCastForm input,
+  .castManagementPage .castEditGrid input,
+  .castManagementPage .castEditGrid select,
+  .castManagementPage .castOperationalGrid textarea {
+    min-height: 48px;
+    padding: 12px 14px;
+    font-size: 15px;
+    border-radius: 9px;
+  }
+
+  .castManagementPage .primaryButton {
+    min-height: 48px;
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+
+  .castManagementPage .castList {
+    gap: 18px;
+  }
+
+  .castManagementPage .castProfileCard {
+    border-radius: 14px;
+  }
+
+  .castManagementPage .castProfileCard .castManageMain {
+    min-height: 86px;
+    padding: 18px 22px;
+  }
+
+  .castManagementPage .castNameEdit {
+    min-width: 340px;
+    gap: 12px;
+  }
+
+  .castManagementPage .castNameEdit input {
+    min-height: 50px;
+    font-size: 20px;
+    padding: 11px 14px;
+  }
+
+  .castManagementPage .castPriceBox {
+    min-width: 150px;
+    padding: 10px 15px;
+  }
+
+  .castManagementPage .castPriceBox small {
+    font-size: 12px;
+  }
+
+  .castManagementPage .castPriceBox strong {
+    font-size: 22px;
+  }
+
+  .castManagementPage .castFlags {
+    gap: 20px;
+  }
+
+  .castManagementPage .switchLabel {
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .castManagementPage .switchLabel input {
+    width: 20px;
+    height: 20px;
+  }
+
+  .castManagementPage .castBasicGrid {
+    padding: 18px 22px;
+    grid-template-columns: 180px 160px 160px 180px minmax(360px,1fr);
+    gap: 16px;
+  }
+
+  .castManagementPage .castQuickActions > span {
+    font-size: 13px;
+    margin-bottom: 7px;
+  }
+
+  .castManagementPage .castQuickActions > div {
+    gap: 8px;
+  }
+
+  .castManagementPage .castQuickActions button {
+    min-height: 42px;
+    padding: 9px 14px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .castManagementPage .castOperationalSection {
+    padding: 20px 22px 22px;
+  }
+
+  .castManagementPage .castOperationalHeading {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .castManagementPage .castOperationalHeading strong {
+    font-size: 17px;
+  }
+
+  .castManagementPage .castOperationalHeading span {
+    font-size: 12px;
+  }
+
+  .castManagementPage .castOperationalGrid {
+    grid-template-columns: minmax(360px,1fr) minmax(380px,1fr) minmax(360px,1fr);
+    gap: 18px;
+  }
+
+  .castManagementPage .castOperationalGrid > label,
+  .castManagementPage .castOptionField {
+    gap: 9px;
+    font-size: 13px;
+  }
+
+  .castManagementPage .castOperationalGrid textarea {
+    min-height: 130px;
+    line-height: 1.55;
+  }
+
+  .castManagementPage .castOptionChoices {
+    gap: 9px;
+  }
+
+  .castManagementPage .castOptionChip {
+    min-height: 42px;
+    padding: 10px 14px;
+    gap: 8px !important;
+  }
+
+  .castManagementPage .castOptionChip input {
+    width: 17px;
+    height: 17px;
+  }
+
+  .castManagementPage .castOptionChip span {
+    font-size: 13px;
+  }
+
+  .castManagementPage .saveToast {
+    padding: 11px 15px;
+    font-size: 13px;
+  }
+}
