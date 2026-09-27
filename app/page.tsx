@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { casts as defaultCasts, courses, drivers, hotels as defaultHotels, pricingSettings } from "@/lib/mock-data";
+import { casts as defaultCasts, courses, drivers as defaultDrivers, hotels as defaultHotels, pricingSettings } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { loadCasts, loadHotels, loadOrders, saveOrder } from "@/lib/storage";
-import type { Cast, CastStatus, Hotel, Order, OrderStatus } from "@/lib/types";
+import { loadCasts, loadDrivers, loadHotels, loadOrders, saveOrder } from "@/lib/storage";
+import type { Cast, CastStatus, Driver, Hotel, Order, OrderStatus } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
 const BOARD_MINUTES = 19 * 60;
@@ -57,12 +57,13 @@ export default function DashboardPage(){
   const [orders,setOrders] = useState<Order[]>([]);
   const [castList,setCastList] = useState<Cast[]>(defaultCasts);
   const [hotelList,setHotelList] = useState<Hotel[]>(defaultHotels);
+  const [driverList,setDriverList] = useState<Driver[]>(defaultDrivers);
   const [now,setNow] = useState<Date|null>(null);
   const [date,setDate] = useState(()=>dateInputValue(new Date()));
   const [zoom,setZoom] = useState(120);
 
   const [castId,setCastId] = useState("");
-  const [driverId,setDriverId] = useState(drivers[0]?.id ?? "");
+  const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
   const [courseId,setCourseId] = useState("60");
   const [nominationType,setNominationType] = useState<"free"|"photo"|"repeat">("free");
   const [scheduledStart,setScheduledStart] = useState("13:30");
@@ -79,6 +80,7 @@ export default function DashboardPage(){
       setOrders(loadOrders());
       setCastList(loadCasts(defaultCasts));
       setHotelList(loadHotels(defaultHotels));
+      setDriverList(loadDrivers(defaultDrivers));
     };
     refresh();
     setNow(new Date());
@@ -86,11 +88,13 @@ export default function DashboardPage(){
     window.addEventListener("storage",refresh);
     window.addEventListener("nightdesk:casts",refresh);
     window.addEventListener("nightdesk:hotels",refresh);
+    window.addEventListener("nightdesk:drivers",refresh);
     return ()=>{
       window.clearInterval(timer);
       window.removeEventListener("storage",refresh);
       window.removeEventListener("nightdesk:casts",refresh);
       window.removeEventListener("nightdesk:hotels",refresh);
+      window.removeEventListener("nightdesk:drivers",refresh);
     };
   },[]);
 
@@ -103,10 +107,18 @@ export default function DashboardPage(){
     ()=>hotelList.filter(h=>h.visible!==false),
     [hotelList]
   );
+  const availableDrivers = useMemo(
+    ()=>driverList.filter(d=>d.active!==false),
+    [driverList]
+  );
 
   useEffect(()=>{
     if(!selectableCasts.some(c=>c.id===castId)) setCastId(selectableCasts[0]?.id ?? "");
   },[selectableCasts,castId]);
+
+  useEffect(()=>{
+    if(!availableDrivers.some(d=>d.id===driverId)) setDriverId(availableDrivers[0]?.id ?? "");
+  },[availableDrivers,driverId]);
 
   useEffect(()=>{
     if(!availableHotels.some(h=>h.name===locationName)){
@@ -118,7 +130,7 @@ export default function DashboardPage(){
 
   const course = courses.find(c=>c.id===courseId);
   const selectedCast = selectableCasts.find(c=>c.id===castId);
-  const selectedDriver = drivers.find(d=>d.id===driverId);
+  const selectedDriver = availableDrivers.find(d=>d.id===driverId);
 
   const total = useMemo(()=>calculateOrderTotal({
     course,
@@ -224,7 +236,7 @@ export default function DashboardPage(){
             <div className="workGrid two">
               <label>ドライバー
                 <select value={driverId} onChange={e=>setDriverId(e.target.value)}>
-                  {drivers.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
+                  {availableDrivers.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </label>
               <label>キャスト
