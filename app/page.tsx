@@ -219,6 +219,25 @@ export default function DashboardPage(){
               </label>
             </div>
 
+            {selectedCast && <div className="selectedCastInfo">
+              <div>
+                <span>単価</span>
+                <strong>{new Intl.NumberFormat("ja-JP").format(selectedCast.unitPrice??0)}円</strong>
+              </div>
+              <div>
+                <span>NG内容</span>
+                <strong>{selectedCast.ngDetails || "なし"}</strong>
+              </div>
+              <div>
+                <span>可能OP</span>
+                <strong>{(selectedCast.availableOptions??[]).length ? (selectedCast.availableOptions??[]).join(" / ") : "なし"}</strong>
+              </div>
+              <div>
+                <span>備考</span>
+                <strong>{selectedCast.notes || "なし"}</strong>
+              </div>
+            </div>}
+
             <div className="workGrid two">
               <label>店舗
                 <select defaultValue="サンプル店舗A"><option>サンプル店舗A</option><option>サンプル店舗B</option><option>サンプル店舗C</option></select>
