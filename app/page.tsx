@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { casts as defaultCasts } from "@/lib/mock-data";
-import { loadCasts, loadOrders } from "@/lib/storage";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { casts as defaultCasts, courses, drivers, pricingSettings } from "@/lib/mock-data";
+import { calculateOrderTotal, formatYen } from "@/lib/pricing";
+import { loadCasts, loadOrders, saveOrder, updateOrderStatus } from "@/lib/storage";
 import type { Cast, CastStatus, Order, OrderStatus } from "@/lib/types";
-import { formatYen } from "@/lib/pricing";
 
-const BOARD_START = 19 * 60;
-const BOARD_MINUTES = 10 * 60;
-const hourLabels = ["19:00","20:00","21:00","22:00","23:00","0:00","1:00","2:00","3:00","4:00"];
+const BOARD_START = 10 * 60;
+const BOARD_MINUTES = 19 * 60;
+const hourLabels = [
+  "10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00",
+  "19:00","20:00","21:00","22:00","23:00","0:00","1:00","2:00","3:00","4:00"
+];
+const areas = ["北見","帯広","釧路","苫小牧","函館","札幌"];
 
 const statusLabels: Record<CastStatus,string> = {
   waiting:"待機", moving:"移動中", serving:"接客中", off:"退勤"
@@ -20,7 +24,7 @@ const orderStatusLabels: Record<OrderStatus,string> = {
 
 function normalizedMinutes(time:string){
   const [rawHour,minute] = time.split(":").map(Number);
-  const hour = rawHour < 12 ? rawHour + 24 : rawHour;
+  const hour = rawHour < 10 ? rawHour + 24 : rawHour;
   return hour * 60 + minute;
 }
 function eventPosition(order:Order){
@@ -34,16 +38,44 @@ function eventPosition(order:Order){
 }
 function currentTimePosition(now:Date){
   let minutes = now.getHours()*60 + now.getMinutes();
-  if(now.getHours() < 12) minutes += 24*60;
+  if(now.getHours() < 10) minutes += 24*60;
   const value = minutes - BOARD_START;
   if(value < 0 || value > BOARD_MINUTES) return null;
   return `${(value/BOARD_MINUTES)*100}%`;
+}
+function addMinutes(time:string, minutes:number){
+  const [h,m] = time.split(":").map(Number);
+  const total = h*60+m+minutes;
+  return `${String(Math.floor(total/60)%24).padStart(2,"0")}:${String(total%60).padStart(2,"0")}`;
+}
+function dateInputValue(date:Date){
+  const y=date.getFullYear();
+  const m=String(date.getMonth()+1).padStart(2,"0");
+  const d=String(date.getDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
 }
 
 export default function DashboardPage(){
   const [orders,setOrders] = useState<Order[]>([]);
   const [castList,setCastList] = useState<Cast[]>(defaultCasts);
   const [now,setNow] = useState<Date|null>(null);
+  const [area,setArea] = useState("札幌");
+  const [date,setDate] = useState(()=>dateInputValue(new Date()));
+  const [zoom,setZoom] = useState(100);
+
+  const [castId,setCastId] = useState("");
+  const [driverId,setDriverId] = useState(drivers[0]?.id ?? "");
+  const [courseId,setCourseId] = useState("60");
+  const [nominationType,setNominationType] = useState<"free"|"photo"|"repeat">("free");
+  const [scheduledStart,setScheduledStart] = useState("19:00");
+  const [locationName,setLocationName] = useState("");
+  const [room,setRoom] = useState("");
+  const [phone,setPhone] = useState("");
+  const [note,setNote] = useState("");
+  const [travelFee,setTravelFee] = useState(pricingSettings.defaultTravelFee);
+  const [discount,setDiscount] = useState(0);
+  const [optionsTotal,setOptionsTotal] = useState(0);
+  const [copied,setCopied] = useState(false);
 
   useEffect(()=>{
     const refresh=()=>{
@@ -66,63 +98,302 @@ export default function DashboardPage(){
     ()=>castList.filter(c=>c.visible!==false && c.scheduledToday!==false),
     [castList]
   );
+  const selectableCasts = useMemo(()=>workingCasts.filter(c=>c.status!=="off"),[workingCasts]);
+
+  useEffect(()=>{
+    if(!selectableCasts.some(c=>c.id===castId)) setCastId(selectableCasts[0]?.id ?? "");
+  },[selectableCasts,castId]);
+
+  const course = courses.find(c=>c.id===courseId);
+  const selectedCast = selectableCasts.find(c=>c.id===castId);
+  const selectedDriver = drivers.find(d=>d.id===driverId);
+
+  const total = useMemo(()=>calculateOrderTotal({
+    course,
+    nominationType,
+    photoNominationFee:pricingSettings.photoNominationFee,
+    repeatNominationFee:pricingSettings.repeatNominationFee,
+    optionsTotal,
+    travelFee,
+    discount,
+    adjustment:0
+  }),[course,nominationType,optionsTotal,travelFee,discount]);
+
+  const linePreview = useMemo(()=>{
+    const nomination = nominationType==="free"?"フリー":nominationType==="photo"?"写真指名":"本指名";
+    const castName = selectedCast?.name ?? "未選択";
+    const driverName = selectedDriver?.name ?? "未選択";
+    return [
+      "【仕事登録】",
+      `${scheduledStart}〜 ${course?.minutes??60}分`,
+      `${castName} / ${nomination}`,
+      locationName ? `${locationName}${room ? ` ${room}号室` : ""}` : "場所未入力",
+      `送迎：${driverName}`,
+      `料金：${formatYen(total)}`,
+      phone ? `TEL：${phone}` : "",
+      note ? `備考：${note}` : ""
+    ].filter(Boolean).join("\n");
+  },[scheduledStart,course,selectedCast,nominationType,locationName,room,selectedDriver,total,phone,note]);
+
   const activeOrders = useMemo(()=>orders.filter(o=>o.status!=="completed"&&o.status!=="cancelled"),[orders]);
   const todaySales = useMemo(()=>orders.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+o.total,0),[orders]);
   const waitingCount = workingCasts.filter(c=>c.status==="waiting").length;
   const nowPosition = now ? currentTimePosition(now) : null;
 
-  return <div>
-    <header className="pageHeader boardPageHeader">
-      <div>
-        <p className="eyebrow">DISPATCH BOARD</p>
-        <h1>配車ボード</h1>
-        <p>キャスト管理で登録した本日の出勤者だけを表示しています。</p>
-      </div>
-      <div className="headerActions">
-        <Link className="secondaryButton" href="/casts">出勤を編集</Link>
-        <Link className="primaryButton" href="/orders/new">＋ 新規受付</Link>
-      </div>
-    </header>
+  function shiftDate(days:number){
+    const base = new Date(date+"T12:00:00");
+    base.setDate(base.getDate()+days);
+    setDate(dateInputValue(base));
+  }
 
-    <section className="boardSummary">
-      <div><span>稼働中</span><strong>{activeOrders.length}</strong><small>件</small></div>
-      <div><span>本日出勤</span><strong>{workingCasts.length}</strong><small>人</small></div>
-      <div><span>待機</span><strong>{waitingCount}</strong><small>人</small></div>
-      <div><span>本日受付</span><strong>{orders.length}</strong><small>件</small></div>
-      <div className="sales"><span>本日売上</span><strong>{formatYen(todaySales)}</strong></div>
+  function registerOrder(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+    if(!selectedCast || !course) return;
+    const order:Order = {
+      id:crypto.randomUUID(),
+      createdAt:new Date().toISOString(),
+      customerPhone:phone,
+      locationType:"hotel",
+      locationName,
+      room,
+      castId:selectedCast.id,
+      castName:selectedCast.name,
+      driverId:selectedDriver?.id,
+      driverName:selectedDriver?.name,
+      courseMinutes:course.minutes,
+      nominationType,
+      optionsTotal,
+      travelFee,
+      discount,
+      adjustment:0,
+      total,
+      status:"accepted",
+      scheduledStart,
+      scheduledEnd:addMinutes(scheduledStart,course.minutes),
+      note
+    };
+    saveOrder(order);
+    setOrders(loadOrders());
+    setLocationName("");
+    setRoom("");
+    setPhone("");
+    setNote("");
+    setOptionsTotal(0);
+    setDiscount(0);
+  }
+
+  async function copyPreview(){
+    try{
+      await navigator.clipboard.writeText(linePreview);
+      setCopied(true);
+      window.setTimeout(()=>setCopied(false),1200);
+    }catch{}
+  }
+
+  function completeServing(){
+    const serving=orders.filter(o=>o.status==="serving");
+    serving.forEach(o=>updateOrderStatus(o.id,"completed"));
+    setOrders(loadOrders());
+  }
+
+  return <div className="deskDashboard">
+    <section className="deskKpis">
+      <div><span>エリア</span><strong>{area}</strong></div>
+      <div><span>本日出勤</span><strong>{workingCasts.length}人</strong></div>
+      <div><span>待機</span><strong>{waitingCount}人</strong></div>
+      <div><span>稼働中</span><strong>{activeOrders.length}件</strong></div>
+      <div><span>売上</span><strong>{formatYen(todaySales)}</strong></div>
     </section>
 
-    <section className="dispatchPanel">
-      <div className="dispatchPanelTop">
-        <div><strong>本日の稼働状況</strong><span>19:00 〜 翌5:00</span></div>
+    <div className="deskColumns">
+      <aside className="deskLeft">
+        <section className="deskPanel">
+          <h2>エリア・日付</h2>
+          <div className="fieldLabel">エリア</div>
+          <div className="areaGrid">
+            {areas.map(item=><button key={item} className={area===item?"active":""} onClick={()=>setArea(item)}>{item}</button>)}
+          </div>
+          <div className="fieldLabel">日付</div>
+          <input type="date" value={date} onChange={e=>setDate(e.target.value)}/>
+          <div className="dateButtons">
+            <button onClick={()=>shiftDate(-1)}>前日</button>
+            <button onClick={()=>setDate(dateInputValue(new Date()))}>今日</button>
+            <button onClick={()=>shiftDate(1)}>翌日</button>
+          </div>
+        </section>
+
+        <section className="deskPanel">
+          <div className="panelTitleRow">
+            <h2>出勤者登録（キャスト）</h2>
+            <Link href="/casts">編集</Link>
+          </div>
+          <div className="compactSearch">キャスト検索</div>
+          <input placeholder="クリックで一覧・入力で検索"/>
+          <div className="castMiniList">
+            {workingCasts.map(cast=><div key={cast.id}>
+              <span className={`castStateDot ${cast.status}`}/>
+              <div><strong>{cast.name}</strong><small>{cast.shiftStart??"--:--"} / 上り {cast.shiftEnd??"--:--"}</small></div>
+              <em>{statusLabels[cast.status]}</em>
+            </div>)}
+            {workingCasts.length===0 && <p>本日の出勤者はいません</p>}
+          </div>
+          <Link className="deskAction green" href="/casts">出勤登録を開く</Link>
+        </section>
+
+        <section className="deskPanel">
+          <h2>出勤者登録（ドライバー）</h2>
+          <div className="driverMiniList">
+            {drivers.map(driver=><div key={driver.id}><strong>{driver.name}</strong><span>稼働中</span></div>)}
+          </div>
+          <button className="deskAction blue">ドライバー登録</button>
+        </section>
+
+        <section className="deskPanel">
+          <h2>ボード拡大・縮小</h2>
+          <div className="zoomControls">
+            <button onClick={()=>setZoom(z=>Math.max(70,z-10))}>−</button>
+            <strong>{zoom}%</strong>
+            <button onClick={()=>setZoom(z=>Math.min(140,z+10))}>＋</button>
+            <button onClick={()=>setZoom(100)}>100%に戻す</button>
+          </div>
+        </section>
+      </aside>
+
+      <main className="deskCenter">
+        <section className="deskPanel workRegister">
+          <h2>仕事登録</h2>
+          <div className="pasteHint">▶ LINE文章を貼り付けて仕事情報を入力する想定</div>
+          <form onSubmit={registerOrder}>
+            <div className="workGrid two">
+              <label>ドライバー
+                <select value={driverId} onChange={e=>setDriverId(e.target.value)}>
+                  {drivers.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </label>
+              <label>キャスト
+                <select value={castId} onChange={e=>setCastId(e.target.value)} disabled={!selectableCasts.length}>
+                  {selectableCasts.map(c=><option key={c.id} value={c.id}>{c.name} / {statusLabels[c.status]}</option>)}
+                </select>
+              </label>
+            </div>
+
+            <div className="workGrid two">
+              <label>店舗
+                <select defaultValue="DEMO STORE"><option>DEMO STORE</option><option>店舗A</option><option>店舗B</option></select>
+              </label>
+              <label>指名区分
+                <select value={nominationType} onChange={e=>setNominationType(e.target.value as typeof nominationType)}>
+                  <option value="free">フリー</option><option value="photo">写真指名</option><option value="repeat">本指名</option>
+                </select>
+              </label>
+            </div>
+
+            <label>料金コース
+              <div className="courseChips">
+                {courses.map(c=><button key={c.id} type="button" className={courseId===c.id?"active":""} onClick={()=>setCourseId(c.id)}>{c.minutes}分</button>)}
+              </div>
+            </label>
+
+            <div className="workGrid two">
+              <label>ホテル名
+                <input value={locationName} onChange={e=>setLocationName(e.target.value)} placeholder="例：ホテル名"/>
+              </label>
+              <label>部屋番号
+                <input value={room} onChange={e=>setRoom(e.target.value)} placeholder="例：501"/>
+              </label>
+            </div>
+
+            <div className="workGrid three">
+              <label>交通費<input type="number" value={travelFee} onChange={e=>setTravelFee(Number(e.target.value))}/></label>
+              <label>割引<input type="number" value={discount} onChange={e=>setDiscount(Number(e.target.value))}/></label>
+              <label>OP合計<input type="number" value={optionsTotal} onChange={e=>setOptionsTotal(Number(e.target.value))}/></label>
+            </div>
+
+            <div className="workGrid two">
+              <label>開始時間<input type="time" value={scheduledStart} onChange={e=>setScheduledStart(e.target.value)}/></label>
+              <label>お客様電話番号<input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="090-1234-5678"/></label>
+            </div>
+
+            <label>備考
+              <textarea rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="入館方法・注意事項・引継ぎなど"/>
+            </label>
+
+            <div className="workFooter">
+              <div><small>自動計算</small><strong>{formatYen(total)}</strong></div>
+              <div className="workButtons">
+                <button className="registerBtn" type="submit" disabled={!selectedCast}>仕事を入れる</button>
+                <Link href="/orders/new">詳細入力</Link>
+                <button type="button" onClick={copyPreview}>LINEコピー</button>
+                <button type="reset">クリア</button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <section className="deskPanel reservationSearch">
+          <h2>予約番号検索</h2>
+          <div><input placeholder="電話番号を入力"/><button>検索</button><button>解除</button></div>
+        </section>
+      </main>
+
+      <aside className="deskRight">
+        <section className="deskPanel previewPanel">
+          <div className="panelTitleRow">
+            <h2>LINE送信プレビュー</h2>
+            <button onClick={copyPreview}>{copied?"コピー済み":"プレビューをコピー"}</button>
+          </div>
+          <pre>{linePreview}</pre>
+        </section>
+
+        <section className="deskPanel">
+          <div className="panelTitleRow">
+            <h2>本日の予約一覧</h2>
+            <span>{orders.length}件</span>
+          </div>
+          <div className="todayOrders">
+            {orders.slice(0,7).map(order=><Link href="/orders" key={order.id}>
+              <div><strong>{order.scheduledStart}</strong><span>{order.castName}</span></div>
+              <small>{order.locationName || "場所未入力"} / {orderStatusLabels[order.status]}</small>
+            </Link>)}
+            {!orders.length && <p>本日の予約はありません</p>}
+          </div>
+        </section>
+
+        <section className="deskPanel boardOps">
+          <h2>ボード操作</h2>
+          <button>前日の出勤者をコピー</button>
+          <button>翌日に出勤者をコピー</button>
+          <Link href="/casts">出勤時間を並び替え</Link>
+          <Link href="/orders">接客・送迎・予約順</Link>
+          <button onClick={completeServing}>接客中を全て完了</button>
+          <Link className="salesUpdate" href="/orders">売上・履歴に更新</Link>
+        </section>
+      </aside>
+    </div>
+
+    <section className="boardSection">
+      <div className="boardSectionHead">
+        <div><h2>配車ボード</h2><span>{area} / {date}</span></div>
         <div className="boardLegend">
           <span><i className="legend accepted"/>受付済</span>
           <span><i className="legend dispatching"/>配車中</span>
           <span><i className="legend serving"/>接客中</span>
         </div>
       </div>
-
-      <div className="dispatchScroll">
-        <div className="dispatchBoard">
+      <div className="dispatchScroll boardZoomWrap">
+        <div className="dispatchBoard wideBoard" style={{width:`${zoom}%`}}>
           <div className="dispatchHeader dispatchNameHead">キャスト</div>
-          <div className="dispatchHeader dispatchShiftHead">出勤 / 上り</div>
+          <div className="dispatchHeader dispatchShiftHead">出勤 / 受付 / 上り</div>
           <div className="dispatchHeader dispatchCountHead">本数</div>
-          <div className="timelineHeader">{hourLabels.map(hour=><div key={hour}>{hour}</div>)}</div>
+          <div className="timelineHeader longTimeline">{hourLabels.map(hour=><div key={hour}>{hour}</div>)}</div>
 
           <div className="dispatchName holdCell"><strong>保留・フリー予約</strong></div>
           <div className="dispatchShift holdCell"><span>未割当</span></div>
           <div className="dispatchCount holdCell"><strong>0</strong><span>本</span></div>
           <div className="timelineCell holdTimeline">
-            <span className="holdHint">キャスト未確定の予約はここに表示</span>
+            <span className="holdHint">未割当の予約表示エリア</span>
             {nowPosition && <span className="nowLine" style={{left:nowPosition}}><b>現在</b></span>}
           </div>
-
-          {workingCasts.length===0 && <>
-            <div className="dispatchName noCastCell"><strong>出勤者なし</strong></div>
-            <div className="dispatchShift noCastCell"><span>キャスト管理から登録</span></div>
-            <div className="dispatchCount noCastCell"><strong>0</strong><span>人</span></div>
-            <div className="timelineCell noCastTimeline"><Link href="/casts">本日の出勤を登録する →</Link></div>
-          </>}
 
           {workingCasts.map(cast=>{
             const castOrders = orders.filter(o=>o.castId===cast.id && o.status!=="cancelled");
@@ -137,16 +408,16 @@ export default function DashboardPage(){
                 <span>上り <b>{cast.shiftEnd ?? "--:--"}</b></span>
               </div>
               <div className="dispatchCount"><strong>{castOrders.length}</strong><span>本</span></div>
-              <div className="timelineCell">
+              <div className="timelineCell longCell">
                 {visibleOrders.map(order=>{
                   const pos = eventPosition(order)!;
                   return <Link key={order.id} href="/orders" className={`timelineOrder timelineOrder-${order.status}`} style={pos}>
                     <strong>{order.scheduledStart}〜{order.scheduledEnd}</strong>
-                    <span>{order.locationName || "場所未入力"}{order.room ? ` ${order.room}` : ""}</span>
-                    <small>{orderStatusLabels[order.status]} ・ {order.driverName ?? "配車未割当"}</small>
+                    <span>{order.castName}</span>
+                    <small>{order.locationName || "場所未入力"} / {order.driverName ?? "配車未割当"}</small>
                   </Link>
                 })}
-                {visibleOrders.length===0 && <span className="emptyTimeline">空き</span>}
+                {!visibleOrders.length && <span className="emptyTimeline">空き</span>}
                 {nowPosition && <span className="nowLine" style={{left:nowPosition}}><b>現在</b></span>}
               </div>
             </div>
