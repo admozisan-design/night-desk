@@ -1,13 +1,9 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { casts as defaultCasts } from "@/lib/mock-data";
 import { loadCasts, saveCasts } from "@/lib/storage";
-import type { Cast, CastStatus } from "@/lib/types";
-
-const statusLabels:Record<CastStatus,string> = {
-  waiting:"待機", moving:"移動中", serving:"接客中", off:"退勤"
-};
+import type { Cast } from "@/lib/types";
 
 const optionChoices = ["オプションA","オプションB","オプションC","オプションD"];
 
@@ -19,9 +15,10 @@ export default function CastsPage(){
   const [casts,setCasts] = useState<Cast[]>(
     defaultCasts.map(c=>({
       ...c,
-      scheduledToday:true,
       visible:true,
-      unitPrice:c.unitPrice??0,
+      freeUnitPrice:c.freeUnitPrice??c.unitPrice??0,
+      photoUnitPrice:c.photoUnitPrice??c.unitPrice??0,
+      repeatUnitPrice:c.repeatUnitPrice??c.unitPrice??0,
       ngDetails:c.ngDetails??"",
       availableOptions:c.availableOptions??[],
       notes:c.notes??""
@@ -30,9 +27,6 @@ export default function CastsPage(){
   const [saved,setSaved] = useState(false);
 
   useEffect(()=>setCasts(loadCasts(defaultCasts)),[]);
-
-  const todayCount = useMemo(()=>casts.filter(c=>c.visible!==false && c.scheduledToday!==false).length,[casts]);
-  const waitingCount = useMemo(()=>casts.filter(c=>c.visible!==false && c.scheduledToday!==false && c.status==="waiting").length,[casts]);
 
   function commit(next:Cast[]){
     setCasts(next);
@@ -62,15 +56,17 @@ export default function CastsPage(){
     const next:Cast[]=[...casts,{
       id:crypto.randomUUID(),
       name,
-      status:"waiting",
-      shiftStart:String(fd.get("shiftStart")||"18:00"),
-      shiftEnd:String(fd.get("shiftEnd")||"04:00"),
-      unitPrice:Number(fd.get("unitPrice")||0),
+      status:"off",
+      shiftStart:"18:00",
+      shiftEnd:"04:00",
+      scheduledToday:false,
+      visible:true,
+      freeUnitPrice:Number(fd.get("freeUnitPrice")||0),
+      photoUnitPrice:Number(fd.get("photoUnitPrice")||0),
+      repeatUnitPrice:Number(fd.get("repeatUnitPrice")||0),
       ngDetails:"",
       availableOptions:[],
-      notes:"",
-      scheduledToday:true,
-      visible:true
+      notes:""
     }];
     commit(next);
     e.currentTarget.reset();
@@ -81,85 +77,90 @@ export default function CastsPage(){
       <div>
         <p className="eyebrow">CAST MANAGEMENT</p>
         <h1>キャスト登録</h1>
-        <p>出勤情報だけでなく、受付時に必要な単価・NG・可能オプション・備考までキャストごとに管理します。</p>
+        <p>キャストごとの単価、NG内容、可能オプション、備考を管理します。</p>
       </div>
       {saved && <span className="saveToast">保存しました</span>}
     </header>
 
     <section className="castSummary">
-      <div><span>登録</span><strong>{casts.filter(c=>c.visible!==false).length}</strong><small>人</small></div>
-      <div><span>本日出勤</span><strong>{todayCount}</strong><small>人</small></div>
-      <div><span>待機</span><strong>{waitingCount}</strong><small>人</small></div>
+      <div><span>登録</span><strong>{casts.length}</strong><small>人</small></div>
+      <div><span>表示中</span><strong>{casts.filter(c=>c.visible!==false).length}</strong><small>人</small></div>
     </section>
 
-    <section className="panel addCastPanel">
+    <section className="panel addCastPanel castMasterAddPanel">
       <div>
         <p className="eyebrow">ADD CAST</p>
         <h2>キャスト追加</h2>
       </div>
-      <form onSubmit={addCast} className="addCastForm addCastFormWide">
-        <label>源氏名<input name="name" required placeholder="例：サンプルE"/></label>
-        <label>単価<input name="unitPrice" type="number" min="0" step="500" defaultValue="5000"/></label>
-        <label>出勤<input name="shiftStart" type="time" defaultValue="18:00"/></label>
-        <label>上り<input name="shiftEnd" type="time" defaultValue="04:00"/></label>
+      <form onSubmit={addCast} className="addCastForm addCastMasterForm">
+        <label>源氏名
+          <input name="name" required placeholder="例：サンプルE"/>
+        </label>
+        <label>フリー単価
+          <input name="freeUnitPrice" type="number" min="0" step="500" defaultValue="5000"/>
+        </label>
+        <label>写真指名単価
+          <input name="photoUnitPrice" type="number" min="0" step="500" defaultValue="6000"/>
+        </label>
+        <label>本指名単価
+          <input name="repeatUnitPrice" type="number" min="0" step="500" defaultValue="7000"/>
+        </label>
         <button className="primaryButton" type="submit">＋ 追加</button>
       </form>
     </section>
 
     <section className="castList">
       {casts.map(cast=><article key={cast.id} className={`castManageCard castProfileCard ${cast.visible===false?"isHidden":""}`}>
-        <div className="castManageMain">
+        <div className="castManageMain castMasterHeader">
           <div className="castNameEdit">
-            <span className={`castStateDot ${cast.status}`}/>
             <input value={cast.name} onChange={e=>patch(cast.id,{name:e.target.value})}/>
           </div>
 
-          <div className="castPriceBox">
-            <small>単価</small>
-            <strong>{formatPrice(cast.unitPrice??0)}円</strong>
+          <div className="castPriceSummary">
+            <div><small>フリー</small><strong>{formatPrice(cast.freeUnitPrice??0)}円</strong></div>
+            <div><small>写真指名</small><strong>{formatPrice(cast.photoUnitPrice??0)}円</strong></div>
+            <div><small>本指名</small><strong>{formatPrice(cast.repeatUnitPrice??0)}円</strong></div>
           </div>
 
-          <div className="castFlags">
-            <label className="switchLabel">
-              <input type="checkbox" checked={cast.scheduledToday!==false} onChange={e=>patch(cast.id,{scheduledToday:e.target.checked})}/>
-              <span>本日出勤</span>
-            </label>
-            <label className="switchLabel">
-              <input type="checkbox" checked={cast.visible!==false} onChange={e=>patch(cast.id,{visible:e.target.checked})}/>
-              <span>表示</span>
-            </label>
-          </div>
+          <label className="switchLabel castVisibleSwitch">
+            <input type="checkbox" checked={cast.visible!==false} onChange={e=>patch(cast.id,{visible:e.target.checked})}/>
+            <span>表示</span>
+          </label>
         </div>
 
-        <div className="castEditGrid castBasicGrid">
-          <label>単価
-            <input
-              type="number"
-              min="0"
-              step="500"
-              value={cast.unitPrice??0}
-              onChange={e=>patch(cast.id,{unitPrice:Number(e.target.value)})}
-            />
-          </label>
-          <label>出勤
-            <input type="time" value={cast.shiftStart??"18:00"} onChange={e=>patch(cast.id,{shiftStart:e.target.value})}/>
-          </label>
-          <label>上り
-            <input type="time" value={cast.shiftEnd??"04:00"} onChange={e=>patch(cast.id,{shiftEnd:e.target.value})}/>
-          </label>
-          <label>現在の状態
-            <select value={cast.status} onChange={e=>patch(cast.id,{status:e.target.value as CastStatus})}>
-              {Object.entries(statusLabels).map(([value,label])=><option key={value} value={value}>{label}</option>)}
-            </select>
-          </label>
-          <div className="castQuickActions">
-            <span>クイック変更</span>
-            <div>
-              <button type="button" onClick={()=>patch(cast.id,{status:"waiting"})}>待機</button>
-              <button type="button" onClick={()=>patch(cast.id,{status:"moving"})}>移動</button>
-              <button type="button" onClick={()=>patch(cast.id,{status:"serving"})}>接客</button>
-              <button type="button" onClick={()=>patch(cast.id,{status:"off"})}>退勤</button>
-            </div>
+        <div className="castRateSection">
+          <div className="castOperationalHeading">
+            <strong>単価設定</strong>
+            <span>指名区分ごとの単価</span>
+          </div>
+          <div className="castRateGrid">
+            <label>フリー
+              <input
+                type="number"
+                min="0"
+                step="500"
+                value={cast.freeUnitPrice??0}
+                onChange={e=>patch(cast.id,{freeUnitPrice:Number(e.target.value)})}
+              />
+            </label>
+            <label>写真指名
+              <input
+                type="number"
+                min="0"
+                step="500"
+                value={cast.photoUnitPrice??0}
+                onChange={e=>patch(cast.id,{photoUnitPrice:Number(e.target.value)})}
+              />
+            </label>
+            <label>本指名
+              <input
+                type="number"
+                min="0"
+                step="500"
+                value={cast.repeatUnitPrice??0}
+                onChange={e=>patch(cast.id,{repeatUnitPrice:Number(e.target.value)})}
+              />
+            </label>
           </div>
         </div>
 
@@ -201,7 +202,7 @@ export default function CastsPage(){
                 rows={4}
                 value={cast.notes??""}
                 onChange={e=>patch(cast.id,{notes:e.target.value})}
-                placeholder="受付・配車時に共有したい内容"
+                placeholder="受付時に共有したい内容"
               />
             </label>
           </div>
