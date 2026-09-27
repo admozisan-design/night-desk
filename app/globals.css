@@ -544,3 +544,10 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .castManageMain{align-items:stretch!important}
   .castPriceBox{margin-left:0;text-align:left}
 }
+
+
+.selectedCastInfo{display:grid;grid-template-columns:120px minmax(180px,1fr) minmax(180px,1fr) minmax(180px,1fr);gap:7px;padding:9px;border:1px solid #dce3e8;border-radius:7px;background:#f8fafb}
+.selectedCastInfo>div{min-width:0;padding:7px 8px;border-right:1px solid #e3e8ec}.selectedCastInfo>div:last-child{border-right:0}
+.selectedCastInfo span,.selectedCastInfo strong{display:block}.selectedCastInfo span{font-size:9px;color:#87919b;margin-bottom:3px}.selectedCastInfo strong{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:1000px){.selectedCastInfo{grid-template-columns:1fr 1fr}.selectedCastInfo>div{border-right:0}}
+@media(max-width:600px){.selectedCastInfo{grid-template-columns:1fr}}
