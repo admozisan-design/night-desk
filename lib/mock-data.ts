@@ -3,19 +3,23 @@ import type { Cast, Course, Driver } from "./types";
 export const casts: Cast[] = [
   {
     id:"c1", name:"サンプルA", status:"waiting", shiftStart:"12:00", shiftEnd:"20:00",
-    unitPrice:5000, ngDetails:"サンプルNG内容", availableOptions:["オプションA","オプションC"], notes:"サンプル備考"
+    freeUnitPrice:5000, photoUnitPrice:6000, repeatUnitPrice:7000,
+    ngDetails:"サンプルNG内容", availableOptions:["オプションA","オプションC"], notes:"サンプル備考"
   },
   {
     id:"c2", name:"サンプルB", status:"serving", availableAt:"15:30", shiftStart:"14:00", shiftEnd:"22:00",
-    unitPrice:6000, ngDetails:"特になし", availableOptions:["オプションA","オプションB"], notes:"受付時に確認事項あり"
+    freeUnitPrice:5500, photoUnitPrice:6500, repeatUnitPrice:7500,
+    ngDetails:"特になし", availableOptions:["オプションA","オプションB"], notes:"受付時に確認事項あり"
   },
   {
     id:"c3", name:"サンプルC", status:"moving", availableAt:"18:00", shiftStart:"17:00", shiftEnd:"01:00",
-    unitPrice:5500, ngDetails:"サンプルNG", availableOptions:["オプションB"], notes:"サンプル備考"
+    freeUnitPrice:6000, photoUnitPrice:7000, repeatUnitPrice:8000,
+    ngDetails:"サンプルNG", availableOptions:["オプションB"], notes:"サンプル備考"
   },
   {
     id:"c4", name:"サンプルD", status:"waiting", shiftStart:"20:00", shiftEnd:"04:00",
-    unitPrice:7000, ngDetails:"特になし", availableOptions:["オプションA","オプションB","オプションC"], notes:""
+    freeUnitPrice:6500, photoUnitPrice:7500, repeatUnitPrice:8500,
+    ngDetails:"特になし", availableOptions:["オプションA","オプションB","オプションC"], notes:""
   },
 ];
 
