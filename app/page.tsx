@@ -13,7 +13,7 @@ const hourLabels = [
   "10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00",
   "19:00","20:00","21:00","22:00","23:00","0:00","1:00","2:00","3:00","4:00"
 ];
-const areas = ["北見","帯広","釧路","苫小牧","函館","札幌"];
+const areas = ["エリアA","エリアB","エリアC","エリアD","エリアE","エリアF"];
 
 const statusLabels: Record<CastStatus,string> = {
   waiting:"待機", moving:"移動中", serving:"接客中", off:"退勤"
@@ -59,7 +59,7 @@ export default function DashboardPage(){
   const [orders,setOrders] = useState<Order[]>([]);
   const [castList,setCastList] = useState<Cast[]>(defaultCasts);
   const [now,setNow] = useState<Date|null>(null);
-  const [area,setArea] = useState("札幌");
+  const [area,setArea] = useState("エリアA");
   const [date,setDate] = useState(()=>dateInputValue(new Date()));
   const [zoom,setZoom] = useState(100);
 
@@ -67,11 +67,11 @@ export default function DashboardPage(){
   const [driverId,setDriverId] = useState(drivers[0]?.id ?? "");
   const [courseId,setCourseId] = useState("60");
   const [nominationType,setNominationType] = useState<"free"|"photo"|"repeat">("free");
-  const [scheduledStart,setScheduledStart] = useState("19:00");
-  const [locationName,setLocationName] = useState("");
-  const [room,setRoom] = useState("");
-  const [phone,setPhone] = useState("");
-  const [note,setNote] = useState("");
+  const [scheduledStart,setScheduledStart] = useState("13:30");
+  const [locationName,setLocationName] = useState("サンプルホテル");
+  const [room,setRoom] = useState("101");
+  const [phone,setPhone] = useState("090-0000-0000");
+  const [note,setNote] = useState("サンプル備考");
   const [travelFee,setTravelFee] = useState(pricingSettings.defaultTravelFee);
   const [discount,setDiscount] = useState(0);
   const [optionsTotal,setOptionsTotal] = useState(0);
@@ -174,10 +174,10 @@ export default function DashboardPage(){
     };
     saveOrder(order);
     setOrders(loadOrders());
-    setLocationName("");
-    setRoom("");
-    setPhone("");
-    setNote("");
+    setLocationName("サンプルホテル");
+    setRoom("101");
+    setPhone("090-0000-0000");
+    setNote("サンプル備考");
     setOptionsTotal(0);
     setDiscount(0);
   }
@@ -279,7 +279,7 @@ export default function DashboardPage(){
 
             <div className="workGrid two">
               <label>店舗
-                <select defaultValue="DEMO STORE"><option>DEMO STORE</option><option>店舗A</option><option>店舗B</option></select>
+                <select defaultValue="サンプル店舗A"><option>サンプル店舗A</option><option>サンプル店舗B</option><option>サンプル店舗C</option></select>
               </label>
               <label>指名区分
                 <select value={nominationType} onChange={e=>setNominationType(e.target.value as typeof nominationType)}>
@@ -296,10 +296,10 @@ export default function DashboardPage(){
 
             <div className="workGrid two">
               <label>ホテル名
-                <input value={locationName} onChange={e=>setLocationName(e.target.value)} placeholder="例：ホテル名"/>
+                <input value={locationName} onChange={e=>setLocationName(e.target.value)} placeholder="例：サンプルホテル"/>
               </label>
               <label>部屋番号
-                <input value={room} onChange={e=>setRoom(e.target.value)} placeholder="例：501"/>
+                <input value={room} onChange={e=>setRoom(e.target.value)} placeholder="例：101"/>
               </label>
             </div>
 
@@ -311,11 +311,11 @@ export default function DashboardPage(){
 
             <div className="workGrid two">
               <label>開始時間<input type="time" value={scheduledStart} onChange={e=>setScheduledStart(e.target.value)}/></label>
-              <label>お客様電話番号<input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="090-1234-5678"/></label>
+              <label>お客様電話番号<input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="090-0000-0000"/></label>
             </div>
 
             <label>備考
-              <textarea rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="入館方法・注意事項・引継ぎなど"/>
+              <textarea rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="サンプル備考を入力"/>
             </label>
 
             <div className="workFooter">
