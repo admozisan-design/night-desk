@@ -1,4 +1,4 @@
-import type { Cast, Course, Driver, Hotel } from "./types";
+import type { Cast, Course, Driver, Hotel, Staff } from "./types";
 
 export const casts: Cast[] = [
   {
@@ -55,4 +55,11 @@ export const hotels: Hotel[] = [
   { id:"h2", name:"サンプルホテルB", area:"エリアA", travelFee:1500, visible:true },
   { id:"h3", name:"サンプルホテルC", area:"エリアB", travelFee:2000, visible:true },
   { id:"h4", name:"サンプルホテルD", area:"エリアC", travelFee:2500, visible:true },
+];
+
+
+export const staff: Staff[] = [
+  { id:"s1", name:"スタッフA", displayName:"フロントA", loginId:"staff-a", shop:"サンプル店舗A", area:"エリアA", notes:"サンプル備考", active:true },
+  { id:"s2", name:"スタッフB", displayName:"フロントB", loginId:"staff-b", shop:"サンプル店舗A", area:"エリアB", notes:"", active:true },
+  { id:"s3", name:"スタッフC", displayName:"フロントC", loginId:"staff-c", shop:"サンプル店舗B", area:"エリアA", notes:"夜帯メイン", active:true },
 ];
