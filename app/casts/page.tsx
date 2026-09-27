@@ -1,11 +1,9 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useEffect, useState } from "react";
-import { casts as defaultCasts } from "@/lib/mock-data";
-import { loadCasts, saveCasts } from "@/lib/storage";
-import type { Cast } from "@/lib/types";
-
-const optionChoices = ["オプションA","オプションB","オプションC","オプションD"];
+import { casts as defaultCasts, options as defaultOptions } from "@/lib/mock-data";
+import { loadCasts, loadOptions, saveCasts } from "@/lib/storage";
+import type { Cast, StoreOption } from "@/lib/types";
 
 function cloneCast(cast:Cast):Cast{
   return {
@@ -35,6 +33,7 @@ export default function CastsPage(){
       cupSize:c.cupSize??""
     }))
   );
+  const [optionList,setOptionList] = useState<StoreOption[]>(defaultOptions);
   const [editing,setEditing] = useState<Record<string,boolean>>({});
   const [drafts,setDrafts] = useState<Record<string,Cast>>({});
   const [ngDrafts,setNgDrafts] = useState<Record<string,string>>({});
@@ -44,7 +43,17 @@ export default function CastsPage(){
   const [newNgItems,setNewNgItems] = useState<string[]>([]);
   const [newOptions,setNewOptions] = useState<string[]>([]);
 
-  useEffect(()=>setCasts(loadCasts(defaultCasts)),[]);
+  useEffect(()=>{
+    const refresh=()=>{
+      setCasts(loadCasts(defaultCasts));
+      setOptionList(loadOptions(defaultOptions));
+    };
+    refresh();
+    window.addEventListener("nightdesk:options",refresh);
+    return ()=>window.removeEventListener("nightdesk:options",refresh);
+  },[]);
+
+  const optionChoices=optionList.filter(option=>option.active!==false).map(option=>option.name);
 
   function commit(next:Cast[]){
     setCasts(next);
