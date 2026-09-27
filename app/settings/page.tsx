@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 const masterItems = [
-  { title:"キャスト登録", description:"在籍キャスト、源氏名、出勤、表示状態を管理", href:"/casts", action:"管理する" },
+  { title:"キャスト登録", description:"キャスト情報、単価、スペック、NG、可能OPを管理", href:"/casts", action:"管理する" },
   { title:"スタッフ登録", description:"フロントスタッフのアカウント・所属店舗を管理", href:"#staff", action:"準備中" },
   { title:"ドライバー登録", description:"送迎ドライバー、稼働状態、担当エリアを管理", href:"#drivers", action:"準備中" },
   { title:"店舗登録", description:"店舗名、営業時間、電話番号、所属エリアを管理", href:"#shops", action:"準備中" },
   { title:"エリア登録", description:"営業エリアと店舗・ホテルの紐付けを管理", href:"#areas", action:"準備中" },
-  { title:"ホテル登録", description:"ホテル名、住所、交通費、入館メモを管理", href:"#hotels", action:"準備中" },
+  { title:"ホテル登録", description:"ホテル名、エリア、交通費を管理", href:"/hotels", action:"管理する" },
 ];
 
 const operationItems = [
