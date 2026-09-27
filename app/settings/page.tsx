@@ -8,15 +8,15 @@ const masterItems = [
 ];
 
 const operationItems = [
-  { title:"顧客管理", description:"電話番号、利用履歴、注意事項、NG情報を確認", href:"#customers", action:"準備中" },
-  { title:"売上管理", description:"日別・キャスト別の売上と本数を集計", href:"#sales", action:"準備中" },
-  { title:"料金登録", description:"コース料金、指名料、交通費、延長料金を設定", href:"#pricing", action:"準備中" },
+  { title:"顧客管理", description:"電話番号、利用履歴、注意事項、NG情報を確認", href:"/customers", action:"管理する" },
+  { title:"売上管理", description:"日別・キャスト別の売上と本数を集計", href:"/sales", action:"管理する" },
+  { title:"料金登録", description:"コース料金、指名料、交通費、延長料金を設定", href:"/pricing", action:"管理する" },
   { title:"オプション管理", description:"オプション名、料金、有効状態を管理", href:"/options", action:"管理する" },
 ];
 
 const systemItems = [
-  { title:"スタッフ権限", description:"閲覧・受付・売上・設定変更などの権限を管理", href:"#permissions", action:"準備中" },
-  { title:"操作履歴", description:"誰がいつ何を変更したかを確認", href:"#logs", action:"準備中" },
+  { title:"スタッフ権限", description:"閲覧・受付・売上・設定変更などの権限を管理", href:"/permissions", action:"管理する" },
+  { title:"操作履歴", description:"誰がいつ何を変更したかを確認", href:"/logs", action:"管理する" },
 ];
 
 function SettingsCard({item}:{item:{title:string;description:string;href:string;action:string}}){
