@@ -219,10 +219,18 @@ export default function DashboardPage(){
               </label>
             </div>
 
-            {selectedCast && <div className="selectedCastInfo">
+            {selectedCast && <div className="selectedCastInfo selectedCastInfoWide">
               <div>
-                <span>単価</span>
-                <strong>{new Intl.NumberFormat("ja-JP").format(selectedCast.unitPrice??0)}円</strong>
+                <span>フリー単価</span>
+                <strong>{new Intl.NumberFormat("ja-JP").format(selectedCast.freeUnitPrice??0)}円</strong>
+              </div>
+              <div>
+                <span>写真指名単価</span>
+                <strong>{new Intl.NumberFormat("ja-JP").format(selectedCast.photoUnitPrice??0)}円</strong>
+              </div>
+              <div>
+                <span>本指名単価</span>
+                <strong>{new Intl.NumberFormat("ja-JP").format(selectedCast.repeatUnitPrice??0)}円</strong>
               </div>
               <div>
                 <span>NG内容</span>
