@@ -61,7 +61,6 @@ export default function DashboardPage(){
   const [now,setNow] = useState<Date|null>(null);
   const [area,setArea] = useState("エリアA");
   const [date,setDate] = useState(()=>dateInputValue(new Date()));
-  const [zoom,setZoom] = useState(120);
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(drivers[0]?.id ?? "");
@@ -215,16 +214,6 @@ export default function DashboardPage(){
             <button onClick={()=>shiftDate(1)}>翌日</button>
           </div>
         </section>
-
-        <section className="deskPanel">
-          <h2>ボード拡大・縮小</h2>
-          <div className="zoomControls">
-            <button onClick={()=>setZoom(z=>Math.max(70,z-10))}>−</button>
-            <strong>{zoom}%</strong>
-            <button onClick={()=>setZoom(z=>Math.min(140,z+10))}>＋</button>
-            <button onClick={()=>setZoom(100)}>100%に戻す</button>
-          </div>
-        </section>
       </aside>
 
       <main className="deskCenter">
@@ -333,7 +322,7 @@ export default function DashboardPage(){
         </div>
       </div>
       <div className="dispatchScroll boardZoomWrap">
-        <div className="dispatchBoard wideBoard" style={{width:`${zoom}%`}}>
+        <div className="dispatchBoard wideBoard">
           <div className="dispatchHeader dispatchNameHead">キャスト</div>
           <div className="dispatchHeader dispatchShiftHead">出勤 / 受付 / 上り</div>
           <div className="dispatchHeader dispatchCountHead">本数</div>
