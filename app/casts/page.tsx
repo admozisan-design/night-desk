@@ -34,7 +34,7 @@ export default function CastsPage(){
     }))
   );
   const [optionList,setOptionList] = useState<StoreOption[]>(defaultOptions);
-  const [editing,setEditing] = useState<Record<string,boolean>>({});
+  const [isEditing,setIsEditing] = useState(false);
   const [drafts,setDrafts] = useState<Record<string,Cast>>({});
   const [ngDrafts,setNgDrafts] = useState<Record<string,string>>({});
   const [saved,setSaved] = useState(false);
@@ -62,9 +62,9 @@ export default function CastsPage(){
     window.setTimeout(()=>setSaved(false),1200);
   }
 
-  function startEdit(cast:Cast){
-    setDrafts(prev=>({...prev,[cast.id]:cloneCast(cast)}));
-    setEditing(prev=>({...prev,[cast.id]:true}));
+  function startEdit(){
+    setDrafts(Object.fromEntries(casts.map(cast=>[cast.id,cloneCast(cast)])));
+    setIsEditing(true);
   }
 
   function updateDraft(id:string,changes:Partial<Cast>){
@@ -74,21 +74,16 @@ export default function CastsPage(){
     });
   }
 
-  function saveCard(id:string){
-    const draft=drafts[id];
-    if(!draft) return;
-    commit(casts.map(c=>c.id===id?cloneCast(draft):c));
-    setEditing(prev=>({...prev,[id]:false}));
-    setDrafts(prev=>{
-      const next={...prev};
-      delete next[id];
-      return next;
-    });
-    setNgDrafts(prev=>({...prev,[id]:""}));
+  function saveAll(){
+    const next=casts.map(cast=>drafts[cast.id]?cloneCast(drafts[cast.id]):cast);
+    commit(next);
+    setIsEditing(false);
+    setDrafts({});
+    setNgDrafts({});
   }
 
   function toggleOption(cast:Cast, option:string){
-    if(!editing[cast.id]) return;
+    if(!isEditing) return;
     const current = cast.availableOptions ?? [];
     const next = current.includes(option)
       ? current.filter(item=>item!==option)
@@ -97,7 +92,7 @@ export default function CastsPage(){
   }
 
   function addNg(cast:Cast){
-    if(!editing[cast.id]) return;
+    if(!isEditing) return;
     const value=(ngDrafts[cast.id]??"").trim();
     if(!value) return;
     const current=cast.ngDetails??[];
@@ -110,7 +105,7 @@ export default function CastsPage(){
   }
 
   function removeNg(cast:Cast, item:string){
-    if(!editing[cast.id]) return;
+    if(!isEditing) return;
     updateDraft(cast.id,{ngDetails:(cast.ngDetails??[]).filter(value=>value!==item)});
   }
 
@@ -186,8 +181,10 @@ export default function CastsPage(){
         <h1>キャスト登録</h1>
         <p>キャストごとの単価、スペック、面接評価、NG内容、可能オプション、備考を管理します。</p>
       </div>
-      <div className="castHeaderActions">
+      <div className="castHeaderActions masterPageActions">
         {saved && <span className="saveToast">保存しました</span>}
+        <button className="masterEditButton" type="button" disabled={isEditing} onClick={startEdit}>編集</button>
+        <button className="masterSaveButton" type="button" disabled={!isEditing} onClick={saveAll}>保存</button>
         <button className="primaryButton castAddTrigger" type="button" onClick={()=>setAddOpen(true)}>＋ キャスト追加</button>
       </div>
     </header>
@@ -199,7 +196,6 @@ export default function CastsPage(){
 
     <section className="castCardGrid">
       {casts.map(cast=>{
-        const isEditing=!!editing[cast.id];
         const current=isEditing ? (drafts[cast.id] ?? cloneCast(cast)) : cast;
 
         return <article key={cast.id} className={`castVerticalCard ${current.visible===false?"isHidden":""} ${isEditing?"isEditing":""}`}>
@@ -220,10 +216,6 @@ export default function CastsPage(){
                 />
                 <span>表示</span>
               </label>
-              <div className="castCardActions">
-                <button type="button" className="castEditButton" disabled={isEditing} onClick={()=>startEdit(cast)}>編集</button>
-                <button type="button" className="castSaveButton" disabled={!isEditing} onClick={()=>saveCard(cast.id)}>保存</button>
-              </div>
             </div>
           </div>
 
