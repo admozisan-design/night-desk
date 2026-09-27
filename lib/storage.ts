@@ -1,7 +1,8 @@
-import type { Cast, Order } from "./types";
+import type { Cast, Hotel, Order } from "./types";
 
 const ORDER_KEY = "night-desk-orders-sample-v02";
 const CAST_KEY = "night-desk-casts-sample-v03";
+const HOTEL_KEY = "night-desk-hotels-sample-v01";
 
 export function loadOrders():Order[] {
   if (typeof window === "undefined") return [];
@@ -64,4 +65,33 @@ export function saveCasts(casts:Cast[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(CAST_KEY, JSON.stringify(casts.map(normalizeCast)));
   window.dispatchEvent(new Event("nightdesk:casts"));
+}
+
+
+function normalizeHotel(hotel:Hotel):Hotel {
+  return {
+    ...hotel,
+    name: hotel.name ?? "",
+    area: hotel.area ?? "エリアA",
+    travelFee: hotel.travelFee ?? 0,
+    visible: hotel.visible ?? true,
+  };
+}
+
+export function loadHotels(defaultHotels:Hotel[]):Hotel[] {
+  if (typeof window === "undefined") return defaultHotels.map(normalizeHotel);
+  try {
+    const raw = localStorage.getItem(HOTEL_KEY);
+    if (!raw) return defaultHotels.map(normalizeHotel);
+    const parsed = JSON.parse(raw) as Hotel[];
+    return parsed.map(normalizeHotel);
+  } catch {
+    return defaultHotels.map(normalizeHotel);
+  }
+}
+
+export function saveHotels(hotels:Hotel[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(HOTEL_KEY, JSON.stringify(hotels.map(normalizeHotel)));
+  window.dispatchEvent(new Event("nightdesk:hotels"));
 }
