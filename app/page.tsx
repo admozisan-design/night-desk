@@ -322,10 +322,26 @@ export default function DashboardPage(){
               </label>
             </div>
 
-            <div className="workGrid three">
+            <div className="orderOptionPicker">
+              <div className="orderOptionPickerHead">
+                <span>オプション</span>
+                <strong>{formatYen(optionsTotal)}</strong>
+              </div>
+              <div className="orderOptionChoices">
+                {selectableOptions.map(option=>{
+                  const checked=selectedOptionIds.includes(option.id);
+                  return <button key={option.id} type="button" className={checked?"active":""} onClick={()=>toggleOrderOption(option.id)}>
+                    <span>{option.name}</span>
+                    <small>{option.price===0?"無料":formatYen(option.price)}</small>
+                  </button>
+                })}
+                {selectedCast && selectableOptions.length===0 && <span className="orderOptionEmpty">対応可能なオプションはありません</span>}
+              </div>
+            </div>
+
+            <div className="workGrid two">
               <label>交通費<input type="number" value={travelFee} onChange={e=>setTravelFee(Number(e.target.value))}/></label>
               <label>割引<input type="number" value={discount} onChange={e=>setDiscount(Number(e.target.value))}/></label>
-              <label>OP合計<input type="number" value={optionsTotal} onChange={e=>setOptionsTotal(Number(e.target.value))}/></label>
             </div>
 
             <div className="workGrid two">
