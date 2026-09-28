@@ -417,7 +417,10 @@ export default function DashboardPage(){
     };
 
     if(editingOrderId){
-      setOrders(updateOrder(editingOrderId,commonChanges));
+      updateOrder(editingOrderId,commonChanges);
+      // 保存後はストレージを正として読み直し、配車ボード上の
+      // 元キャスト行から変更先キャスト行へ即座にオーダーを移動させる。
+      setOrders(loadOrders());
     }else{
       const order:Order = {
         id:crypto.randomUUID(),
