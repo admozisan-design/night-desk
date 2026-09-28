@@ -2114,3 +2114,24 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .timelineOrder.orderVisual-out{
   cursor:pointer;
 }
+
+
+/* ===== Operation guide ===== */
+.operationGuide{margin-top:10px}
+.operationGuide h2{margin-bottom:10px}
+.operationGuideList{display:grid;gap:8px}
+.operationGuideList>div{display:grid;grid-template-columns:12px 1fr;gap:8px;align-items:start;padding-bottom:8px;border-bottom:1px solid #edf0f3}
+.operationGuideList>div:last-child{border-bottom:0;padding-bottom:0}
+.guideDot{width:10px;height:10px;margin-top:4px;border-radius:3px}
+.guideDot.beforeDispatch{background:#8f6faa}
+.guideDot.afterDispatch{background:#d99b2f}
+.guideDot.inService{background:#138477}
+.guideDot.out{background:#8d96a0}
+.operationGuideList p{margin:0;min-width:0}
+.operationGuideList strong,.operationGuideList small{display:block}
+.operationGuideList strong{font-size:11px;color:#33404c}
+.operationGuideList small{margin-top:2px;font-size:9px;line-height:1.45;color:#7c8792}
+.operationGuideTips{display:grid;gap:6px;margin-top:11px;padding-top:10px;border-top:1px solid #e2e7eb}
+.operationGuideTips p{display:grid;grid-template-columns:64px 1fr;gap:7px;margin:0}
+.operationGuideTips strong{font-size:9px;color:#55616d}
+.operationGuideTips span{font-size:9px;line-height:1.45;color:#7c8792}
