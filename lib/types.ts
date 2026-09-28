@@ -59,6 +59,6 @@ export type AuditLog = {
 export type Order = {
   id:string; createdAt:string; customerPhone:string; locationType:"hotel"|"home";
   locationName:string; room?:string; castId:string; castName:string; driverId?:string; driverName?:string;
-  courseMinutes:number; nominationType:"free"|"photo"|"repeat"; selectedOptions?:string[]; optionsTotal:number; travelFee:number;
+  courseId?:string; courseMinutes:number; extensionMinutes?:number; extensionTotal?:number; nominationType:"free"|"photo"|"repeat"; selectedOptions?:string[]; optionsTotal:number; travelFee:number;
   discount:number; adjustment:number; total:number; status:OrderStatus; scheduledStart:string; scheduledEnd:string; inTime?:string; note?:string;
 };
