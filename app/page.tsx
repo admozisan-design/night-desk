@@ -4,8 +4,8 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { deleteOrder, loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadStoreSettings, saveCasts, saveOrder, updateOrder } from "@/lib/storage";
-import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
+import { deleteOrder, loadCasts, loadCustomers, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadStoreSettings, saveCasts, saveOrder, updateOrder } from "@/lib/storage";
+import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
 const BOARD_MINUTES = 19 * 60;
@@ -69,6 +69,13 @@ function dateInputValue(date:Date){
   const m=String(date.getMonth()+1).padStart(2,"0");
   const d=String(date.getDate()).padStart(2,"0");
   return `${y}-${m}-${d}`;
+}
+function normalizePhone(value:string){
+  return value.replace(/\D/g,"");
+}
+function orderServiceDate(order:Order){
+  if(order.serviceDate) return order.serviceDate;
+  return dateInputValue(new Date(order.createdAt));
 }
 function castShiftForDate(cast:Cast,date:string){
   return cast.schedule?.find(shift=>shift.date===date);
@@ -135,6 +142,7 @@ export default function DashboardPage(){
   const [hotelList,setHotelList] = useState<Hotel[]>(defaultHotels);
   const [driverList,setDriverList] = useState<Driver[]>(defaultDrivers);
   const [optionList,setOptionList] = useState<StoreOption[]>(defaultOptions);
+  const [customerList,setCustomerList] = useState<Customer[]>([]);
   const [pricing,setPricing] = useState<PricingConfig>(defaultPricingConfig);
   const [storeSettings,setStoreSettings] = useState(defaultStoreSettings);
   const [now,setNow] = useState<Date|null>(null);
@@ -168,6 +176,7 @@ export default function DashboardPage(){
       setHotelList(loadHotels(defaultHotels));
       setDriverList(loadDrivers(defaultDrivers));
       setOptionList(loadOptions(defaultOptions));
+      setCustomerList(loadCustomers());
       setPricing(loadPricing(defaultPricingConfig));
       setStoreSettings(loadStoreSettings(defaultStoreSettings));
     };
@@ -181,6 +190,7 @@ export default function DashboardPage(){
     window.addEventListener("nightdesk:drivers",refresh);
     window.addEventListener("nightdesk:options",refresh);
     window.addEventListener("nightdesk:pricing",refresh);
+    window.addEventListener("nightdesk:customers",refresh);
     window.addEventListener("nightdesk:store-settings",refresh);
     return ()=>{
       window.clearInterval(timer);
@@ -191,6 +201,7 @@ export default function DashboardPage(){
       window.removeEventListener("nightdesk:drivers",refresh);
       window.removeEventListener("nightdesk:options",refresh);
       window.removeEventListener("nightdesk:pricing",refresh);
+      window.removeEventListener("nightdesk:customers",refresh);
       window.removeEventListener("nightdesk:store-settings",refresh);
     };
   },[]);
@@ -258,6 +269,17 @@ export default function DashboardPage(){
   const course = pricing.courses.find(c=>c.id===courseId);
   const selectedCast = formCastChoices.find(c=>c.id===castId);
   const selectedDriver = availableDrivers.find(d=>d.id===driverId);
+  const phoneKey=normalizePhone(phone);
+  const matchedCustomer=useMemo(()=>{
+    if(phoneKey.length<4) return undefined;
+    return customerList.find(customer=>normalizePhone(customer.phone)===phoneKey);
+  },[customerList,phoneKey]);
+  const customerHistory=useMemo(()=>{
+    if(phoneKey.length<4) return [];
+    return orders
+      .filter(order=>normalizePhone(order.customerPhone??"")===phoneKey && order.status!=="cancelled")
+      .sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+  },[orders,phoneKey]);
   const selectableOptions = useMemo(
     ()=>optionList.filter(option=>option.active!==false && (selectedCast?.availableOptions??[]).includes(option.name)),
     [optionList,selectedCast]
@@ -657,8 +679,60 @@ export default function DashboardPage(){
 
             <div className="workGrid two">
               <label>開始時間<input type="time" value={scheduledStart} onChange={e=>setScheduledStart(e.target.value)}/></label>
-              <label>お客様電話番号<input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="090-0000-0000"/></label>
+              <label className="customerPhoneField">お客様電話番号
+                <div className="customerPhoneInputWrap">
+                  <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="090-0000-0000"/>
+                  {phoneKey.length>=4 && <span className={matchedCustomer?"customerFoundBadge":"customerNewBadge"}>
+                    {matchedCustomer ? "登録顧客" : customerHistory.length ? "履歴あり" : "新規"}
+                  </span>}
+                </div>
+              </label>
             </div>
+
+            {phoneKey.length>=4 && <section className={`customerLookupPanel ${matchedCustomer?.ngInfo || matchedCustomer?.active===false ? "hasWarning" : ""}`}>
+              <div className="customerLookupHead">
+                <div>
+                  <span>顧客情報</span>
+                  <strong>{matchedCustomer?.name || "名前未登録"}</strong>
+                </div>
+                <div className="customerLookupStats">
+                  <span>利用 <strong>{customerHistory.length}回</strong></span>
+                  <span>最終 <strong>{customerHistory[0] ? orderServiceDate(customerHistory[0]) : "—"}</strong></span>
+                </div>
+              </div>
+
+              {(matchedCustomer?.active===false || matchedCustomer?.ngInfo) && <div className="customerNgWarning">
+                <strong>⚠ NG警告</strong>
+                <p>{matchedCustomer?.active===false ? "利用不可設定の顧客です。" : ""}{matchedCustomer?.active===false && matchedCustomer?.ngInfo ? " / " : ""}{matchedCustomer?.ngInfo || ""}</p>
+              </div>}
+
+              <div className="customerLookupNotes">
+                <span>顧客備考</span>
+                <p>{matchedCustomer?.notes || "登録された備考はありません"}</p>
+              </div>
+
+              <div className="customerHistoryBox">
+                <div className="customerHistoryTitle">
+                  <span>利用履歴</span>
+                  <strong>{customerHistory.length}件</strong>
+                </div>
+                {customerHistory.length>0
+                  ? <div className="customerHistoryList">
+                      {customerHistory.slice(0,5).map(history=><div key={history.id} className="customerHistoryItem">
+                        <div>
+                          <strong>{orderServiceDate(history)} {history.scheduledStart}</strong>
+                          <span>{history.castName} / {history.courseMinutes+(history.extensionMinutes??0)}分</span>
+                        </div>
+                        <div>
+                          <span>{history.locationName || "場所未入力"}</span>
+                          <strong>{formatYen(history.total)}</strong>
+                        </div>
+                      </div>)}
+                    </div>
+                  : <p className="customerHistoryEmpty">過去の利用履歴はありません</p>}
+                {customerHistory.length>5 && <small>直近5件を表示しています</small>}
+              </div>
+            </section>}
 
             <label>備考
               <textarea rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="サンプル備考を入力"/>
