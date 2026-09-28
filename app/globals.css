@@ -2351,3 +2351,11 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .optionSelectFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;border-top:1px solid #e5eaee;background:#fafcfd}.optionSelectFooter span{font-size:11px;font-weight:900;color:#65717b}
 .storePaymentSettings{margin-top:16px;padding:14px;border:1px solid #dfe5e9;border-radius:10px;background:#f8fafb}.storePaymentSettings h3{margin:0 0 11px;font-size:13px}.storePaymentSettings label{display:grid;gap:6px;max-width:240px;font-size:11px;font-weight:900}.storePercentInput{display:grid;grid-template-columns:1fr 42px}.storePercentInput input{border-radius:8px 0 0 8px}.storePercentInput span{display:grid;place-items:center;border:1px solid #d5dce2;border-left:0;border-radius:0 8px 8px 0;background:#fff;font-weight:900}.storePaymentSettings p{margin:8px 0 0;color:#7b8690;font-size:10px}
 @media(max-width:650px){.workGrid.three,.paymentAndTimeGrid{grid-template-columns:1fr}.optionSelectBody{grid-template-columns:1fr}}
+
+
+/* ===== Manual in-time entry ===== */
+.inTimeControl{display:grid;gap:8px}
+.inTimeControl label{display:grid;gap:7px;color:#cbd4dc;font-size:11px;font-weight:900}
+.inTimeControl input{width:100%;min-height:56px;padding:10px 12px;border:1px solid #53606d;border-radius:9px;background:#f8fafb;color:#1d2730;font-size:22px;font-weight:900;text-align:center}
+.inTimeControl small{display:block;color:#9fabb6;font-size:10px;line-height:1.5;text-align:center}
+.orderActionSubButtons button:disabled{opacity:.45;cursor:not-allowed}

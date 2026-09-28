@@ -154,9 +154,10 @@ export default function DashboardPage(){
   const [shiftEditCastId,setShiftEditCastId] = useState<string|null>(null);
   const [shiftDraft,setShiftDraft] = useState<{start:string;endType:CastShiftEndType;endTime:string}>({start:"18:00",endType:"leave",endTime:"04:00"});
   const [selectedOrderId,setSelectedOrderId] = useState<string|null>(null);
-  const [orderMode,setOrderMode] = useState<"menu"|"extend">("menu");
+  const [orderMode,setOrderMode] = useState<"menu"|"inTime"|"extend">("menu");
   const [editingOrderId,setEditingOrderId] = useState<string|null>(null);
   const [extensionCount,setExtensionCount] = useState(1);
+  const [inTimeDraft,setInTimeDraft] = useState("");
   const [copyNotice,setCopyNotice] = useState("");
   const [customerNotice,setCustomerNotice] = useState("");
   const [optionModalOpen,setOptionModalOpen] = useState(false);
@@ -397,11 +398,18 @@ export default function DashboardPage(){
     setCopyNotice("配車済みに変更しました");
   }
 
-  function recordInTime(){
+  function beginInTimeEntry(){
     if(!selectedOrder) return;
-    const inTime=currentClockTime();
-    setOrders(updateOrder(selectedOrder.id,{inTime,status:"serving"}));
-    setCopyNotice(`イン時間 ${inTime} を記録しました`);
+    setInTimeDraft(selectedOrder.inTime ?? currentClockTime());
+    setCopyNotice("");
+    setOrderMode("inTime");
+  }
+
+  function recordInTime(){
+    if(!selectedOrder || !inTimeDraft) return;
+    setOrders(updateOrder(selectedOrder.id,{inTime:inTimeDraft,status:"serving"}));
+    setCopyNotice(`イン時間 ${inTimeDraft} を記録しました`);
+    setOrderMode("menu");
   }
 
   async function copyOrderLine(kind:"send"|"pickup"){
@@ -1002,7 +1010,7 @@ export default function DashboardPage(){
           >
             {selectedOrder.status==="dispatching" ? "配車済み ✓" : "配車済み"}
           </button>
-          <button type="button" className="orderActionIn" onClick={recordInTime}>
+          <button type="button" className="orderActionIn" onClick={beginInTimeEntry}>
             {selectedOrder.inTime ? `イン ${selectedOrder.inTime}` : "イン時間"}
           </button>
           <button type="button" className="orderActionSend" onClick={()=>copyOrderLine("send")}>送り用LINEコピー</button>
@@ -1011,6 +1019,20 @@ export default function DashboardPage(){
           <button type="button" className="orderActionExtend" onClick={beginExtension}>延長処理</button>
           <button type="button" className="orderActionDelete" onClick={removeSelectedOrder}>削除</button>
           <button type="button" className="orderActionClose" onClick={closeOrderMenu}>閉じる</button>
+        </div>}
+
+        {orderMode==="inTime" && <div className="orderActionSubpanel">
+          <h3>イン時間入力</h3>
+          <div className="inTimeControl">
+            <label>イン時間
+              <input type="time" value={inTimeDraft} onChange={e=>setInTimeDraft(e.target.value)}/>
+            </label>
+            <small>実際に入った時刻を手入力して確定してください。</small>
+          </div>
+          <div className="orderActionSubButtons">
+            <button type="button" onClick={()=>setOrderMode("menu")}>戻る</button>
+            <button type="button" className="primary" onClick={recordInTime} disabled={!inTimeDraft}>イン時間を確定</button>
+          </div>
         </div>}
 
         {orderMode==="extend" && <div className="orderActionSubpanel">
