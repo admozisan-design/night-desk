@@ -501,6 +501,7 @@ export default function DashboardPage(){
       travelFee,
       discount,
       total,
+      serviceDate:date,
       scheduledStart,
       scheduledEnd:addMinutes(scheduledStart,course.minutes+effectiveExtensionMinutes),
       note

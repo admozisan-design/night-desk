@@ -2178,3 +2178,54 @@ button:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:600px){
   .storeHoursGrid{grid-template-columns:1fr}
 }
+
+
+/* ===== Cast settlement ===== */
+.settlementPage{max-width:none;width:100%}
+.settlementHeader{align-items:center}
+.settlementHeaderActions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.settlementFilters{display:grid;grid-template-columns:180px 240px minmax(360px,1fr);gap:14px;align-items:end;padding:15px 17px}
+.settlementFilters label{display:grid;gap:6px;font-size:11px;font-weight:900;color:#626e79}
+.settlementFilters input,.settlementFilters select{min-height:42px;padding:8px 10px;border:1px solid #d6dde3;border-radius:8px;background:#fff;font-size:14px;font-weight:800}
+.settlementRates{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.settlementRates span{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid #e0e5e9;border-radius:8px;background:#f8fafb;color:#7a858f;font-size:10px;font-weight:900}
+.settlementRates strong{color:#34414d;font-size:12px}
+.settlementSummary{display:grid;grid-template-columns:110px repeat(4,minmax(130px,1fr)) minmax(160px,1.25fr);gap:10px;margin:12px 0}
+.settlementSummary>div{padding:13px 14px;border:1px solid #dce2e7;border-radius:10px;background:#fff}
+.settlementSummary span,.settlementSummary strong,.settlementSummary small{display:block}
+.settlementSummary span{font-size:10px;color:#8a949e;font-weight:900}
+.settlementSummary strong{margin-top:4px;font-size:18px}
+.settlementSummary small{font-size:9px;color:#98a1aa}
+.settlementSummary .settlementPayout{border-color:#9bc75a;background:#f5fbe9}
+.settlementSummary .settlementPayout strong{font-size:22px;color:#4f741d}
+.settlementPanel{padding:0;overflow:auto}
+.settlementTable{min-width:1180px}
+.settlementRow{display:grid;grid-template-columns:minmax(190px,1.45fr) 90px 120px 120px 120px 165px 125px 90px;align-items:center;gap:10px;min-height:74px;padding:9px 13px;border-bottom:1px solid #edf0f3}
+.settlementRow:last-child{border-bottom:0}
+.settlementTableHead{min-height:42px;background:#f6f8f9;color:#78838e;font-size:10px;font-weight:900}
+.settlementOrderInfo strong,.settlementOrderInfo span,.settlementOrderInfo small{display:block}
+.settlementOrderInfo strong{font-size:13px}
+.settlementOrderInfo span{margin-top:3px;font-size:10px;color:#687480}
+.settlementOrderInfo small{margin-top:3px;font-size:9px;color:#919aa3}
+.settlementNomination{font-size:11px}
+.settlementRow>input,.settlementAdjustmentCell input{width:100%;min-height:39px;padding:7px 8px;border:1px solid #d6dde3;border-radius:7px;background:#fff;font-size:12px;font-weight:800}
+.settlementAdjustmentCell{display:grid;grid-template-columns:1fr;gap:5px}
+.settlementAdjustmentCell .settlementMemo{min-height:32px;font-size:10px;font-weight:600}
+.settlementSubtotal{font-size:14px;color:#496d1b}
+.settlementSaveButton{min-height:38px;border:1px solid #76ad2a;border-radius:7px;background:#84cc16;color:#18230c;font-size:11px;font-weight:900;cursor:pointer}
+.settlementEmpty{padding:36px;text-align:center;color:#77828c}
+.settlementEmpty strong{display:block;font-size:15px;color:#4d5964}
+.settlementEmpty p{margin:6px 0 0;font-size:11px}
+.settlementHelp{margin-top:12px;padding:13px 15px;border:1px solid #dfe5e9;border-radius:10px;background:#f8fafb}
+.settlementHelp strong{font-size:11px}
+.settlementHelp p{margin:5px 0 0;font-size:10px;line-height:1.6;color:#77828c}
+@media(max-width:1000px){
+  .settlementFilters{grid-template-columns:1fr 1fr}
+  .settlementRates{grid-column:1/-1}
+  .settlementSummary{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:650px){
+  .settlementFilters{grid-template-columns:1fr}
+  .settlementRates{grid-column:auto}
+  .settlementSummary{grid-template-columns:1fr 1fr}
+}

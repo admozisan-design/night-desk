@@ -44,6 +44,13 @@ export type Hotel = { id:string; name:string; travelFee:number; visible?:boolean
 export type Staff = { id:string; name:string; displayName:string; loginId:string; notes?:string; active?:boolean; };
 export type StoreOption = { id:string; name:string; price:number; notes?:string; active?:boolean; };
 export type StoreSettings = { openTime:string; closeTime:string; };
+export type CastSettlementAdjustment = {
+  orderId:string;
+  optionBack:number;
+  extensionBack:number;
+  adjustment:number;
+  memo?:string;
+};
 export type Customer = { id:string; phone:string; name?:string; notes?:string; ngInfo?:string; active?:boolean; };
 export type PricingConfig = {
   courses:Course[];
@@ -72,5 +79,5 @@ export type Order = {
   id:string; createdAt:string; customerPhone:string; locationType:"hotel"|"home";
   locationName:string; room?:string; castId:string; castName:string; driverId?:string; driverName?:string;
   courseId?:string; courseMinutes:number; extensionMinutes?:number; extensionTotal?:number; nominationType:"free"|"photo"|"repeat"; selectedOptions?:string[]; optionsTotal:number; travelFee:number;
-  discount:number; adjustment:number; total:number; status:OrderStatus; scheduledStart:string; scheduledEnd:string; inTime?:string; note?:string;
+  discount:number; adjustment:number; total:number; status:OrderStatus; serviceDate?:string; scheduledStart:string; scheduledEnd:string; inTime?:string; note?:string;
 };

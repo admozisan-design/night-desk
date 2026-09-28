@@ -1,4 +1,4 @@
-import type { AuditLog, Cast, Customer, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings } from "./types";
+import type { AuditLog, Cast, CastSettlementAdjustment, Customer, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings } from "./types";
 
 const ORDER_KEY = "night-desk-orders-sample-v02";
 const CAST_KEY = "night-desk-casts-sample-v03";
@@ -11,6 +11,7 @@ const PRICING_KEY = "night-desk-pricing-sample-v01";
 const PERMISSION_KEY = "night-desk-permissions-sample-v01";
 const LOG_KEY = "night-desk-audit-log-v01";
 const STORE_SETTINGS_KEY = "night-desk-store-settings-v01";
+const SETTLEMENT_KEY = "night-desk-cast-settlement-v01";
 
 export function loadOrders():Order[] {
   if (typeof window === "undefined") return [];
@@ -373,4 +374,24 @@ export function saveStoreSettings(settings:StoreSettings){
   localStorage.setItem(STORE_SETTINGS_KEY,JSON.stringify(settings));
   window.dispatchEvent(new Event("nightdesk:store-settings"));
   appendAuditLog("店舗設定","営業時間を保存",`${settings.openTime}〜${settings.closeTime}`);
+}
+
+
+export function loadCastSettlementAdjustments():Record<string,CastSettlementAdjustment> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(SETTLEMENT_KEY) ?? "{}") as Record<string,CastSettlementAdjustment>;
+  } catch {
+    return {};
+  }
+}
+
+export function saveCastSettlementAdjustment(adjustment:CastSettlementAdjustment){
+  if (typeof window === "undefined") return;
+  const current=loadCastSettlementAdjustments();
+  const next={...current,[adjustment.orderId]:adjustment};
+  localStorage.setItem(SETTLEMENT_KEY,JSON.stringify(next));
+  window.dispatchEvent(new Event("nightdesk:settlement"));
+  appendAuditLog("精算","キャスト精算を保存",adjustment.orderId);
+  return next;
 }
