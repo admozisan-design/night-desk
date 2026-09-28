@@ -5,8 +5,7 @@ import { usePathname } from "next/navigation";
 
 const nav = [
   ["/", "配車管理"],
-  ["/casts", "キャスト"],
-  ["/orders/new", "新規受付"],
+  ["/casts", "キャスト出勤管理"],
   ["/orders", "予約一覧"],
   ["/settings", "設定"],
 ] as const;
