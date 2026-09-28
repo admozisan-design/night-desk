@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const masterItems = [
-  { title:"キャスト登録", description:"キャスト情報、単価、スペック、NG、可能OPを管理", href:"/casts", action:"管理する" },
+  { title:"キャスト登録", description:"キャスト情報、単価、スペック、NG、可能OPを管理", href:"/casts/manage", action:"管理する" },
   { title:"スタッフ登録", description:"スタッフ名、表示名、ログインIDを管理", href:"/staff", action:"管理する" },
   { title:"ドライバー登録", description:"ドライバー名、電話番号、車両、ナンバーを管理", href:"/drivers", action:"管理する" },
   { title:"ホテル登録", description:"ホテル名と交通費を管理", href:"/hotels", action:"管理する" },
