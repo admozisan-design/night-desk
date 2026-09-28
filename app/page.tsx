@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { casts as defaultCasts, defaultPricingConfig, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, saveCasts, saveOrder } from "@/lib/storage";
+import { deleteOrder, loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, saveCasts, saveOrder, updateOrder } from "@/lib/storage";
 import type { Cast, CastAttendanceStatus, CastStatus, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
@@ -85,6 +85,11 @@ export default function DashboardPage(){
   const [detailCastId,setDetailCastId] = useState<string|null>(null);
   const [shiftEditCastId,setShiftEditCastId] = useState<string|null>(null);
   const [shiftDraft,setShiftDraft] = useState({start:"18:00",end:"04:00"});
+  const [selectedOrderId,setSelectedOrderId] = useState<string|null>(null);
+  const [orderMode,setOrderMode] = useState<"menu"|"edit"|"extend">("menu");
+  const [orderEditDraft,setOrderEditDraft] = useState({scheduledStart:"",scheduledEnd:"",locationName:"",room:"",driverId:"",note:""});
+  const [extensionCount,setExtensionCount] = useState(1);
+  const [copyNotice,setCopyNotice] = useState("");
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
@@ -214,6 +219,7 @@ export default function DashboardPage(){
   const detailCast = detailCastId ? castList.find(c=>c.id===detailCastId) : undefined;
   const detailShift = detailCast ? castShiftForDate(detailCast,date) : undefined;
   const shiftEditCast = shiftEditCastId ? castList.find(c=>c.id===shiftEditCastId) : undefined;
+  const selectedOrder = selectedOrderId ? orders.find(order=>order.id===selectedOrderId) : undefined;
 
   function replaceCastShift(cast:Cast, changes:Partial<NonNullable<Cast["schedule"]>[number]>){
     const existing=castShiftForDate(cast,date);
@@ -249,6 +255,98 @@ export default function DashboardPage(){
     if(!shiftEditCast) return;
     replaceCastShift(shiftEditCast,{start:shiftDraft.start,end:shiftDraft.end,working:true});
     setShiftEditCastId(null);
+  }
+
+  function openOrderMenu(order:Order){
+    setSelectedOrderId(order.id);
+    setOrderMode("menu");
+    setCopyNotice("");
+  }
+
+  function closeOrderMenu(){
+    setSelectedOrderId(null);
+    setOrderMode("menu");
+    setCopyNotice("");
+  }
+
+  function currentClockTime(){
+    const value=new Date();
+    return `${String(value.getHours()).padStart(2,"0")}:${String(value.getMinutes()).padStart(2,"0")}`;
+  }
+
+  function recordInTime(){
+    if(!selectedOrder) return;
+    const inTime=currentClockTime();
+    setOrders(updateOrder(selectedOrder.id,{inTime,status:"serving"}));
+    setCopyNotice(`イン時間 ${inTime} を記録しました`);
+  }
+
+  async function copyOrderLine(kind:"send"|"pickup"){
+    if(!selectedOrder) return;
+    const roomText=selectedOrder.room ? ` ${selectedOrder.room}号室` : "";
+    const text=kind==="send"
+      ? `【送り】\nキャスト：${selectedOrder.castName}\n場所：${selectedOrder.locationName}${roomText}\n時間：${selectedOrder.scheduledStart}〜${selectedOrder.scheduledEnd}\nドライバー：${selectedOrder.driverName ?? "未割当"}`
+      : `【お迎え】\nキャスト：${selectedOrder.castName}\nお迎え：${selectedOrder.scheduledEnd}\n場所：${selectedOrder.locationName}${roomText}\nドライバー：${selectedOrder.driverName ?? "未割当"}`;
+    try{
+      await navigator.clipboard.writeText(text);
+      setCopyNotice(kind==="send"?"送り用LINEをコピーしました":"お迎え用LINEをコピーしました");
+    }catch{
+      setCopyNotice("コピーできませんでした");
+    }
+  }
+
+  function beginOrderEdit(){
+    if(!selectedOrder) return;
+    const driver=driverList.find(driver=>driver.name===selectedOrder.driverName);
+    setOrderEditDraft({
+      scheduledStart:selectedOrder.scheduledStart,
+      scheduledEnd:selectedOrder.scheduledEnd,
+      locationName:selectedOrder.locationName,
+      room:selectedOrder.room ?? "",
+      driverId:selectedOrder.driverId ?? driver?.id ?? "",
+      note:selectedOrder.note ?? ""
+    });
+    setOrderMode("edit");
+  }
+
+  function saveOrderEdit(){
+    if(!selectedOrder) return;
+    const driver=driverList.find(item=>item.id===orderEditDraft.driverId);
+    setOrders(updateOrder(selectedOrder.id,{
+      scheduledStart:orderEditDraft.scheduledStart,
+      scheduledEnd:orderEditDraft.scheduledEnd,
+      locationName:orderEditDraft.locationName,
+      room:orderEditDraft.room,
+      driverId:driver?.id,
+      driverName:driver?.name,
+      note:orderEditDraft.note
+    }));
+    setOrderMode("menu");
+    setCopyNotice("編集内容を保存しました");
+  }
+
+  function beginExtension(){
+    setExtensionCount(1);
+    setOrderMode("extend");
+  }
+
+  function applyExtension(){
+    if(!selectedOrder) return;
+    const add=pricing.extensionMinutes*extensionCount;
+    setOrders(updateOrder(selectedOrder.id,{
+      scheduledEnd:addMinutes(selectedOrder.scheduledEnd,add),
+      courseMinutes:selectedOrder.courseMinutes+add,
+      total:selectedOrder.total+(pricing.extensionPrice*extensionCount)
+    }));
+    setOrderMode("menu");
+    setCopyNotice(`${add}分延長しました`);
+  }
+
+  function removeSelectedOrder(){
+    if(!selectedOrder) return;
+    if(!window.confirm(`${selectedOrder.castName} のオーダーを削除しますか？`)) return;
+    setOrders(deleteOrder(selectedOrder.id));
+    closeOrderMenu();
   }
 
   function shiftDate(days:number){
@@ -506,11 +604,11 @@ export default function DashboardPage(){
               <div className="timelineCell longCell">
                 {visibleOrders.map(order=>{
                   const pos = eventPosition(order)!;
-                  return <Link key={order.id} href="/orders" className={`timelineOrder timelineOrder-${order.status}`} style={pos}>
+                  return <button type="button" key={order.id} className={`timelineOrder timelineOrder-${order.status}`} style={pos} onClick={()=>openOrderMenu(order)}>
                     <strong>{order.scheduledStart}〜{order.scheduledEnd}</strong>
                     <span>{order.castName}</span>
                     <small>{order.locationName || "場所未入力"} / {order.driverName ?? "配車未割当"}</small>
-                  </Link>
+                  </button>
                 })}
                 {!visibleOrders.length && !unavailable && <span className="emptyTimeline">空き</span>}
                 <div className="offShiftBlock before" style={{width:availability.beforeWidth}} title="出勤時間外">
@@ -534,6 +632,74 @@ export default function DashboardPage(){
         </div>
       </div>
     </section>
+
+    {selectedOrder && <div className="orderActionBackdrop" onMouseDown={e=>{if(e.currentTarget===e.target)closeOrderMenu();}}>
+      <div className="orderActionModal" role="dialog" aria-modal="true" aria-labelledby="order-action-title">
+        <div className="orderActionSummary">
+          <div>
+            <span>{selectedOrder.castName}</span>
+            <strong id="order-action-title">{selectedOrder.scheduledStart}〜{selectedOrder.scheduledEnd}</strong>
+          </div>
+          <small>{selectedOrder.locationName}{selectedOrder.room ? ` / ${selectedOrder.room}号室` : ""}</small>
+        </div>
+
+        {copyNotice && <div className="orderActionNotice">{copyNotice}</div>}
+
+        {orderMode==="menu" && <div className="orderActionButtons">
+          <button type="button" className="orderActionIn" onClick={recordInTime}>
+            {selectedOrder.inTime ? `イン ${selectedOrder.inTime}` : "イン時間"}
+          </button>
+          <button type="button" className="orderActionSend" onClick={()=>copyOrderLine("send")}>送り用LINEコピー</button>
+          <button type="button" className="orderActionPickup" onClick={()=>copyOrderLine("pickup")}>お迎え用LINEコピー</button>
+          <button type="button" className="orderActionEdit" onClick={beginOrderEdit}>編集</button>
+          <button type="button" className="orderActionExtend" onClick={beginExtension}>延長処理</button>
+          <button type="button" className="orderActionDelete" onClick={removeSelectedOrder}>削除</button>
+          <button type="button" className="orderActionClose" onClick={closeOrderMenu}>閉じる</button>
+        </div>}
+
+        {orderMode==="edit" && <div className="orderActionSubpanel">
+          <h3>オーダー編集</h3>
+          <div className="orderActionEditGrid">
+            <label>開始時間<input type="time" value={orderEditDraft.scheduledStart} onChange={e=>setOrderEditDraft(current=>({...current,scheduledStart:e.target.value}))}/></label>
+            <label>終了時間<input type="time" value={orderEditDraft.scheduledEnd} onChange={e=>setOrderEditDraft(current=>({...current,scheduledEnd:e.target.value}))}/></label>
+            <label>ホテル
+              <select value={orderEditDraft.locationName} onChange={e=>setOrderEditDraft(current=>({...current,locationName:e.target.value}))}>
+                {availableHotels.map(hotel=><option key={hotel.id} value={hotel.name}>{hotel.name}</option>)}
+              </select>
+            </label>
+            <label>部屋番号<input value={orderEditDraft.room} onChange={e=>setOrderEditDraft(current=>({...current,room:e.target.value}))}/></label>
+            <label className="orderActionFull">ドライバー
+              <select value={orderEditDraft.driverId} onChange={e=>setOrderEditDraft(current=>({...current,driverId:e.target.value}))}>
+                <option value="">未割当</option>
+                {availableDrivers.map(driver=><option key={driver.id} value={driver.id}>{driver.name}</option>)}
+              </select>
+            </label>
+            <label className="orderActionFull">備考<textarea rows={3} value={orderEditDraft.note} onChange={e=>setOrderEditDraft(current=>({...current,note:e.target.value}))}/></label>
+          </div>
+          <div className="orderActionSubButtons">
+            <button type="button" onClick={()=>setOrderMode("menu")}>戻る</button>
+            <button type="button" className="primary" onClick={saveOrderEdit}>保存</button>
+          </div>
+        </div>}
+
+        {orderMode==="extend" && <div className="orderActionSubpanel">
+          <h3>延長処理</h3>
+          <div className="extensionControl">
+            <button type="button" onClick={()=>setExtensionCount(value=>Math.max(1,value-1))}>−</button>
+            <div>
+              <strong>{pricing.extensionMinutes*extensionCount}分</strong>
+              <span>＋{formatYen(pricing.extensionPrice*extensionCount)}</span>
+            </div>
+            <button type="button" onClick={()=>setExtensionCount(value=>value+1)}>＋</button>
+          </div>
+          <p className="extensionPreview">終了予定 {selectedOrder.scheduledEnd} → <strong>{addMinutes(selectedOrder.scheduledEnd,pricing.extensionMinutes*extensionCount)}</strong></p>
+          <div className="orderActionSubButtons">
+            <button type="button" onClick={()=>setOrderMode("menu")}>戻る</button>
+            <button type="button" className="primary danger" onClick={applyExtension}>延長確定</button>
+          </div>
+        </div>}
+      </div>
+    </div>}
 
     {detailCast && <div className="attendanceModalBackdrop" onMouseDown={e=>{if(e.currentTarget===e.target)setDetailCastId(null);}}>
       <div className="attendanceModal" role="dialog" aria-modal="true" aria-labelledby="attendance-modal-title">
