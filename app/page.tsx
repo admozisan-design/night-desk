@@ -86,8 +86,8 @@ export default function DashboardPage(){
   const [shiftEditCastId,setShiftEditCastId] = useState<string|null>(null);
   const [shiftDraft,setShiftDraft] = useState({start:"18:00",end:"04:00"});
   const [selectedOrderId,setSelectedOrderId] = useState<string|null>(null);
-  const [orderMode,setOrderMode] = useState<"menu"|"edit"|"extend">("menu");
-  const [orderEditDraft,setOrderEditDraft] = useState({scheduledStart:"",scheduledEnd:"",locationName:"",room:"",driverId:"",note:""});
+  const [orderMode,setOrderMode] = useState<"menu"|"extend">("menu");
+  const [editingOrderId,setEditingOrderId] = useState<string|null>(null);
   const [extensionCount,setExtensionCount] = useState(1);
   const [copyNotice,setCopyNotice] = useState("");
 
@@ -163,8 +163,9 @@ export default function DashboardPage(){
   );
 
   useEffect(()=>{
+    if(editingOrderId) return;
     if(!selectableCasts.some(c=>c.id===castId)) setCastId(selectableCasts[0]?.id ?? "");
-  },[selectableCasts,castId]);
+  },[selectableCasts,castId,editingOrderId]);
 
   useEffect(()=>{
     if(!availableDrivers.some(d=>d.id===driverId)) setDriverId(availableDrivers[0]?.id ?? "");
@@ -184,8 +185,12 @@ export default function DashboardPage(){
     }
   },[availableHotels,locationName]);
 
+  const formCastChoices = useMemo(
+    ()=>editingOrderId ? castList.filter(c=>c.visible!==false) : selectableCasts,
+    [editingOrderId,castList,selectableCasts]
+  );
   const course = pricing.courses.find(c=>c.id===courseId);
-  const selectedCast = selectableCasts.find(c=>c.id===castId);
+  const selectedCast = formCastChoices.find(c=>c.id===castId);
   const selectedDriver = availableDrivers.find(d=>d.id===driverId);
   const selectableOptions = useMemo(
     ()=>optionList.filter(option=>option.active!==false && (selectedCast?.availableOptions??[]).includes(option.name)),
@@ -297,32 +302,47 @@ export default function DashboardPage(){
 
   function beginOrderEdit(){
     if(!selectedOrder) return;
-    const driver=driverList.find(driver=>driver.name===selectedOrder.driverName);
-    setOrderEditDraft({
-      scheduledStart:selectedOrder.scheduledStart,
-      scheduledEnd:selectedOrder.scheduledEnd,
-      locationName:selectedOrder.locationName,
-      room:selectedOrder.room ?? "",
-      driverId:selectedOrder.driverId ?? driver?.id ?? "",
-      note:selectedOrder.note ?? ""
-    });
-    setOrderMode("edit");
+    const driver=driverList.find(driver=>driver.id===selectedOrder.driverId || driver.name===selectedOrder.driverName);
+    const courseMatch=pricing.courses.find(item=>item.minutes===selectedOrder.courseMinutes);
+    const optionIds=optionList
+      .filter(option=>(selectedOrder.selectedOptions??[]).includes(option.name))
+      .map(option=>option.id);
+
+    setEditingOrderId(selectedOrder.id);
+    setCastId(selectedOrder.castId);
+    setDriverId(selectedOrder.driverId ?? driver?.id ?? "");
+    if(courseMatch) setCourseId(courseMatch.id);
+    setNominationType(selectedOrder.nominationType);
+    setScheduledStart(selectedOrder.scheduledStart);
+    setLocationName(selectedOrder.locationName);
+    setRoom(selectedOrder.room ?? "");
+    setPhone(selectedOrder.customerPhone ?? "");
+    setNote(selectedOrder.note ?? "");
+    setTravelFee(selectedOrder.travelFee);
+    setDiscount(selectedOrder.discount);
+    setSelectedOptionIds(optionIds);
+
+    closeOrderMenu();
+    window.setTimeout(()=>{
+      document.getElementById("work-register")?.scrollIntoView({behavior:"smooth",block:"start"});
+    },60);
   }
 
-  function saveOrderEdit(){
-    if(!selectedOrder) return;
-    const driver=driverList.find(item=>item.id===orderEditDraft.driverId);
-    setOrders(updateOrder(selectedOrder.id,{
-      scheduledStart:orderEditDraft.scheduledStart,
-      scheduledEnd:orderEditDraft.scheduledEnd,
-      locationName:orderEditDraft.locationName,
-      room:orderEditDraft.room,
-      driverId:driver?.id,
-      driverName:driver?.name,
-      note:orderEditDraft.note
-    }));
-    setOrderMode("menu");
-    setCopyNotice("編集内容を保存しました");
+  function resetOrderForm(){
+    setEditingOrderId(null);
+    setCastId(selectableCasts[0]?.id ?? "");
+    setDriverId(availableDrivers[0]?.id ?? "");
+    setCourseId(pricing.courses[0]?.id ?? "");
+    setNominationType("free");
+    setScheduledStart("13:30");
+    const firstHotel=availableHotels[0];
+    setLocationName(firstHotel?.name ?? "");
+    setTravelFee(firstHotel?.travelFee ?? pricing.defaultTravelFee);
+    setRoom("101");
+    setPhone("090-0000-0000");
+    setNote("サンプル備考");
+    setSelectedOptionIds([]);
+    setDiscount(0);
   }
 
   function beginExtension(){
@@ -371,11 +391,13 @@ export default function DashboardPage(){
   function registerOrder(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
     if(!selectedCast || !course) return;
-    const order:Order = {
-      id:crypto.randomUUID(),
-      createdAt:new Date().toISOString(),
+
+    const selectedOptionNames=selectableOptions
+      .filter(option=>selectedOptionIds.includes(option.id))
+      .map(option=>option.name);
+    const commonChanges = {
       customerPhone:phone,
-      locationType:"hotel",
+      locationType:"hotel" as const,
       locationName,
       room,
       castId:selectedCast.id,
@@ -384,27 +406,30 @@ export default function DashboardPage(){
       driverName:selectedDriver?.name,
       courseMinutes:course.minutes,
       nominationType,
-      selectedOptions:selectableOptions.filter(option=>selectedOptionIds.includes(option.id)).map(option=>option.name),
+      selectedOptions:selectedOptionNames,
       optionsTotal,
       travelFee,
       discount,
-      adjustment:0,
       total,
-      status:"accepted",
       scheduledStart,
       scheduledEnd:addMinutes(scheduledStart,course.minutes),
       note
     };
-    saveOrder(order);
-    setOrders(loadOrders());
-    const firstHotel=availableHotels[0];
-    setLocationName(firstHotel?.name ?? "");
-    setTravelFee(firstHotel?.travelFee ?? 0);
-    setRoom("101");
-    setPhone("090-0000-0000");
-    setNote("サンプル備考");
-    setSelectedOptionIds([]);
-    setDiscount(0);
+
+    if(editingOrderId){
+      setOrders(updateOrder(editingOrderId,commonChanges));
+    }else{
+      const order:Order = {
+        id:crypto.randomUUID(),
+        createdAt:new Date().toISOString(),
+        ...commonChanges,
+        adjustment:0,
+        status:"accepted"
+      };
+      saveOrder(order);
+      setOrders(loadOrders());
+    }
+    resetOrderForm();
   }
 
   return <div className="deskDashboard">
@@ -429,8 +454,11 @@ export default function DashboardPage(){
       </aside>
 
       <main className="deskCenter">
-        <section className="deskPanel workRegister">
-          <h2>仕事登録</h2>
+        <section className={`deskPanel workRegister ${editingOrderId?"isEditingOrder":""}`} id="work-register">
+          <div className="workRegisterTitleRow">
+            <h2>{editingOrderId?"仕事編集":"仕事登録"}</h2>
+            {editingOrderId && <span className="workEditBadge">既存オーダー編集中</span>}
+          </div>
           <form onSubmit={registerOrder}>
             <div className="workGrid two">
               <label>ドライバー
@@ -439,8 +467,8 @@ export default function DashboardPage(){
                 </select>
               </label>
               <label>キャスト
-                <select value={castId} onChange={e=>setCastId(e.target.value)} disabled={!selectableCasts.length}>
-                  {selectableCasts.map(c=><option key={c.id} value={c.id}>{c.name} / {statusLabels[c.status]}</option>)}
+                <select value={castId} onChange={e=>setCastId(e.target.value)} disabled={!formCastChoices.length}>
+                  {formCastChoices.map(c=><option key={c.id} value={c.id}>{c.name} / {statusLabels[c.status]}</option>)}
                 </select>
               </label>
             </div>
@@ -530,9 +558,9 @@ export default function DashboardPage(){
             <div className="workFooter">
               <div><small>自動計算</small><strong>{formatYen(total)}</strong></div>
               <div className="workButtons">
-                <button className="registerBtn" type="submit" disabled={!selectedCast}>仕事を入れる</button>
-                <Link href="/orders/new">詳細入力</Link>
-                <button type="reset">クリア</button>
+                <button className="registerBtn" type="submit" disabled={!selectedCast}>{editingOrderId?"変更を保存":"仕事を入れる"}</button>
+                {!editingOrderId && <Link href="/orders/new">詳細入力</Link>}
+                <button type="button" onClick={resetOrderForm}>{editingOrderId?"編集キャンセル":"クリア"}</button>
               </div>
             </div>
           </form>
@@ -655,31 +683,6 @@ export default function DashboardPage(){
           <button type="button" className="orderActionExtend" onClick={beginExtension}>延長処理</button>
           <button type="button" className="orderActionDelete" onClick={removeSelectedOrder}>削除</button>
           <button type="button" className="orderActionClose" onClick={closeOrderMenu}>閉じる</button>
-        </div>}
-
-        {orderMode==="edit" && <div className="orderActionSubpanel">
-          <h3>オーダー編集</h3>
-          <div className="orderActionEditGrid">
-            <label>開始時間<input type="time" value={orderEditDraft.scheduledStart} onChange={e=>setOrderEditDraft(current=>({...current,scheduledStart:e.target.value}))}/></label>
-            <label>終了時間<input type="time" value={orderEditDraft.scheduledEnd} onChange={e=>setOrderEditDraft(current=>({...current,scheduledEnd:e.target.value}))}/></label>
-            <label>ホテル
-              <select value={orderEditDraft.locationName} onChange={e=>setOrderEditDraft(current=>({...current,locationName:e.target.value}))}>
-                {availableHotels.map(hotel=><option key={hotel.id} value={hotel.name}>{hotel.name}</option>)}
-              </select>
-            </label>
-            <label>部屋番号<input value={orderEditDraft.room} onChange={e=>setOrderEditDraft(current=>({...current,room:e.target.value}))}/></label>
-            <label className="orderActionFull">ドライバー
-              <select value={orderEditDraft.driverId} onChange={e=>setOrderEditDraft(current=>({...current,driverId:e.target.value}))}>
-                <option value="">未割当</option>
-                {availableDrivers.map(driver=><option key={driver.id} value={driver.id}>{driver.name}</option>)}
-              </select>
-            </label>
-            <label className="orderActionFull">備考<textarea rows={3} value={orderEditDraft.note} onChange={e=>setOrderEditDraft(current=>({...current,note:e.target.value}))}/></label>
-          </div>
-          <div className="orderActionSubButtons">
-            <button type="button" onClick={()=>setOrderMode("menu")}>戻る</button>
-            <button type="button" className="primary" onClick={saveOrderEdit}>保存</button>
-          </div>
         </div>}
 
         {orderMode==="extend" && <div className="orderActionSubpanel">
