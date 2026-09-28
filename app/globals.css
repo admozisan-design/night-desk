@@ -1866,3 +1866,59 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .castScheduleHeaderActions{width:100%}
   .castScheduleHeaderActions .secondaryButton,.castScheduleHeaderActions .primaryButton{flex:1}
 }
+
+
+/* ===== Dispatch attendance / quick shift edit ===== */
+.dispatchCastButton{min-width:0;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.dispatchCastButton strong{display:block;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
+.dispatchCastButton:hover strong{color:#527c19;text-decoration-color:#9ec568}
+.dispatchCastMeta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap}
+.dispatchCastMeta small{margin:0!important}
+.attendanceBadge{display:inline-flex;align-items:center;justify-content:center;min-width:38px;padding:3px 7px;border-radius:999px;font-size:9px;font-style:normal;font-weight:900}
+.attendanceBadge.unconfirmed{background:#edf0f2;color:#78838d}
+.attendanceBadge.present{background:#e3f4cf;color:#4d731b}
+.attendanceBadge.late{background:#fff0c9;color:#8a6300}
+.attendanceBadge.absent{background:#ffe1e5;color:#a52b3e}
+.attendanceBadge.leftEarly{background:#eee4ff;color:#6e3aa8}
+
+.dispatchShiftQuick{display:grid;gap:4px;width:100%;height:100%;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer;border-radius:8px}
+.dispatchShiftQuick:hover{background:#f4f8ee}
+.dispatchShiftQuick span{display:block}
+.dispatchShiftQuick b{text-decoration:underline;text-decoration-color:transparent;text-underline-offset:2px}
+.dispatchShiftQuick:hover b{text-decoration-color:#9ec568;color:#527c19}
+
+.attendanceModalBackdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px;background:rgba(20,28,36,.38)}
+.attendanceModal{width:min(560px,96vw);overflow:hidden;border:1px solid #d8e0e6;border-radius:16px;background:#fff;box-shadow:0 28px 80px rgba(15,25,35,.28)}
+.attendanceModalHead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:19px 21px;border-bottom:1px solid #e7ebee;background:#fbfcfd}
+.attendanceModalHead span{display:block;font-size:10px;font-weight:900;color:#8a949e}
+.attendanceModalHead h2{margin:4px 0 0;font-size:22px}
+.attendanceModalHead>button{width:36px;height:36px;border:1px solid #d7dde3;border-radius:9px;background:#fff;color:#5f6b77;font-size:20px;cursor:pointer}
+.attendanceModalInfo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid #edf0f3}
+.attendanceModalInfo>div{padding:13px 16px}
+.attendanceModalInfo>div+div{border-left:1px solid #edf0f3}
+.attendanceModalInfo span,.attendanceModalInfo strong{display:block}
+.attendanceModalInfo span{font-size:9px;font-weight:900;color:#9099a2}
+.attendanceModalInfo strong{margin-top:4px;font-size:12px}
+.attendanceModalSection{padding:18px 20px}
+.attendanceModalSectionTitle{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.attendanceModalSectionTitle span{font-size:12px;font-weight:900;color:#5e6a76}
+.attendanceModalSectionTitle strong{font-size:12px}
+.attendanceStatusChoices{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.attendanceStatusChoices button{min-height:48px;border:1px solid #d8dee4;border-radius:10px;background:#fff;font-size:13px;font-weight:900;cursor:pointer}
+.attendanceStatusChoices .present{color:#4d731b}.attendanceStatusChoices .present.active{background:#e3f4cf;border-color:#9bc75a}
+.attendanceStatusChoices .late{color:#8a6300}.attendanceStatusChoices .late.active{background:#fff0c9;border-color:#e7b837}
+.attendanceStatusChoices .absent{color:#a52b3e}.attendanceStatusChoices .absent.active{background:#ffe1e5;border-color:#e87b8a}
+.attendanceStatusChoices .leftEarly{color:#6e3aa8}.attendanceStatusChoices .leftEarly.active{background:#eee4ff;border-color:#ad88dc}
+.attendanceModalFooter{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid #edf0f3;background:#fbfcfd}
+.attendanceModalFooter button{min-height:40px;padding:8px 15px;border:1px solid #d4dbe1;border-radius:8px;background:#fff;font-size:12px;font-weight:900;cursor:pointer}
+.attendanceModalFooter .primaryButton{border-color:#79b91c;background:#84cc16;color:#17200b}
+.shiftQuickModal{width:min(480px,96vw)}
+.shiftQuickForm{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:20px}
+.shiftQuickForm label{display:grid;gap:7px;font-size:12px;font-weight:900;color:#5d6975}
+.shiftQuickForm input{min-height:46px;padding:9px 11px;border:1px solid #d5dce2;border-radius:9px;background:#fff;font-size:16px;font-weight:900}
+@media(max-width:600px){
+  .attendanceModalInfo{grid-template-columns:1fr}
+  .attendanceModalInfo>div+div{border-left:0;border-top:1px solid #edf0f3}
+  .attendanceStatusChoices{grid-template-columns:1fr 1fr}
+  .shiftQuickForm{grid-template-columns:1fr}
+}
