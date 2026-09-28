@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { casts as defaultCasts, defaultPricingConfig, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
 import { deleteOrder, loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, saveCasts, saveOrder, updateOrder } from "@/lib/storage";
@@ -135,7 +135,6 @@ export default function DashboardPage(){
   const [editingOrderId,setEditingOrderId] = useState<string|null>(null);
   const [extensionCount,setExtensionCount] = useState(1);
   const [copyNotice,setCopyNotice] = useState("");
-  const orderClickTimer = useRef<number|null>(null);
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
@@ -171,7 +170,6 @@ export default function DashboardPage(){
     window.addEventListener("nightdesk:pricing",refresh);
     return ()=>{
       window.clearInterval(timer);
-      if(orderClickTimer.current) window.clearTimeout(orderClickTimer.current);
       window.removeEventListener("storage",refresh);
       window.removeEventListener("nightdesk:orders",refresh);
       window.removeEventListener("nightdesk:casts",refresh);
@@ -324,25 +322,6 @@ export default function DashboardPage(){
     setCopyNotice("");
   }
 
-  function handleOrderSingleClick(order:Order){
-    if(orderClickTimer.current) window.clearTimeout(orderClickTimer.current);
-    orderClickTimer.current=window.setTimeout(()=>{
-      openOrderMenu(order);
-      orderClickTimer.current=null;
-    },220);
-  }
-
-  function handleOrderDoubleClick(order:Order){
-    if(orderClickTimer.current){
-      window.clearTimeout(orderClickTimer.current);
-      orderClickTimer.current=null;
-    }
-    const visual=orderVisualState(order,date,now);
-    if(visual==="in" || visual==="out" || visual==="cancelled") return;
-    const nextStatus:OrderStatus=order.status==="dispatching" ? "accepted" : "dispatching";
-    setOrders(updateOrder(order.id,{status:nextStatus}));
-  }
-
   function closeOrderMenu(){
     setSelectedOrderId(null);
     setOrderMode("menu");
@@ -352,6 +331,13 @@ export default function DashboardPage(){
   function currentClockTime(){
     const value=new Date();
     return `${String(value.getHours()).padStart(2,"0")}:${String(value.getMinutes()).padStart(2,"0")}`;
+  }
+
+  function markOrderDispatched(){
+    if(!selectedOrder) return;
+    if(selectedOrder.inTime || selectedOrder.status==="serving" || selectedOrder.status==="completed" || selectedOrder.status==="cancelled") return;
+    setOrders(updateOrder(selectedOrder.id,{status:"dispatching"}));
+    setCopyNotice("配車済みに変更しました");
   }
 
   function recordInTime(){
@@ -545,8 +531,8 @@ export default function DashboardPage(){
         <section className="deskPanel operationGuide">
           <h2>操作ガイド</h2>
           <div className="operationGuideList">
-            <div><span className="guideDot beforeDispatch"/><p><strong>紫：配車前</strong><small>オーダーをダブルクリックで配車後へ</small></p></div>
-            <div><span className="guideDot afterDispatch"/><p><strong>橙：配車後</strong><small>もう一度ダブルクリックで配車前へ戻す</small></p></div>
+            <div><span className="guideDot beforeDispatch"/><p><strong>紫：配車前</strong><small>オーダーをクリック →「配車済み」で切替</small></p></div>
+            <div><span className="guideDot afterDispatch"/><p><strong>橙：配車後</strong><small>配車済みになったオーダー</small></p></div>
             <div><span className="guideDot inService"/><p><strong>緑：イン中</strong><small>オーダーをクリック →「イン時間」で切替</small></p></div>
             <div><span className="guideDot out"/><p><strong>灰：アウト</strong><small>終了予定時間を過ぎると自動でグレー表示</small></p></div>
           </div>
@@ -744,9 +730,8 @@ export default function DashboardPage(){
                     key={order.id}
                     className={`timelineOrder orderVisual-${visualState}`}
                     style={pos}
-                    onClick={()=>handleOrderSingleClick(order)}
-                    onDoubleClick={()=>handleOrderDoubleClick(order)}
-                    title={visualState==="beforeDispatch"?"配車前（ダブルクリックで配車後へ）":visualState==="afterDispatch"?"配車後（ダブルクリックで配車前へ）":visualState==="in"?"イン中":visualState==="out"?"アウト":"キャンセル"}
+                    onClick={()=>openOrderMenu(order)}
+                    title={visualState==="beforeDispatch"?"配車前":visualState==="afterDispatch"?"配車後":visualState==="in"?"イン中":visualState==="out"?"アウト":"キャンセル"}
                   >
                     <strong>{order.scheduledStart}〜{order.scheduledEnd}</strong>
                     <span>{order.castName}</span>
@@ -789,6 +774,14 @@ export default function DashboardPage(){
         {copyNotice && <div className="orderActionNotice">{copyNotice}</div>}
 
         {orderMode==="menu" && <div className="orderActionButtons">
+          <button
+            type="button"
+            className="orderActionDispatch"
+            onClick={markOrderDispatched}
+            disabled={selectedOrder.status==="dispatching" || Boolean(selectedOrder.inTime) || selectedOrder.status==="serving" || selectedOrder.status==="completed" || selectedOrder.status==="cancelled"}
+          >
+            {selectedOrder.status==="dispatching" ? "配車済み ✓" : "配車済み"}
+          </button>
           <button type="button" className="orderActionIn" onClick={recordInTime}>
             {selectedOrder.inTime ? `イン ${selectedOrder.inTime}` : "イン時間"}
           </button>
