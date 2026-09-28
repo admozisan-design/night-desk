@@ -830,7 +830,7 @@ export default function DashboardPage(){
             {paymentMethod==="card" && <div className="cardFeePreview">
               <span>カード手数料 {storeSettings.cardFeeRate??0}%</span>
               <strong>＋{formatYen(cardFee)}</strong>
-            </div>
+            </div>}
 
             <label>備考
               <textarea rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="サンプル備考を入力"/>
