@@ -407,8 +407,15 @@ export default function DashboardPage(){
 
   function recordInTime(){
     if(!selectedOrder || !inTimeDraft) return;
-    setOrders(updateOrder(selectedOrder.id,{inTime:inTimeDraft,status:"serving"}));
-    setCopyNotice(`イン時間 ${inTimeDraft} を記録しました`);
+    const duration=selectedOrder.courseMinutes+(selectedOrder.extensionMinutes??0);
+    const scheduledEnd=addMinutes(inTimeDraft,duration);
+    setOrders(updateOrder(selectedOrder.id,{
+      inTime:inTimeDraft,
+      status:"serving",
+      scheduledStart:inTimeDraft,
+      scheduledEnd
+    }));
+    setCopyNotice(`イン時間 ${inTimeDraft} に合わせてオーダーを移動しました`);
     setOrderMode("menu");
   }
 
