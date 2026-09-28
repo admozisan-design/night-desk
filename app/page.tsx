@@ -333,10 +333,21 @@ export default function DashboardPage(){
     : 0;
   const total = subtotalBeforeCard+cardFee;
 
-  const activeOrders = useMemo(()=>orders.filter(o=>o.status!=="completed"&&o.status!=="cancelled"),[orders]);
-  const todaySales = useMemo(()=>orders.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+o.total,0),[orders]);
+  const selectedDateOrders = useMemo(
+    ()=>orders.filter(order=>orderServiceDate(order)===date),
+    [orders,date]
+  );
+  const activeOrders = useMemo(
+    ()=>selectedDateOrders.filter(order=>order.status!=="completed"&&order.status!=="cancelled"),
+    [selectedDateOrders]
+  );
+  const todaySales = useMemo(
+    ()=>selectedDateOrders.filter(order=>order.status!=="cancelled").reduce((sum,order)=>sum+order.total,0),
+    [selectedDateOrders]
+  );
   const waitingCount = workingCasts.filter(c=>c.status==="waiting").length;
-  const nowPosition = now ? currentTimePosition(now) : null;
+  const todayValue=dateInputValue(new Date());
+  const nowPosition = now && date===todayValue ? currentTimePosition(now) : null;
   const detailCast = detailCastId ? castList.find(c=>c.id===detailCastId) : undefined;
   const detailShift = detailCast ? castShiftForDate(detailCast,date) : undefined;
   const shiftEditCast = shiftEditCastId ? castList.find(c=>c.id===shiftEditCastId) : undefined;
@@ -640,7 +651,7 @@ export default function DashboardPage(){
 
   return <div className="deskDashboard">
     <section className="deskKpis">
-      <div><span>本日出勤</span><strong>{workingCasts.length}人</strong></div>
+      <div><span>出勤人数</span><strong>{workingCasts.length}人</strong></div>
       <div><span>待機</span><strong>{waitingCount}人</strong></div>
       <div><span>稼働中</span><strong>{activeOrders.length}件</strong></div>
       <div><span>売上</span><strong>{formatYen(todaySales)}</strong></div>
@@ -890,15 +901,19 @@ export default function DashboardPage(){
       <aside className="deskRight">
         <section className="deskPanel">
           <div className="panelTitleRow">
-            <h2>本日の予約一覧</h2>
-            <span>{orders.length}件</span>
+            <h2>選択日の予約一覧</h2>
+            <span>{selectedDateOrders.length}件</span>
           </div>
           <div className="todayOrders">
-            {orders.slice(0,7).map(order=><Link href="/orders" key={order.id}>
-              <div><strong>{order.scheduledStart}</strong><span>{order.castName}</span></div>
-              <small>{order.locationName || "場所未入力"} / {orderStatusLabels[order.status]}</small>
-            </Link>)}
-            {!orders.length && <p>本日の予約はありません</p>}
+            {selectedDateOrders
+              .slice()
+              .sort((a,b)=>a.scheduledStart.localeCompare(b.scheduledStart))
+              .slice(0,7)
+              .map(order=><Link href="/orders" key={order.id}>
+                <div><strong>{order.scheduledStart}</strong><span>{order.castName}</span></div>
+                <small>{order.locationName || "場所未入力"} / {orderStatusLabels[order.status]}</small>
+              </Link>)}
+            {!selectedDateOrders.length && <p>{date} の予約はありません</p>}
           </div>
         </section>
       </aside>
@@ -922,7 +937,7 @@ export default function DashboardPage(){
           <div className="timelineHeader longTimeline">{hourLabels.map(hour=><div key={hour}>{hour}</div>)}</div>
 
           {workingCasts.map(cast=>{
-            const castOrders = orders.filter(o=>o.castId===cast.id && o.status!=="cancelled");
+            const castOrders = selectedDateOrders.filter(o=>o.castId===cast.id && o.status!=="cancelled");
             const visibleOrders = castOrders.filter(o=>eventPosition(o));
             const shift=castShiftForDate(cast,date);
             const attendance=shift?.attendance;
