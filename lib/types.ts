@@ -1,4 +1,5 @@
 export type CastStatus = "waiting" | "moving" | "serving" | "off";
+export type CastShift = { date:string; start:string; end:string; working:boolean; };
 export type OrderStatus = "accepted" | "dispatching" | "serving" | "completed" | "cancelled";
 export type Cast = {
   id:string;
@@ -8,6 +9,7 @@ export type Cast = {
   shiftStart?:string;
   shiftEnd?:string;
   scheduledToday?:boolean;
+  schedule?:CastShift[];
   visible?:boolean;
   unitPrice?:number;
   freeUnitPrice?:number;
