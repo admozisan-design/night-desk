@@ -280,22 +280,13 @@ export default function DashboardPage(){
       .filter(order=>normalizePhone(order.customerPhone??"")===phoneKey && order.status!=="cancelled")
       .sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
   },[orders,phoneKey]);
-  const servedCustomerHistory=useMemo(()=>customerHistory.filter(order=>
-    order.id!==editingOrderId &&
-    (order.status==="completed" || Boolean(order.inTime) || orderServiceDate(order)<date)
-  ),[customerHistory,editingOrderId,date]);
-  const visitedCastCounts=useMemo(()=>{
-    const counts=new Map<string,number>();
-    for(const order of servedCustomerHistory){
-      counts.set(order.castId,(counts.get(order.castId)??0)+1);
-    }
-    return counts;
-  },[servedCustomerHistory]);
-  const visitedCastIds=useMemo(()=>new Set(visitedCastCounts.keys()),[visitedCastCounts]);
-  const visitedAvailableCasts=useMemo(
-    ()=>formCastChoices.filter(cast=>visitedCastIds.has(cast.id)),
-    [formCastChoices,visitedCastIds]
-  );
+  const workingCastIdsToday=useMemo(()=>new Set(workingCasts.map(cast=>cast.id)),[workingCasts]);
+  const customerNgText=(matchedCustomer?.ngInfo??"").toLowerCase();
+  function historyCastIsNg(history:Order){
+    const cast=castList.find(item=>item.id===history.castId);
+    const castName=(cast?.name ?? history.castName ?? "").trim().toLowerCase();
+    return Boolean(castName && customerNgText.includes(castName));
+  }
   const selectableOptions = useMemo(
     ()=>optionList.filter(option=>option.active!==false && (selectedCast?.availableOptions??[]).includes(option.name)),
     [optionList,selectedCast]
@@ -657,16 +648,28 @@ export default function DashboardPage(){
                   </div>
                   {customerHistory.length>0
                     ? <div className="customerHistoryList">
-                        {customerHistory.slice(0,5).map(history=><div key={history.id} className="customerHistoryItem">
+                        {customerHistory.slice(0,5).map(history=>{
+                        const isWorkingToday=workingCastIdsToday.has(history.castId);
+                        const isNgCast=historyCastIsNg(history);
+                        return <div
+                          key={history.id}
+                          className={`customerHistoryItem ${isNgCast?"isNgCast":isWorkingToday?"isWorkingCast":""}`}
+                        >
                           <div>
                             <strong>{orderServiceDate(history)} {history.scheduledStart}</strong>
                             <span>{history.castName} / {history.courseMinutes+(history.extensionMinutes??0)}分</span>
+                            {isNgCast
+                              ? <em className="historyCastFlag ng">NGキャスト</em>
+                              : isWorkingToday
+                                ? <em className="historyCastFlag working">本日出勤</em>
+                                : null}
                           </div>
                           <div>
                             <span>{history.locationName || "場所未入力"}</span>
                             <strong>{formatYen(history.total)}</strong>
                           </div>
-                        </div>)}
+                        </div>
+                      })}
                       </div>
                     : <p className="customerHistoryEmpty">過去の利用履歴はありません</p>}
                   {customerHistory.length>5 && <small>直近5件を表示しています</small>}
@@ -681,38 +684,9 @@ export default function DashboardPage(){
                 </select>
               </label>
               <label>キャスト
-                <div className="castHistorySelectWrap">
-                  <select
-                    value={castId}
-                    onChange={e=>setCastId(e.target.value)}
-                    disabled={!formCastChoices.length}
-                    className={visitedCastIds.has(castId)?"hasVisitedCast":""}
-                  >
-                    {formCastChoices.map(c=>{
-                      const visited=visitedCastIds.has(c.id);
-                      const count=visitedCastCounts.get(c.id)??0;
-                      return <option
-                        key={c.id}
-                        value={c.id}
-                        className={visited?"visitedCastOption":""}
-                      >
-                        {visited ? `★ ${c.name} / 既遊${count}回 / ${statusLabels[c.status]}` : `${c.name} / ${statusLabels[c.status]}`}
-                      </option>
-                    })}
-                  </select>
-                  {visitedCastIds.has(castId) && <span className="selectedVisitedCastBadge">既遊キャスト</span>}
-                </div>
-                {visitedAvailableCasts.length>0 && <div className="visitedCastChips">
-                  <span className="visitedCastChipsLabel">既遊</span>
-                  {visitedAvailableCasts.map(cast=><button
-                    type="button"
-                    key={cast.id}
-                    className={cast.id===castId?"active":""}
-                    onClick={()=>setCastId(cast.id)}
-                  >
-                    ★ {cast.name} <small>{visitedCastCounts.get(cast.id)??0}回</small>
-                  </button>)}
-                </div>}
+                <select value={castId} onChange={e=>setCastId(e.target.value)} disabled={!formCastChoices.length}>
+                  {formCastChoices.map(c=><option key={c.id} value={c.id}>{c.name} / {statusLabels[c.status]}</option>)}
+                </select>
               </label>
             </div>
 

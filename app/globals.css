@@ -2290,64 +2290,30 @@ button:disabled{opacity:.45;cursor:not-allowed}
 }
 
 
-/* ===== Previously served casts ===== */
-.castHistorySelectWrap{position:relative}
-.castHistorySelectWrap select{padding-right:86px!important}
-.castHistorySelectWrap select.hasVisitedCast{
-  border-color:#8fc24b!important;
-  background:#f4fae9!important;
-  color:#456c18;
-  font-weight:900;
+/* ===== History cast highlighting ===== */
+.customerHistoryItem.isWorkingCast{
+  border-color:#b7d98b;
+  background:#f1f9e7;
 }
-.visitedCastOption{
-  background:#e8f6d4;
-  color:#3f6814;
-  font-weight:900;
+.customerHistoryItem.isNgCast{
+  border-color:#e28b96;
+  background:#fff0f2;
 }
-.selectedVisitedCastBadge{
-  position:absolute;
-  right:8px;
-  top:50%;
-  transform:translateY(-50%);
-  padding:4px 7px;
+.historyCastFlag{
+  display:inline-flex;
+  width:max-content;
+  margin-top:5px;
+  padding:3px 6px;
   border-radius:999px;
-  background:#dff1c5;
-  color:#4a711c;
-  font-size:9px;
-  font-weight:900;
-  pointer-events:none;
-}
-.visitedCastChips{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  flex-wrap:wrap;
-  margin-top:7px;
-}
-.visitedCastChipsLabel{
-  font-size:9px;
-  font-weight:900;
-  color:#6e7a84;
-}
-.visitedCastChips button{
-  min-height:26px;
-  padding:4px 8px;
-  border:1px solid #b8d78d;
-  border-radius:999px;
-  background:#eff8e3;
-  color:#527822;
-  font-size:10px;
-  font-weight:900;
-  cursor:pointer;
-}
-.visitedCastChips button:hover,
-.visitedCastChips button.active{
-  border-color:#7fb73b;
-  background:#dff1c5;
-  color:#3e6412;
-}
-.visitedCastChips small{
-  margin-left:3px;
   font-size:8px;
-  opacity:.8;
+  font-style:normal;
+  font-weight:900;
+}
+.historyCastFlag.working{
+  background:#dff1c5;
+  color:#4b721b;
+}
+.historyCastFlag.ng{
+  background:#ffd9de;
+  color:#a32538;
 }
