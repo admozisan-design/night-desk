@@ -1,6 +1,6 @@
 export type CastStatus = "waiting" | "moving" | "serving" | "off";
 export type CastAttendanceStatus = "present" | "late" | "absent" | "leftEarly";
-export type CastShift = { date:string; start:string; end:string; working:boolean; attendance?:CastAttendanceStatus; };
+export type CastShift = { date:string; start:string; receptionEnd:string; end:string; working:boolean; attendance?:CastAttendanceStatus; };
 export type OrderStatus = "accepted" | "dispatching" | "serving" | "completed" | "cancelled";
 export type Cast = {
   id:string;
@@ -32,6 +32,7 @@ export type Course = { id:string; minutes:number; price:number; };
 export type Hotel = { id:string; name:string; travelFee:number; visible?:boolean; };
 export type Staff = { id:string; name:string; displayName:string; loginId:string; notes?:string; active?:boolean; };
 export type StoreOption = { id:string; name:string; price:number; notes?:string; active?:boolean; };
+export type StoreSettings = { openTime:string; closeTime:string; };
 export type Customer = { id:string; phone:string; name?:string; notes?:string; ngInfo?:string; active?:boolean; };
 export type PricingConfig = {
   courses:Course[];

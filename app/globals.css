@@ -1843,7 +1843,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .castScheduleWeekSummary span{font-size:10px;color:#89939d;font-weight:800}
 .castScheduleWeekSummary strong{margin-top:4px;font-size:13px}
 .castScheduleTable{display:grid}
-.castScheduleRow{display:grid;grid-template-columns:minmax(160px,1.4fr) 150px 150px 150px;align-items:center;gap:12px;min-height:64px;padding:9px 18px;border-bottom:1px solid #edf0f3}
+.castScheduleRow{display:grid;grid-template-columns:minmax(150px,1.3fr) 120px 130px 130px 130px;align-items:center;gap:12px;min-height:64px;padding:9px 18px;border-bottom:1px solid #edf0f3}
 .castScheduleRow:last-child{border-bottom:0}
 .castScheduleTableHead{min-height:42px;background:#f6f8f9;color:#7b8691;font-size:10px;font-weight:900}
 .castScheduleRow.isWorking{background:#fbfff7}
@@ -1859,7 +1859,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .castScheduleLayout{grid-template-columns:1fr}
   .castScheduleCastButtons{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
   .castSchedulePanel{overflow:auto}
-  .castScheduleTable,.castScheduleToolbar,.castScheduleWeekSummary{min-width:720px}
+  .castScheduleTable,.castScheduleToolbar,.castScheduleWeekSummary{min-width:800px}
 }
 @media(max-width:600px){
   .castScheduleCastButtons{grid-template-columns:1fr}
@@ -1913,7 +1913,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .attendanceModalFooter button{min-height:40px;padding:8px 15px;border:1px solid #d4dbe1;border-radius:8px;background:#fff;font-size:12px;font-weight:900;cursor:pointer}
 .attendanceModalFooter .primaryButton{border-color:#79b91c;background:#84cc16;color:#17200b}
 .shiftQuickModal{width:min(480px,96vw)}
-.shiftQuickForm{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:20px}
+.shiftQuickForm{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:20px}
 .shiftQuickForm label{display:grid;gap:7px;font-size:12px;font-weight:900;color:#5d6975}
 .shiftQuickForm input{min-height:46px;padding:9px 11px;border:1px solid #d5dce2;border-radius:9px;background:#fff;font-size:16px;font-weight:900}
 @media(max-width:600px){
@@ -2136,3 +2136,43 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .operationGuideTips p{display:grid;grid-template-columns:64px 1fr;gap:7px;margin:0}
 .operationGuideTips strong{font-size:9px;color:#55616d}
 .operationGuideTips span{font-size:9px;line-height:1.45;color:#7c8792}
+
+
+/* ===== Reception end / store settings ===== */
+.receptionClosedBlock{
+  position:absolute;
+  top:0;
+  bottom:0;
+  z-index:2;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  overflow:hidden;
+  background:rgba(217,155,47,.12);
+  border-left:1px dashed rgba(190,124,20,.55);
+  pointer-events:none;
+}
+.receptionClosedBlock span{
+  margin-bottom:4px;
+  padding:2px 5px;
+  border-radius:999px;
+  background:rgba(255,248,231,.9);
+  color:#9a6716;
+  font-size:8px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.receptionClosedBlock[style*="width: 0%"],
+.receptionClosedBlock[style*="width:0%"]{display:none}
+.storeSettingsPage{max-width:860px}
+.storeHoursPanel{padding:18px}
+.storeHoursPanel h2{margin:0 0 16px}
+.storeHoursGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.storeHoursGrid label{display:grid;gap:7px;font-size:12px;font-weight:900;color:#5d6975}
+.storeHoursGrid input{min-height:46px;padding:9px 11px;border:1px solid #d5dce2;border-radius:9px;background:#fff;font-size:16px;font-weight:900}
+.storeHoursNote{margin-top:16px;padding:13px 14px;border:1px solid #e2e7eb;border-radius:10px;background:#f8fafb}
+.storeHoursNote strong{font-size:12px}
+.storeHoursNote p{margin:5px 0 0;font-size:11px;line-height:1.6;color:#74808b}
+@media(max-width:600px){
+  .storeHoursGrid{grid-template-columns:1fr}
+}

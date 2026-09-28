@@ -1,4 +1,4 @@
-import type { AuditLog, Cast, Customer, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption } from "./types";
+import type { AuditLog, Cast, Customer, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings } from "./types";
 
 const ORDER_KEY = "night-desk-orders-sample-v02";
 const CAST_KEY = "night-desk-casts-sample-v03";
@@ -10,6 +10,7 @@ const CUSTOMER_KEY = "night-desk-customers-sample-v01";
 const PRICING_KEY = "night-desk-pricing-sample-v01";
 const PERMISSION_KEY = "night-desk-permissions-sample-v01";
 const LOG_KEY = "night-desk-audit-log-v01";
+const STORE_SETTINGS_KEY = "night-desk-store-settings-v01";
 
 export function loadOrders():Order[] {
   if (typeof window === "undefined") return [];
@@ -62,7 +63,7 @@ function normalizeCast(cast:Cast):Cast {
   return {
     ...cast,
     scheduledToday: cast.scheduledToday ?? true,
-    schedule: Array.isArray(cast.schedule) ? cast.schedule : [],
+    schedule: Array.isArray(cast.schedule) ? cast.schedule.map(shift=>({...shift,receptionEnd:shift.receptionEnd ?? shift.end})) : [],
     visible: cast.visible ?? true,
     unitPrice: cast.unitPrice ?? 0,
     freeUnitPrice: cast.freeUnitPrice ?? cast.unitPrice ?? 0,
@@ -338,4 +339,27 @@ export function loadAuditLogs():AuditLog[] {
   } catch {
     return [];
   }
+}
+
+
+export function loadStoreSettings(defaultSettings:StoreSettings):StoreSettings {
+  if (typeof window === "undefined") return defaultSettings;
+  try {
+    const raw=localStorage.getItem(STORE_SETTINGS_KEY);
+    if(!raw) return defaultSettings;
+    const parsed=JSON.parse(raw) as Partial<StoreSettings>;
+    return {
+      openTime:parsed.openTime ?? defaultSettings.openTime,
+      closeTime:parsed.closeTime ?? defaultSettings.closeTime,
+    };
+  } catch {
+    return defaultSettings;
+  }
+}
+
+export function saveStoreSettings(settings:StoreSettings){
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORE_SETTINGS_KEY,JSON.stringify(settings));
+  window.dispatchEvent(new Event("nightdesk:store-settings"));
+  appendAuditLog("店舗設定","営業時間を保存",`${settings.openTime}〜${settings.closeTime}`);
 }

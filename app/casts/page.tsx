@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { casts as defaultCasts } from "@/lib/mock-data";
-import { loadCasts, saveCasts } from "@/lib/storage";
+import { casts as defaultCasts, defaultStoreSettings } from "@/lib/mock-data";
+import { loadCasts, loadStoreSettings, saveCasts } from "@/lib/storage";
 import type { Cast, CastShift } from "@/lib/types";
 
 const dayNames = ["日","月","火","水","木","金","土"];
@@ -40,10 +40,12 @@ export default function CastSchedulePage(){
   const [weekStart,setWeekStart]=useState(()=>startOfWeek());
   const [drafts,setDrafts]=useState<Record<string,CastShift>>({});
   const [saved,setSaved]=useState(false);
+  const [storeSettings,setStoreSettings]=useState(defaultStoreSettings);
 
   useEffect(()=>{
     const loaded=loadCasts(defaultCasts);
     setCasts(loaded);
+    setStoreSettings(loadStoreSettings(defaultStoreSettings));
     setSelectedId(current=>current || loaded.find(c=>c.visible!==false)?.id || loaded[0]?.id || "");
   },[]);
 
@@ -55,15 +57,18 @@ export default function CastSchedulePage(){
     const next:Record<string,CastShift>={};
     for(const date of weekDates){
       const existing=selected.schedule?.find(item=>item.date===date);
-      next[date]=existing ?? {
-        date,
-        start:selected.shiftStart ?? "18:00",
-        end:selected.shiftEnd ?? "04:00",
-        working:false
-      };
+      next[date]=existing
+        ? {...existing,receptionEnd:existing.receptionEnd ?? existing.end}
+        : {
+            date,
+            start:selected.shiftStart ?? storeSettings.openTime,
+            receptionEnd:selected.shiftEnd ?? storeSettings.closeTime,
+            end:selected.shiftEnd ?? storeSettings.closeTime,
+            working:false
+          };
     }
     setDrafts(next);
-  },[selectedId,weekStart,casts]);
+  },[selectedId,weekStart,casts,storeSettings]);
 
   function updateShift(date:string,changes:Partial<CastShift>){
     setDrafts(current=>({
@@ -91,7 +96,7 @@ export default function CastSchedulePage(){
       <div>
         <p className="eyebrow">CAST SCHEDULE</p>
         <h1>キャスト出勤管理</h1>
-        <p>キャストを1人選び、日ごとの出勤・休みと出勤時間を設定します。</p>
+        <p>キャストごとに出勤・受付終了・上がりを日別で設定します。</p>
       </div>
       <div className="castScheduleHeaderActions">
         {saved && <span className="saveToast">保存しました</span>}
@@ -140,7 +145,7 @@ export default function CastSchedulePage(){
 
         <div className="castScheduleTable">
           <div className="castScheduleRow castScheduleTableHead">
-            <span>日付</span><span>予定</span><span>出勤</span><span>上り</span>
+            <span>日付</span><span>予定</span><span>出勤</span><span>受付終了</span><span>上がり</span>
           </div>
           {weekDates.map(date=>{
             const shift=drafts[date];
@@ -152,6 +157,7 @@ export default function CastSchedulePage(){
                 <span>{shift.working?"出勤":"休み"}</span>
               </label>
               <input type="time" value={shift.start} disabled={!shift.working} onChange={e=>updateShift(date,{start:e.target.value})}/>
+              <input type="time" value={shift.receptionEnd} disabled={!shift.working} onChange={e=>updateShift(date,{receptionEnd:e.target.value})}/>
               <input type="time" value={shift.end} disabled={!shift.working} onChange={e=>updateShift(date,{end:e.target.value})}/>
             </div>
           })}

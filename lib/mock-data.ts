@@ -1,4 +1,6 @@
-import type { Cast, Course, Driver, Hotel, PricingConfig, Staff, StoreOption } from "./types";
+import type { Cast, Course, Driver, Hotel, PricingConfig, Staff, StoreOption, StoreSettings } from "./types";
+
+export const defaultStoreSettings: StoreSettings = { openTime:"10:00", closeTime:"05:00" };
 
 export const casts: Cast[] = [
   {

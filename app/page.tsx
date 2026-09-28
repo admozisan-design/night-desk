@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { casts as defaultCasts, defaultPricingConfig, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
+import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { deleteOrder, loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, saveCasts, saveOrder, updateOrder } from "@/lib/storage";
+import { deleteOrder, loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadStoreSettings, saveCasts, saveOrder, updateOrder } from "@/lib/storage";
 import type { Cast, CastAttendanceStatus, CastStatus, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
@@ -87,6 +87,17 @@ function shiftAvailabilityPosition(startTime:string,endTime:string){
     afterWidth:`${((BOARD_MINUTES-visibleEnd)/BOARD_MINUTES)*100}%`
   };
 }
+function receptionClosedPosition(receptionEnd:string,endTime:string){
+  let start=normalizedMinutes(receptionEnd)-BOARD_START;
+  let end=normalizedMinutes(endTime)-BOARD_START;
+  if(end<start) end+=24*60;
+  const visibleStart=Math.max(0,Math.min(BOARD_MINUTES,start));
+  const visibleEnd=Math.max(0,Math.min(BOARD_MINUTES,end));
+  return {
+    left:`${(visibleStart/BOARD_MINUTES)*100}%`,
+    width:`${(Math.max(0,visibleEnd-visibleStart)/BOARD_MINUTES)*100}%`
+  };
+}
 function resolveOrderCourse(order:Order,pricing:PricingConfig){
   const byId=order.courseId ? pricing.courses.find(course=>course.id===order.courseId) : undefined;
   if(byId) return byId;
@@ -125,11 +136,12 @@ export default function DashboardPage(){
   const [driverList,setDriverList] = useState<Driver[]>(defaultDrivers);
   const [optionList,setOptionList] = useState<StoreOption[]>(defaultOptions);
   const [pricing,setPricing] = useState<PricingConfig>(defaultPricingConfig);
+  const [storeSettings,setStoreSettings] = useState(defaultStoreSettings);
   const [now,setNow] = useState<Date|null>(null);
   const [date,setDate] = useState(()=>dateInputValue(new Date()));
   const [detailCastId,setDetailCastId] = useState<string|null>(null);
   const [shiftEditCastId,setShiftEditCastId] = useState<string|null>(null);
-  const [shiftDraft,setShiftDraft] = useState({start:"18:00",end:"04:00"});
+  const [shiftDraft,setShiftDraft] = useState({start:"18:00",receptionEnd:"04:00",end:"04:00"});
   const [selectedOrderId,setSelectedOrderId] = useState<string|null>(null);
   const [orderMode,setOrderMode] = useState<"menu"|"extend">("menu");
   const [editingOrderId,setEditingOrderId] = useState<string|null>(null);
@@ -157,6 +169,7 @@ export default function DashboardPage(){
       setDriverList(loadDrivers(defaultDrivers));
       setOptionList(loadOptions(defaultOptions));
       setPricing(loadPricing(defaultPricingConfig));
+      setStoreSettings(loadStoreSettings(defaultStoreSettings));
     };
     refresh();
     setNow(new Date());
@@ -168,6 +181,7 @@ export default function DashboardPage(){
     window.addEventListener("nightdesk:drivers",refresh);
     window.addEventListener("nightdesk:options",refresh);
     window.addEventListener("nightdesk:pricing",refresh);
+    window.addEventListener("nightdesk:store-settings",refresh);
     return ()=>{
       window.clearInterval(timer);
       window.removeEventListener("storage",refresh);
@@ -177,6 +191,7 @@ export default function DashboardPage(){
       window.removeEventListener("nightdesk:drivers",refresh);
       window.removeEventListener("nightdesk:options",refresh);
       window.removeEventListener("nightdesk:pricing",refresh);
+      window.removeEventListener("nightdesk:store-settings",refresh);
     };
   },[]);
 
@@ -285,6 +300,7 @@ export default function DashboardPage(){
     const nextShift={
       date,
       start:existing?.start ?? cast.shiftStart ?? "18:00",
+      receptionEnd:existing?.receptionEnd ?? existing?.end ?? cast.shiftEnd ?? "04:00",
       end:existing?.end ?? cast.shiftEnd ?? "04:00",
       working:existing?.working ?? true,
       attendance:existing?.attendance,
@@ -305,6 +321,7 @@ export default function DashboardPage(){
     const shift=castShiftForDate(cast,date);
     setShiftDraft({
       start:shift?.start ?? cast.shiftStart ?? "18:00",
+      receptionEnd:shift?.receptionEnd ?? shift?.end ?? cast.shiftEnd ?? "04:00",
       end:shift?.end ?? cast.shiftEnd ?? "04:00"
     });
     setShiftEditCastId(cast.id);
@@ -312,7 +329,7 @@ export default function DashboardPage(){
 
   function saveQuickShift(){
     if(!shiftEditCast) return;
-    replaceCastShift(shiftEditCast,{start:shiftDraft.start,end:shiftDraft.end,working:true});
+    replaceCastShift(shiftEditCast,{start:shiftDraft.start,receptionEnd:shiftDraft.receptionEnd,end:shiftDraft.end,working:true});
     setShiftEditCastId(null);
   }
 
@@ -677,7 +694,7 @@ export default function DashboardPage(){
 
     <section className="boardSection">
       <div className="boardSectionHead">
-        <div><h2>配車ボード</h2><span>{date}</span></div>
+        <div><h2>配車ボード</h2><span>{date}</span><span>営業時間 {storeSettings.openTime}〜{storeSettings.closeTime}</span></div>
         <div className="boardLegend">
           <span><i className="legend beforeDispatch"/>配車前</span>
           <span><i className="legend afterDispatch"/>配車後</span>
@@ -700,7 +717,9 @@ export default function DashboardPage(){
             const unavailable=attendance==="absent" || attendance==="leftEarly";
             const shiftStart=shift?.start ?? cast.shiftStart ?? "10:00";
             const shiftEnd=shift?.end ?? cast.shiftEnd ?? "05:00";
+            const receptionEnd=shift?.receptionEnd ?? shiftEnd;
             const availability=shiftAvailabilityPosition(shiftStart,shiftEnd);
+            const receptionClosed=receptionClosedPosition(receptionEnd,shiftEnd);
             return <div className={`dispatchRowContents ${unavailable?"isUnavailableCast":""}`} key={cast.id}>
               <div className="dispatchName">
                 <span className={`castStateDot ${cast.status}`}/>
@@ -717,6 +736,7 @@ export default function DashboardPage(){
               <div className="dispatchShift">
                 <button type="button" className="dispatchShiftQuick" onClick={()=>openShiftQuickEdit(cast)} title="出勤時間をクイック修正">
                   <span>出勤 <b>{shift?.start ?? cast.shiftStart ?? "--:--"}</b></span>
+                  <span>受付 <b>{shift?.receptionEnd ?? shift?.end ?? cast.shiftEnd ?? "--:--"}</b></span>
                   <span>上り <b>{shift?.end ?? cast.shiftEnd ?? "--:--"}</b></span>
                 </button>
               </div>
@@ -739,6 +759,9 @@ export default function DashboardPage(){
                   </button>
                 })}
                 {!visibleOrders.length && !unavailable && <span className="emptyTimeline">空き</span>}
+                <div className="receptionClosedBlock" style={receptionClosed} title="受付終了後">
+                  <span>受付終了後</span>
+                </div>
                 <div className="offShiftBlock before" style={{width:availability.beforeWidth}} title="出勤時間外">
                   <span>出勤前</span>
                 </div>
@@ -857,7 +880,10 @@ export default function DashboardPage(){
           <label>出勤
             <input type="time" value={shiftDraft.start} onChange={e=>setShiftDraft(current=>({...current,start:e.target.value}))}/>
           </label>
-          <label>上り
+          <label>受付終了
+            <input type="time" value={shiftDraft.receptionEnd} onChange={e=>setShiftDraft(current=>({...current,receptionEnd:e.target.value}))}/>
+          </label>
+          <label>上がり
             <input type="time" value={shiftDraft.end} onChange={e=>setShiftDraft(current=>({...current,end:e.target.value}))}/>
           </label>
         </div>

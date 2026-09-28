@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 const masterItems = [
+  { title:"店舗設定", description:"店舗の営業時間を設定", href:"/store", action:"設定する" },
   { title:"キャスト登録", description:"キャスト情報、単価、スペック、NG、可能OPを管理", href:"/casts/manage", action:"管理する" },
   { title:"スタッフ登録", description:"スタッフ名、表示名、ログインIDを管理", href:"/staff", action:"管理する" },
   { title:"ドライバー登録", description:"ドライバー名、電話番号、車両、ナンバーを管理", href:"/drivers", action:"管理する" },
