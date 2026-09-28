@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
 import { deleteOrder, loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadStoreSettings, saveCasts, saveOrder, updateOrder } from "@/lib/storage";
-import type { Cast, CastAttendanceStatus, CastStatus, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
+import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
 const BOARD_MINUTES = 19 * 60;
@@ -141,7 +141,7 @@ export default function DashboardPage(){
   const [date,setDate] = useState(()=>dateInputValue(new Date()));
   const [detailCastId,setDetailCastId] = useState<string|null>(null);
   const [shiftEditCastId,setShiftEditCastId] = useState<string|null>(null);
-  const [shiftDraft,setShiftDraft] = useState({start:"18:00",receptionEnd:"04:00",end:"04:00"});
+  const [shiftDraft,setShiftDraft] = useState<{start:string;endType:CastShiftEndType;endTime:string}>({start:"18:00",endType:"leave",endTime:"04:00"});
   const [selectedOrderId,setSelectedOrderId] = useState<string|null>(null);
   const [orderMode,setOrderMode] = useState<"menu"|"extend">("menu");
   const [editingOrderId,setEditingOrderId] = useState<string|null>(null);
@@ -300,8 +300,8 @@ export default function DashboardPage(){
     const nextShift={
       date,
       start:existing?.start ?? cast.shiftStart ?? "18:00",
-      receptionEnd:existing?.receptionEnd ?? existing?.end ?? cast.shiftEnd ?? "04:00",
-      end:existing?.end ?? cast.shiftEnd ?? "04:00",
+      endType:existing?.endType ?? "leave",
+      endTime:existing?.endTime ?? cast.shiftEnd ?? "04:00",
       working:existing?.working ?? true,
       attendance:existing?.attendance,
       ...changes
@@ -321,15 +321,15 @@ export default function DashboardPage(){
     const shift=castShiftForDate(cast,date);
     setShiftDraft({
       start:shift?.start ?? cast.shiftStart ?? "18:00",
-      receptionEnd:shift?.receptionEnd ?? shift?.end ?? cast.shiftEnd ?? "04:00",
-      end:shift?.end ?? cast.shiftEnd ?? "04:00"
+      endType:shift?.endType ?? "leave",
+      endTime:shift?.endTime ?? cast.shiftEnd ?? "04:00"
     });
     setShiftEditCastId(cast.id);
   }
 
   function saveQuickShift(){
     if(!shiftEditCast) return;
-    replaceCastShift(shiftEditCast,{start:shiftDraft.start,receptionEnd:shiftDraft.receptionEnd,end:shiftDraft.end,working:true});
+    replaceCastShift(shiftEditCast,{start:shiftDraft.start,endType:shiftDraft.endType,endTime:shiftDraft.endTime,working:true});
     setShiftEditCastId(null);
   }
 
@@ -705,7 +705,7 @@ export default function DashboardPage(){
       <div className="dispatchScroll boardZoomWrap">
         <div className="dispatchBoard wideBoard">
           <div className="dispatchHeader dispatchNameHead">キャスト</div>
-          <div className="dispatchHeader dispatchShiftHead">出勤 / 受付 / 上り</div>
+          <div className="dispatchHeader dispatchShiftHead">出勤 / 終了条件</div>
           <div className="dispatchHeader dispatchCountHead">本数</div>
           <div className="timelineHeader longTimeline">{hourLabels.map(hour=><div key={hour}>{hour}</div>)}</div>
 
@@ -715,11 +715,14 @@ export default function DashboardPage(){
             const shift=castShiftForDate(cast,date);
             const attendance=shift?.attendance;
             const unavailable=attendance==="absent" || attendance==="leftEarly";
-            const shiftStart=shift?.start ?? cast.shiftStart ?? "10:00";
-            const shiftEnd=shift?.end ?? cast.shiftEnd ?? "05:00";
-            const receptionEnd=shift?.receptionEnd ?? shiftEnd;
-            const availability=shiftAvailabilityPosition(shiftStart,shiftEnd);
-            const receptionClosed=receptionClosedPosition(receptionEnd,shiftEnd);
+            const shiftStart=shift?.start ?? cast.shiftStart ?? storeSettings.openTime;
+            const endType=shift?.endType ?? "leave";
+            const endTime=shift?.endTime ?? cast.shiftEnd ?? storeSettings.closeTime;
+            const timelineEnd=endType==="leave" ? endTime : storeSettings.closeTime;
+            const availability=shiftAvailabilityPosition(shiftStart,timelineEnd);
+            const receptionClosed=endType==="reception"
+              ? receptionClosedPosition(endTime,storeSettings.closeTime)
+              : null;
             return <div className={`dispatchRowContents ${unavailable?"isUnavailableCast":""}`} key={cast.id}>
               <div className="dispatchName">
                 <span className={`castStateDot ${cast.status}`}/>
@@ -736,8 +739,7 @@ export default function DashboardPage(){
               <div className="dispatchShift">
                 <button type="button" className="dispatchShiftQuick" onClick={()=>openShiftQuickEdit(cast)} title="出勤時間をクイック修正">
                   <span>出勤 <b>{shift?.start ?? cast.shiftStart ?? "--:--"}</b></span>
-                  <span>受付 <b>{shift?.receptionEnd ?? shift?.end ?? cast.shiftEnd ?? "--:--"}</b></span>
-                  <span>上り <b>{shift?.end ?? cast.shiftEnd ?? "--:--"}</b></span>
+                  <span>{(shift?.endType ?? "leave")==="reception" ? "受付終了" : "上がり"} <b>{shift?.endTime ?? cast.shiftEnd ?? "--:--"}</b></span>
                 </button>
               </div>
               <div className="dispatchCount"><strong>{castOrders.length}</strong><span>本</span></div>
@@ -759,9 +761,9 @@ export default function DashboardPage(){
                   </button>
                 })}
                 {!visibleOrders.length && !unavailable && <span className="emptyTimeline">空き</span>}
-                <div className="receptionClosedBlock" style={receptionClosed} title="受付終了後">
-                  <span>受付終了後</span>
-                </div>
+                {receptionClosed && <div className="receptionClosedBlock" style={receptionClosed} title="受付終了後">
+                  <span>受付終了後（事前予約のみ）</span>
+                </div>}
                 <div className="offShiftBlock before" style={{width:availability.beforeWidth}} title="出勤時間外">
                   <span>出勤前</span>
                 </div>
@@ -846,7 +848,7 @@ export default function DashboardPage(){
         </div>
         <div className="attendanceModalInfo">
           <div><span>日付</span><strong>{date}</strong></div>
-          <div><span>出勤予定</span><strong>{detailShift?.start ?? detailCast.shiftStart ?? "--:--"} 〜 {detailShift?.end ?? detailCast.shiftEnd ?? "--:--"}</strong></div>
+          <div><span>出勤予定</span><strong>{detailShift?.start ?? detailCast.shiftStart ?? "--:--"} / {(detailShift?.endType ?? "leave")==="reception" ? "受付終了" : "上がり"} {detailShift?.endTime ?? detailCast.shiftEnd ?? "--:--"}</strong></div>
           <div><span>現在状態</span><strong>{statusLabels[detailCast.status]}</strong></div>
         </div>
         <div className="attendanceModalSection">
@@ -880,11 +882,14 @@ export default function DashboardPage(){
           <label>出勤
             <input type="time" value={shiftDraft.start} onChange={e=>setShiftDraft(current=>({...current,start:e.target.value}))}/>
           </label>
-          <label>受付終了
-            <input type="time" value={shiftDraft.receptionEnd} onChange={e=>setShiftDraft(current=>({...current,receptionEnd:e.target.value}))}/>
+          <label>終了条件
+            <select value={shiftDraft.endType} onChange={e=>setShiftDraft(current=>({...current,endType:e.target.value as CastShiftEndType}))}>
+              <option value="reception">受付終了</option>
+              <option value="leave">上がり</option>
+            </select>
           </label>
-          <label>上がり
-            <input type="time" value={shiftDraft.end} onChange={e=>setShiftDraft(current=>({...current,end:e.target.value}))}/>
+          <label>時刻
+            <input type="time" value={shiftDraft.endTime} onChange={e=>setShiftDraft(current=>({...current,endTime:e.target.value}))}/>
           </label>
         </div>
         <div className="attendanceModalFooter">
