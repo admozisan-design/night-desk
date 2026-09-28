@@ -591,6 +591,73 @@ export default function DashboardPage(){
             {editingOrderId && <span className="workEditBadge">既存オーダー編集中</span>}
           </div>
           <form onSubmit={registerOrder}>
+            <div className="customerLookupTop">
+              <label className="customerPhoneField">お客様電話番号
+                <div className="customerPhoneInputWrap">
+                  <input
+                    value={phone}
+                    inputMode="tel"
+                    enterKeyHint="search"
+                    onChange={e=>setPhone(e.target.value)}
+                    onKeyDown={e=>{
+                      if(e.key==="Enter"){
+                        e.preventDefault();
+                      }
+                    }}
+                    placeholder="090-0000-0000"
+                  />
+                  {phoneKey.length>=4 && <span className={matchedCustomer?"customerFoundBadge":"customerNewBadge"}>
+                    {matchedCustomer ? "登録顧客" : customerHistory.length ? "履歴あり" : "新規"}
+                  </span>}
+                </div>
+              </label>
+
+              {phoneKey.length>=4 && <section className={`customerLookupPanel ${matchedCustomer?.ngInfo || matchedCustomer?.active===false ? "hasWarning" : ""}`}>
+                <div className="customerLookupHead">
+                  <div>
+                    <span>顧客情報</span>
+                    <strong>{matchedCustomer?.name || "名前未登録"}</strong>
+                  </div>
+                  <div className="customerLookupStats">
+                    <span>利用 <strong>{customerHistory.length}回</strong></span>
+                    <span>最終 <strong>{customerHistory[0] ? orderServiceDate(customerHistory[0]) : "—"}</strong></span>
+                  </div>
+                </div>
+
+                {(matchedCustomer?.active===false || matchedCustomer?.ngInfo) && <div className="customerNgWarning">
+                  <strong>⚠ NG警告</strong>
+                  <p>{matchedCustomer?.active===false ? "利用不可設定の顧客です。" : ""}{matchedCustomer?.active===false && matchedCustomer?.ngInfo ? " / " : ""}{matchedCustomer?.ngInfo || ""}</p>
+                </div>}
+
+                <div className="customerLookupNotes">
+                  <span>顧客備考</span>
+                  <p>{matchedCustomer?.notes || "登録された備考はありません"}</p>
+                </div>
+
+                <div className="customerHistoryBox">
+                  <div className="customerHistoryTitle">
+                    <span>利用履歴</span>
+                    <strong>{customerHistory.length}件</strong>
+                  </div>
+                  {customerHistory.length>0
+                    ? <div className="customerHistoryList">
+                        {customerHistory.slice(0,5).map(history=><div key={history.id} className="customerHistoryItem">
+                          <div>
+                            <strong>{orderServiceDate(history)} {history.scheduledStart}</strong>
+                            <span>{history.castName} / {history.courseMinutes+(history.extensionMinutes??0)}分</span>
+                          </div>
+                          <div>
+                            <span>{history.locationName || "場所未入力"}</span>
+                            <strong>{formatYen(history.total)}</strong>
+                          </div>
+                        </div>)}
+                      </div>
+                    : <p className="customerHistoryEmpty">過去の利用履歴はありません</p>}
+                  {customerHistory.length>5 && <small>直近5件を表示しています</small>}
+                </div>
+              </section>}
+            </div>
+
             <div className="workGrid two">
               <label>ドライバー
                 <select value={driverId} onChange={e=>setDriverId(e.target.value)}>
@@ -677,62 +744,9 @@ export default function DashboardPage(){
               <label>割引<input type="number" value={discount} onChange={e=>setDiscount(Number(e.target.value))}/></label>
             </div>
 
-            <div className="workGrid two">
-              <label>開始時間<input type="time" value={scheduledStart} onChange={e=>setScheduledStart(e.target.value)}/></label>
-              <label className="customerPhoneField">お客様電話番号
-                <div className="customerPhoneInputWrap">
-                  <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="090-0000-0000"/>
-                  {phoneKey.length>=4 && <span className={matchedCustomer?"customerFoundBadge":"customerNewBadge"}>
-                    {matchedCustomer ? "登録顧客" : customerHistory.length ? "履歴あり" : "新規"}
-                  </span>}
-                </div>
-              </label>
-            </div>
-
-            {phoneKey.length>=4 && <section className={`customerLookupPanel ${matchedCustomer?.ngInfo || matchedCustomer?.active===false ? "hasWarning" : ""}`}>
-              <div className="customerLookupHead">
-                <div>
-                  <span>顧客情報</span>
-                  <strong>{matchedCustomer?.name || "名前未登録"}</strong>
-                </div>
-                <div className="customerLookupStats">
-                  <span>利用 <strong>{customerHistory.length}回</strong></span>
-                  <span>最終 <strong>{customerHistory[0] ? orderServiceDate(customerHistory[0]) : "—"}</strong></span>
-                </div>
-              </div>
-
-              {(matchedCustomer?.active===false || matchedCustomer?.ngInfo) && <div className="customerNgWarning">
-                <strong>⚠ NG警告</strong>
-                <p>{matchedCustomer?.active===false ? "利用不可設定の顧客です。" : ""}{matchedCustomer?.active===false && matchedCustomer?.ngInfo ? " / " : ""}{matchedCustomer?.ngInfo || ""}</p>
-              </div>}
-
-              <div className="customerLookupNotes">
-                <span>顧客備考</span>
-                <p>{matchedCustomer?.notes || "登録された備考はありません"}</p>
-              </div>
-
-              <div className="customerHistoryBox">
-                <div className="customerHistoryTitle">
-                  <span>利用履歴</span>
-                  <strong>{customerHistory.length}件</strong>
-                </div>
-                {customerHistory.length>0
-                  ? <div className="customerHistoryList">
-                      {customerHistory.slice(0,5).map(history=><div key={history.id} className="customerHistoryItem">
-                        <div>
-                          <strong>{orderServiceDate(history)} {history.scheduledStart}</strong>
-                          <span>{history.castName} / {history.courseMinutes+(history.extensionMinutes??0)}分</span>
-                        </div>
-                        <div>
-                          <span>{history.locationName || "場所未入力"}</span>
-                          <strong>{formatYen(history.total)}</strong>
-                        </div>
-                      </div>)}
-                    </div>
-                  : <p className="customerHistoryEmpty">過去の利用履歴はありません</p>}
-                {customerHistory.length>5 && <small>直近5件を表示しています</small>}
-              </div>
-            </section>}
+            <label>開始時間
+              <input type="time" value={scheduledStart} onChange={e=>setScheduledStart(e.target.value)}/>
+            </label>
 
             <label>備考
               <textarea rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="サンプル備考を入力"/>
