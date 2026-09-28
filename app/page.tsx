@@ -72,6 +72,36 @@ function shiftAvailabilityPosition(startTime:string,endTime:string){
     afterWidth:`${((BOARD_MINUTES-visibleEnd)/BOARD_MINUTES)*100}%`
   };
 }
+function resolveOrderCourse(order:Order,pricing:PricingConfig){
+  const byId=order.courseId ? pricing.courses.find(course=>course.id===order.courseId) : undefined;
+  if(byId) return byId;
+  const exact=pricing.courses.find(course=>course.minutes===order.courseMinutes);
+  if(exact) return exact;
+  return [...pricing.courses]
+    .filter(course=>course.minutes<=order.courseMinutes)
+    .sort((a,b)=>b.minutes-a.minutes)[0] ?? pricing.courses[0];
+}
+function resolveOrderExtensionMinutes(order:Order,pricing:PricingConfig){
+  if(order.extensionMinutes!==undefined) return order.extensionMinutes;
+  const base=resolveOrderCourse(order,pricing);
+  return base ? Math.max(0,order.courseMinutes-base.minutes) : 0;
+}
+function resolveOrderExtensionTotal(order:Order,pricing:PricingConfig){
+  if(order.extensionTotal!==undefined) return order.extensionTotal;
+  const base=resolveOrderCourse(order,pricing);
+  if(!base) return 0;
+  const baseTotal=calculateOrderTotal({
+    course:base,
+    nominationType:order.nominationType,
+    photoNominationFee:pricing.photoNominationFee,
+    repeatNominationFee:pricing.repeatNominationFee,
+    optionsTotal:order.optionsTotal,
+    travelFee:order.travelFee,
+    discount:order.discount,
+    adjustment:order.adjustment??0
+  });
+  return Math.max(0,order.total-baseTotal);
+}
 
 export default function DashboardPage(){
   const [orders,setOrders] = useState<Order[]>([]);
@@ -117,6 +147,7 @@ export default function DashboardPage(){
     setNow(new Date());
     const timer = window.setInterval(()=>setNow(new Date()),60000);
     window.addEventListener("storage",refresh);
+    window.addEventListener("nightdesk:orders",refresh);
     window.addEventListener("nightdesk:casts",refresh);
     window.addEventListener("nightdesk:hotels",refresh);
     window.addEventListener("nightdesk:drivers",refresh);
@@ -125,6 +156,7 @@ export default function DashboardPage(){
     return ()=>{
       window.clearInterval(timer);
       window.removeEventListener("storage",refresh);
+      window.removeEventListener("nightdesk:orders",refresh);
       window.removeEventListener("nightdesk:casts",refresh);
       window.removeEventListener("nightdesk:hotels",refresh);
       window.removeEventListener("nightdesk:drivers",refresh);
@@ -185,10 +217,14 @@ export default function DashboardPage(){
     }
   },[availableHotels,locationName]);
 
-  const formCastChoices = useMemo(
-    ()=>editingOrderId ? castList.filter(c=>c.visible!==false) : selectableCasts,
-    [editingOrderId,castList,selectableCasts]
-  );
+  const editingOrder = editingOrderId ? orders.find(order=>order.id===editingOrderId) : undefined;
+  const formCastChoices = useMemo(()=>{
+    if(!editingOrder) return selectableCasts;
+    const choices=new Map(selectableCasts.map(cast=>[cast.id,cast]));
+    const current=castList.find(cast=>cast.id===editingOrder.castId && cast.visible!==false);
+    if(current) choices.set(current.id,current);
+    return [...choices.values()];
+  },[editingOrder,castList,selectableCasts]);
   const course = pricing.courses.find(c=>c.id===courseId);
   const selectedCast = formCastChoices.find(c=>c.id===castId);
   const selectedDriver = availableDrivers.find(d=>d.id===driverId);
@@ -206,6 +242,9 @@ export default function DashboardPage(){
     setSelectedOptionIds(current=>current.filter(id=>allowed.has(id)));
   },[selectableOptions]);
 
+  const editingExtensionMinutes = editingOrder ? resolveOrderExtensionMinutes(editingOrder,pricing) : 0;
+  const editingExtensionTotal = editingOrder ? resolveOrderExtensionTotal(editingOrder,pricing) : 0;
+  const editingAdjustment = editingOrder?.adjustment ?? 0;
   const total = useMemo(()=>calculateOrderTotal({
     course,
     nominationType,
@@ -214,8 +253,8 @@ export default function DashboardPage(){
     optionsTotal,
     travelFee,
     discount,
-    adjustment:0
-  }),[course,nominationType,optionsTotal,travelFee,discount,pricing.photoNominationFee,pricing.repeatNominationFee]);
+    adjustment:editingAdjustment+editingExtensionTotal
+  }),[course,nominationType,optionsTotal,travelFee,discount,pricing.photoNominationFee,pricing.repeatNominationFee,editingAdjustment,editingExtensionTotal]);
 
   const activeOrders = useMemo(()=>orders.filter(o=>o.status!=="completed"&&o.status!=="cancelled"),[orders]);
   const todaySales = useMemo(()=>orders.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+o.total,0),[orders]);
@@ -303,7 +342,7 @@ export default function DashboardPage(){
   function beginOrderEdit(){
     if(!selectedOrder) return;
     const driver=driverList.find(driver=>driver.id===selectedOrder.driverId || driver.name===selectedOrder.driverName);
-    const courseMatch=pricing.courses.find(item=>item.minutes===selectedOrder.courseMinutes);
+    const courseMatch=resolveOrderCourse(selectedOrder,pricing);
     const optionIds=optionList
       .filter(option=>(selectedOrder.selectedOptions??[]).includes(option.name))
       .map(option=>option.id);
@@ -353,10 +392,17 @@ export default function DashboardPage(){
   function applyExtension(){
     if(!selectedOrder) return;
     const add=pricing.extensionMinutes*extensionCount;
+    const addPrice=pricing.extensionPrice*extensionCount;
+    const baseCourse=resolveOrderCourse(selectedOrder,pricing);
+    const currentExtensionMinutes=resolveOrderExtensionMinutes(selectedOrder,pricing);
+    const currentExtensionTotal=resolveOrderExtensionTotal(selectedOrder,pricing);
     setOrders(updateOrder(selectedOrder.id,{
+      courseId:baseCourse?.id ?? selectedOrder.courseId,
+      courseMinutes:baseCourse?.minutes ?? selectedOrder.courseMinutes,
+      extensionMinutes:currentExtensionMinutes+add,
+      extensionTotal:currentExtensionTotal+addPrice,
       scheduledEnd:addMinutes(selectedOrder.scheduledEnd,add),
-      courseMinutes:selectedOrder.courseMinutes+add,
-      total:selectedOrder.total+(pricing.extensionPrice*extensionCount)
+      total:selectedOrder.total+addPrice
     }));
     setOrderMode("menu");
     setCopyNotice(`${add}分延長しました`);
@@ -395,6 +441,8 @@ export default function DashboardPage(){
     const selectedOptionNames=selectableOptions
       .filter(option=>selectedOptionIds.includes(option.id))
       .map(option=>option.name);
+    const effectiveExtensionMinutes=editingOrder ? editingExtensionMinutes : 0;
+    const effectiveExtensionTotal=editingOrder ? editingExtensionTotal : 0;
     const commonChanges = {
       customerPhone:phone,
       locationType:"hotel" as const,
@@ -404,7 +452,10 @@ export default function DashboardPage(){
       castName:selectedCast.name,
       driverId:selectedDriver?.id,
       driverName:selectedDriver?.name,
+      courseId:course.id,
       courseMinutes:course.minutes,
+      extensionMinutes:effectiveExtensionMinutes,
+      extensionTotal:effectiveExtensionTotal,
       nominationType,
       selectedOptions:selectedOptionNames,
       optionsTotal,
@@ -412,20 +463,20 @@ export default function DashboardPage(){
       discount,
       total,
       scheduledStart,
-      scheduledEnd:addMinutes(scheduledStart,course.minutes),
+      scheduledEnd:addMinutes(scheduledStart,course.minutes+effectiveExtensionMinutes),
       note
     };
 
     if(editingOrderId){
-      updateOrder(editingOrderId,commonChanges);
-      // 保存後はストレージを正として読み直し、配車ボード上の
-      // 元キャスト行から変更先キャスト行へ即座にオーダーを移動させる。
-      setOrders(loadOrders());
+      const syncedOrders=updateOrder(editingOrderId,commonChanges);
+      setOrders(syncedOrders);
     }else{
       const order:Order = {
         id:crypto.randomUUID(),
         createdAt:new Date().toISOString(),
         ...commonChanges,
+        extensionMinutes:0,
+        extensionTotal:0,
         adjustment:0,
         status:"accepted"
       };
@@ -638,7 +689,7 @@ export default function DashboardPage(){
                   return <button type="button" key={order.id} className={`timelineOrder timelineOrder-${order.status}`} style={pos} onClick={()=>openOrderMenu(order)}>
                     <strong>{order.scheduledStart}〜{order.scheduledEnd}</strong>
                     <span>{order.castName}</span>
-                    <small>{order.locationName || "場所未入力"} / {order.driverName ?? "配車未割当"}</small>
+                    <small>{order.locationName || "場所未入力"}{order.room ? ` ${order.room}` : ""} / {order.driverName ?? "配車未割当"} / {order.courseMinutes+(order.extensionMinutes??0)}分</small>
                   </button>
                 })}
                 {!visibleOrders.length && !unavailable && <span className="emptyTimeline">空き</span>}
