@@ -2085,3 +2085,32 @@ button:disabled{opacity:.45;cursor:not-allowed}
   font-size:10px;
   font-weight:900;
 }
+
+
+/* ===== Order lifecycle colors ===== */
+.legend.beforeDispatch{background:#8f6faa}
+.legend.afterDispatch{background:#d99b2f}
+.legend.inService{background:#138477}
+.legend.out{background:#8d96a0}
+
+.timelineOrder.orderVisual-beforeDispatch{background:#8f6faa}
+.timelineOrder.orderVisual-afterDispatch{background:#d99b2f}
+.timelineOrder.orderVisual-in{background:#138477}
+.timelineOrder.orderVisual-out{
+  background:#8d96a0;
+  border-color:#aeb5bc;
+  box-shadow:none;
+  opacity:.66;
+}
+.timelineOrder.orderVisual-cancelled{
+  background:#7f8790;
+  opacity:.5;
+}
+.timelineOrder.orderVisual-beforeDispatch,
+.timelineOrder.orderVisual-afterDispatch{
+  cursor:default;
+}
+.timelineOrder.orderVisual-in,
+.timelineOrder.orderVisual-out{
+  cursor:pointer;
+}

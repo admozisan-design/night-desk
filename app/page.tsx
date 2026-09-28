@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { casts as defaultCasts, defaultPricingConfig, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
 import { deleteOrder, loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, saveCasts, saveOrder, updateOrder } from "@/lib/storage";
@@ -17,7 +17,7 @@ const statusLabels: Record<CastStatus,string> = {
   waiting:"待機", moving:"移動中", serving:"接客中", off:"退勤"
 };
 const orderStatusLabels: Record<OrderStatus,string> = {
-  accepted:"受付済", dispatching:"配車中", serving:"接客中", completed:"完了", cancelled:"キャンセル"
+  accepted:"配車前", dispatching:"配車後", serving:"イン中", completed:"アウト", cancelled:"キャンセル"
 };
 const attendanceLabels: Record<CastAttendanceStatus,string> = {
   present:"出勤", late:"遅刻", absent:"当欠", leftEarly:"早退"
@@ -43,6 +43,21 @@ function currentTimePosition(now:Date){
   const value = minutes - BOARD_START;
   if(value < 0 || value > BOARD_MINUTES) return null;
   return `${(value/BOARD_MINUTES)*100}%`;
+}
+function orderEndDateTime(order:Order,serviceDate:string){
+  const [year,month,day]=serviceDate.split("-").map(Number);
+  const [hour,minute]=order.scheduledEnd.split(":").map(Number);
+  const result=new Date(year,month-1,day,hour,minute,0,0);
+  if(hour<10) result.setDate(result.getDate()+1);
+  return result;
+}
+function orderVisualState(order:Order,serviceDate:string,now:Date|null){
+  if(order.status==="cancelled") return "cancelled";
+  if(order.status==="completed") return "out";
+  if(now && now>=orderEndDateTime(order,serviceDate)) return "out";
+  if(order.inTime || order.status==="serving") return "in";
+  if(order.status==="dispatching") return "afterDispatch";
+  return "beforeDispatch";
 }
 function addMinutes(time:string, minutes:number){
   const [h,m] = time.split(":").map(Number);
@@ -120,6 +135,7 @@ export default function DashboardPage(){
   const [editingOrderId,setEditingOrderId] = useState<string|null>(null);
   const [extensionCount,setExtensionCount] = useState(1);
   const [copyNotice,setCopyNotice] = useState("");
+  const orderClickTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
@@ -155,6 +171,7 @@ export default function DashboardPage(){
     window.addEventListener("nightdesk:pricing",refresh);
     return ()=>{
       window.clearInterval(timer);
+      if(orderClickTimer.current) window.clearTimeout(orderClickTimer.current);
       window.removeEventListener("storage",refresh);
       window.removeEventListener("nightdesk:orders",refresh);
       window.removeEventListener("nightdesk:casts",refresh);
@@ -305,6 +322,25 @@ export default function DashboardPage(){
     setSelectedOrderId(order.id);
     setOrderMode("menu");
     setCopyNotice("");
+  }
+
+  function handleOrderSingleClick(order:Order){
+    if(orderClickTimer.current) window.clearTimeout(orderClickTimer.current);
+    orderClickTimer.current=window.setTimeout(()=>{
+      openOrderMenu(order);
+      orderClickTimer.current=null;
+    },220);
+  }
+
+  function handleOrderDoubleClick(order:Order){
+    if(orderClickTimer.current){
+      window.clearTimeout(orderClickTimer.current);
+      orderClickTimer.current=null;
+    }
+    const visual=orderVisualState(order,date,now);
+    if(visual==="in" || visual==="out" || visual==="cancelled") return;
+    const nextStatus:OrderStatus=order.status==="dispatching" ? "accepted" : "dispatching";
+    setOrders(updateOrder(order.id,{status:nextStatus}));
   }
 
   function closeOrderMenu(){
@@ -642,9 +678,10 @@ export default function DashboardPage(){
       <div className="boardSectionHead">
         <div><h2>配車ボード</h2><span>{date}</span></div>
         <div className="boardLegend">
-          <span><i className="legend accepted"/>受付済</span>
-          <span><i className="legend dispatching"/>配車中</span>
-          <span><i className="legend serving"/>接客中</span>
+          <span><i className="legend beforeDispatch"/>配車前</span>
+          <span><i className="legend afterDispatch"/>配車後</span>
+          <span><i className="legend inService"/>イン中</span>
+          <span><i className="legend out"/>アウト</span>
         </div>
       </div>
       <div className="dispatchScroll boardZoomWrap">
@@ -686,7 +723,16 @@ export default function DashboardPage(){
               <div className="timelineCell longCell">
                 {visibleOrders.map(order=>{
                   const pos = eventPosition(order)!;
-                  return <button type="button" key={order.id} className={`timelineOrder timelineOrder-${order.status}`} style={pos} onClick={()=>openOrderMenu(order)}>
+                  const visualState=orderVisualState(order,date,now);
+                  return <button
+                    type="button"
+                    key={order.id}
+                    className={`timelineOrder orderVisual-${visualState}`}
+                    style={pos}
+                    onClick={()=>handleOrderSingleClick(order)}
+                    onDoubleClick={()=>handleOrderDoubleClick(order)}
+                    title={visualState==="beforeDispatch"?"配車前（ダブルクリックで配車後へ）":visualState==="afterDispatch"?"配車後（ダブルクリックで配車前へ）":visualState==="in"?"イン中":visualState==="out"?"アウト":"キャンセル"}
+                  >
                     <strong>{order.scheduledStart}〜{order.scheduledEnd}</strong>
                     <span>{order.castName}</span>
                     <small>{order.locationName || "場所未入力"}{order.room ? ` ${order.room}` : ""} / {order.driverName ?? "配車未割当"} / {order.courseMinutes+(order.extensionMinutes??0)}分</small>
