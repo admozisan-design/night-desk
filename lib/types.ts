@@ -1,6 +1,17 @@
 export type CastStatus = "waiting" | "moving" | "serving" | "off";
 export type CastAttendanceStatus = "present" | "late" | "absent" | "leftEarly";
-export type CastShift = { date:string; start:string; receptionEnd:string; end:string; working:boolean; attendance?:CastAttendanceStatus; };
+export type CastShiftEndType = "reception" | "leave";
+export type CastShift = {
+  date:string;
+  start:string;
+  endType:CastShiftEndType;
+  endTime:string;
+  working:boolean;
+  attendance?:CastAttendanceStatus;
+  /** Legacy fields kept only so previously saved browser data can be migrated. */
+  receptionEnd?:string;
+  end?:string;
+};
 export type OrderStatus = "accepted" | "dispatching" | "serving" | "completed" | "cancelled";
 export type Cast = {
   id:string;
