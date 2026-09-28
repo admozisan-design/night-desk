@@ -541,6 +541,21 @@ export default function DashboardPage(){
             <button onClick={()=>shiftDate(1)}>翌日</button>
           </div>
         </section>
+
+        <section className="deskPanel operationGuide">
+          <h2>操作ガイド</h2>
+          <div className="operationGuideList">
+            <div><span className="guideDot beforeDispatch"/><p><strong>紫：配車前</strong><small>オーダーをダブルクリックで配車後へ</small></p></div>
+            <div><span className="guideDot afterDispatch"/><p><strong>橙：配車後</strong><small>もう一度ダブルクリックで配車前へ戻す</small></p></div>
+            <div><span className="guideDot inService"/><p><strong>緑：イン中</strong><small>オーダーをクリック →「イン時間」で切替</small></p></div>
+            <div><span className="guideDot out"/><p><strong>灰：アウト</strong><small>終了予定時間を過ぎると自動でグレー表示</small></p></div>
+          </div>
+          <div className="operationGuideTips">
+            <p><strong>クリック</strong><span>オーダー操作メニューを開く</span></p>
+            <p><strong>キャスト名</strong><span>出勤・遅刻・当欠・早退を変更</span></p>
+            <p><strong>出勤時間</strong><span>クリックでクイック修正</span></p>
+          </div>
+        </section>
       </aside>
 
       <main className="deskCenter">
