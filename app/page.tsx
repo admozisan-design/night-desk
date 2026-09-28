@@ -679,7 +679,7 @@ export default function DashboardPage(){
                     </button>}
                   </div>
                 </div>
-                {customerNotice && <div className="customerLookupNotice">{customerNotice}</div>
+                {customerNotice && <div className="customerLookupNotice">{customerNotice}</div>}
 
                 {(matchedCustomer?.active===false || matchedCustomer?.ngInfo) && <div className="customerNgWarning">
                   <strong>⚠ NG警告</strong>
