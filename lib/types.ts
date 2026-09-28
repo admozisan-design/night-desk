@@ -79,5 +79,5 @@ export type Order = {
   id:string; createdAt:string; customerPhone:string; locationType:"hotel"|"home";
   locationName:string; room?:string; castId:string; castName:string; driverId?:string; driverName?:string;
   courseId?:string; courseMinutes:number; extensionMinutes?:number; extensionTotal?:number; nominationType:"free"|"photo"|"repeat"; selectedOptions?:string[]; optionsTotal:number; travelFee:number;
-  discount:number; surcharge?:number; adjustment:number; paymentMethod?:"cash"|"card"; cardFee?:number; total:number; status:OrderStatus; serviceDate?:string; scheduledStart:string; scheduledEnd:string; inTime?:string; note?:string;
+  discount:number; surcharge?:number; adjustment:number; paymentMethod?:"cash"|"card"; cardFee?:number; total:number; status:OrderStatus; serviceDate?:string; scheduledStart:string; scheduledEnd:string; inTime?:string; note?:string; handoffNote?:string;
 };

@@ -160,6 +160,7 @@ export default function DashboardPage(){
   const [selectedOrderId,setSelectedOrderId] = useState<string|null>(null);
   const [orderMode,setOrderMode] = useState<"menu"|"inTime"|"extend">("menu");
   const [editingOrderId,setEditingOrderId] = useState<string|null>(null);
+  const [pendingEditOrderId,setPendingEditOrderId] = useState<string|null>(null);
   const [extensionCount,setExtensionCount] = useState(1);
   const [inTimeDraft,setInTimeDraft] = useState("");
   const [copyNotice,setCopyNotice] = useState("");
@@ -194,6 +195,7 @@ export default function DashboardPage(){
     };
     refresh();
     setNow(new Date());
+    setPendingEditOrderId(new URLSearchParams(window.location.search).get("editOrder"));
     const timer = window.setInterval(()=>setNow(new Date()),60000);
     window.addEventListener("storage",refresh);
     window.addEventListener("nightdesk:orders",refresh);
@@ -340,6 +342,19 @@ export default function DashboardPage(){
   const shiftEditCast = shiftEditCastId ? castList.find(c=>c.id===shiftEditCastId) : undefined;
   const selectedOrder = selectedOrderId ? orders.find(order=>order.id===selectedOrderId) : undefined;
 
+  useEffect(()=>{
+    if(!pendingEditOrderId || !orders.length) return;
+    const target=orders.find(order=>order.id===pendingEditOrderId);
+    if(!target){
+      setPendingEditOrderId(null);
+      window.history.replaceState(null,"","/");
+      return;
+    }
+    loadOrderIntoEditForm(target);
+    setPendingEditOrderId(null);
+    window.history.replaceState(null,"","/");
+  },[pendingEditOrderId,orders]);
+
   function replaceCastShift(cast:Cast, changes:Partial<NonNullable<Cast["schedule"]>[number]>){
     const existing=castShiftForDate(cast,date);
     const nextShift={
@@ -437,35 +452,40 @@ export default function DashboardPage(){
     }
   }
 
-  function beginOrderEdit(){
-    if(!selectedOrder) return;
-    const driver=driverList.find(driver=>driver.id===selectedOrder.driverId || driver.name===selectedOrder.driverName);
-    const courseMatch=resolveOrderCourse(selectedOrder,pricing);
+  function loadOrderIntoEditForm(order:Order){
+    const driver=driverList.find(driver=>driver.id===order.driverId || driver.name===order.driverName);
+    const courseMatch=resolveOrderCourse(order,pricing);
     const optionIds=optionList
-      .filter(option=>(selectedOrder.selectedOptions??[]).includes(option.name))
+      .filter(option=>(order.selectedOptions??[]).includes(option.name))
       .map(option=>option.id);
 
-    setEditingOrderId(selectedOrder.id);
-    setCastId(selectedOrder.castId);
-    setDriverId(selectedOrder.driverId ?? driver?.id ?? "");
+    setEditingOrderId(order.id);
+    setDate(orderServiceDate(order));
+    setCastId(order.castId);
+    setDriverId(order.driverId ?? driver?.id ?? "");
     if(courseMatch) setCourseId(courseMatch.id);
-    setNominationType(selectedOrder.nominationType);
-    setScheduledStart(selectedOrder.scheduledStart);
-    setLocationName(selectedOrder.locationName);
-    setRoom(selectedOrder.room ?? "");
-    setPhone(selectedOrder.customerPhone ?? "");
-    setNote(selectedOrder.note ?? "");
-    setTravelFee(selectedOrder.travelFee);
-    setDiscount(selectedOrder.discount);
-    setSurcharge(selectedOrder.surcharge??0);
-    setPaymentMethod(selectedOrder.paymentMethod??"cash");
+    setNominationType(order.nominationType);
+    setScheduledStart(order.scheduledStart);
+    setLocationName(order.locationName);
+    setRoom(order.room ?? "");
+    setPhone(order.customerPhone ?? "");
+    setNote(order.note ?? "");
+    setTravelFee(order.travelFee);
+    setDiscount(order.discount);
+    setSurcharge(order.surcharge??0);
+    setPaymentMethod(order.paymentMethod??"cash");
     setSelectedOptionIds(optionIds);
     setCustomerNotice("");
 
-    closeOrderMenu();
     window.setTimeout(()=>{
       document.getElementById("work-register")?.scrollIntoView({behavior:"smooth",block:"start"});
     },60);
+  }
+
+  function beginOrderEdit(){
+    if(!selectedOrder) return;
+    loadOrderIntoEditForm(selectedOrder);
+    closeOrderMenu();
   }
 
   function resetOrderForm(){
