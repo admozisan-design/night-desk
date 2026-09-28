@@ -52,6 +52,9 @@ function dateInputValue(date:Date){
   const d=String(date.getDate()).padStart(2,"0");
   return `${y}-${m}-${d}`;
 }
+function castShiftForDate(cast:Cast,date:string){
+  return cast.schedule?.find(shift=>shift.date===date);
+}
 
 export default function DashboardPage(){
   const [orders,setOrders] = useState<Order[]>([]);
@@ -106,8 +109,12 @@ export default function DashboardPage(){
   },[]);
 
   const workingCasts = useMemo(
-    ()=>castList.filter(c=>c.visible!==false && c.scheduledToday!==false),
-    [castList]
+    ()=>castList.filter(c=>{
+      if(c.visible===false) return false;
+      const shift=castShiftForDate(c,date);
+      return shift ? shift.working : c.scheduledToday!==false;
+    }),
+    [castList,date]
   );
   const selectableCasts = useMemo(()=>workingCasts.filter(c=>c.status!=="off"),[workingCasts]);
   const availableHotels = useMemo(
@@ -400,14 +407,15 @@ export default function DashboardPage(){
           {workingCasts.map(cast=>{
             const castOrders = orders.filter(o=>o.castId===cast.id && o.status!=="cancelled");
             const visibleOrders = castOrders.filter(o=>eventPosition(o));
+            const shift=castShiftForDate(cast,date);
             return <div className="dispatchRowContents" key={cast.id}>
               <div className="dispatchName">
                 <span className={`castStateDot ${cast.status}`}/>
                 <div><strong>{cast.name}</strong><small>{statusLabels[cast.status]}</small></div>
               </div>
               <div className="dispatchShift">
-                <span>出勤 <b>{cast.shiftStart ?? "--:--"}</b></span>
-                <span>上り <b>{cast.shiftEnd ?? "--:--"}</b></span>
+                <span>出勤 <b>{shift?.start ?? cast.shiftStart ?? "--:--"}</b></span>
+                <span>上り <b>{shift?.end ?? cast.shiftEnd ?? "--:--"}</b></span>
               </div>
               <div className="dispatchCount"><strong>{castOrders.length}</strong><span>本</span></div>
               <div className="timelineCell longCell">
