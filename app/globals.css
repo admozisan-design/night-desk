@@ -1943,6 +1943,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .timelineCell.longCell{
   position:relative;
   overflow:hidden;
+  z-index:0;
+  isolation:isolate;
 }
 .timelineOrder{
   position:absolute;
@@ -1952,7 +1954,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
   position:absolute;
   top:0;
   bottom:0;
-  z-index:6;
+  z-index:4;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -1994,7 +1996,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .unavailableCastTimelineBlock{
   position:absolute;
   inset:0;
-  z-index:8;
+  z-index:4;
   display:flex;
   align-items:center;
   justify-content:center;
