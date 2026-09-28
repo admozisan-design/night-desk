@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { casts as defaultCasts, defaultStoreSettings } from "@/lib/mock-data";
 import { loadCasts, loadStoreSettings, saveCasts } from "@/lib/storage";
-import type { Cast, CastShift } from "@/lib/types";
+import type { Cast, CastShift, CastShiftEndType } from "@/lib/types";
 
 const dayNames = ["日","月","火","水","木","金","土"];
 
@@ -58,12 +58,12 @@ export default function CastSchedulePage(){
     for(const date of weekDates){
       const existing=selected.schedule?.find(item=>item.date===date);
       next[date]=existing
-        ? {...existing,receptionEnd:existing.receptionEnd ?? existing.end}
+        ? existing
         : {
             date,
             start:selected.shiftStart ?? storeSettings.openTime,
-            receptionEnd:selected.shiftEnd ?? storeSettings.closeTime,
-            end:selected.shiftEnd ?? storeSettings.closeTime,
+            endType:"leave",
+            endTime:selected.shiftEnd ?? storeSettings.closeTime,
             working:false
           };
     }
@@ -96,7 +96,7 @@ export default function CastSchedulePage(){
       <div>
         <p className="eyebrow">CAST SCHEDULE</p>
         <h1>キャスト出勤管理</h1>
-        <p>キャストごとに出勤・受付終了・上がりを日別で設定します。</p>
+        <p>出勤時間と、その日の終了条件「受付終了」または「上がり」を設定します。</p>
       </div>
       <div className="castScheduleHeaderActions">
         {saved && <span className="saveToast">保存しました</span>}
@@ -145,7 +145,7 @@ export default function CastSchedulePage(){
 
         <div className="castScheduleTable">
           <div className="castScheduleRow castScheduleTableHead">
-            <span>日付</span><span>予定</span><span>出勤</span><span>受付終了</span><span>上がり</span>
+            <span>日付</span><span>予定</span><span>出勤</span><span>終了条件</span><span>時刻</span>
           </div>
           {weekDates.map(date=>{
             const shift=drafts[date];
@@ -157,8 +157,15 @@ export default function CastSchedulePage(){
                 <span>{shift.working?"出勤":"休み"}</span>
               </label>
               <input type="time" value={shift.start} disabled={!shift.working} onChange={e=>updateShift(date,{start:e.target.value})}/>
-              <input type="time" value={shift.receptionEnd} disabled={!shift.working} onChange={e=>updateShift(date,{receptionEnd:e.target.value})}/>
-              <input type="time" value={shift.end} disabled={!shift.working} onChange={e=>updateShift(date,{end:e.target.value})}/>
+              <select
+                value={shift.endType}
+                disabled={!shift.working}
+                onChange={e=>updateShift(date,{endType:e.target.value as CastShiftEndType})}
+              >
+                <option value="reception">受付終了</option>
+                <option value="leave">上がり</option>
+              </select>
+              <input type="time" value={shift.endTime} disabled={!shift.working} onChange={e=>updateShift(date,{endTime:e.target.value})}/>
             </div>
           })}
         </div>
