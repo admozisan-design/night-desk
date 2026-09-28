@@ -1922,3 +1922,94 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .attendanceStatusChoices{grid-template-columns:1fr 1fr}
   .shiftQuickForm{grid-template-columns:1fr}
 }
+
+
+/* ===== Dispatch availability blocks ===== */
+.dispatchRowContents.isUnavailableCast{
+  filter:grayscale(.75);
+  opacity:.58;
+}
+.dispatchRowContents.isUnavailableCast:hover{
+  opacity:.72;
+}
+.dispatchRowContents.isUnavailableCast .dispatchName,
+.dispatchRowContents.isUnavailableCast .dispatchShift,
+.dispatchRowContents.isUnavailableCast .dispatchCount{
+  background:#f1f3f4;
+}
+.dispatchRowContents.isUnavailableCast .dispatchCastButton{
+  opacity:1;
+}
+.timelineCell.longCell{
+  position:relative;
+  overflow:hidden;
+}
+.timelineOrder{
+  position:absolute;
+  z-index:3;
+}
+.offShiftBlock{
+  position:absolute;
+  top:0;
+  bottom:0;
+  z-index:6;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  overflow:hidden;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(130,140,150,.13) 0,
+      rgba(130,140,150,.13) 7px,
+      rgba(130,140,150,.22) 7px,
+      rgba(130,140,150,.22) 14px
+    ),
+    #eef1f3;
+  border-color:#d3d9de;
+  color:#8c969f;
+  cursor:not-allowed;
+  pointer-events:auto;
+}
+.offShiftBlock.before{
+  left:0;
+  border-right:1px solid #cbd3d9;
+}
+.offShiftBlock.after{
+  border-left:1px solid #cbd3d9;
+}
+.offShiftBlock span{
+  padding:4px 7px;
+  border-radius:999px;
+  background:rgba(255,255,255,.78);
+  font-size:9px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.offShiftBlock[style*="width: 0%"],
+.offShiftBlock[style*="width:0%"]{
+  display:none;
+}
+.unavailableCastTimelineBlock{
+  position:absolute;
+  inset:0;
+  z-index:8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(226,230,233,.78);
+  color:#737d86;
+  cursor:not-allowed;
+}
+.unavailableCastTimelineBlock strong{
+  padding:7px 13px;
+  border:1px solid #cdd4da;
+  border-radius:999px;
+  background:#f7f8f9;
+  font-size:11px;
+  font-weight:900;
+}
+.nowLine{
+  z-index:9;
+}
