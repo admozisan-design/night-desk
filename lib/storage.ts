@@ -60,10 +60,27 @@ function normalizeCast(cast:Cast):Cast {
       ? [legacyNg.trim()]
       : [];
 
+  const schedule = Array.isArray(cast.schedule)
+    ? cast.schedule.map(shift=>{
+        const legacyReception=shift.receptionEnd;
+        const legacyLeave=shift.end;
+        const inferredReception=Boolean(legacyReception && legacyLeave && legacyReception!==legacyLeave);
+        const endType=shift.endType ?? (inferredReception ? "reception" : "leave");
+        const endTime=shift.endTime
+          ?? (endType==="reception" ? legacyReception : legacyLeave)
+          ?? legacyReception
+          ?? legacyLeave
+          ?? cast.shiftEnd
+          ?? "04:00";
+        const { receptionEnd:_legacyReception, end:_legacyEnd, ...rest }=shift;
+        return {...rest,endType,endTime};
+      })
+    : [];
+
   return {
     ...cast,
     scheduledToday: cast.scheduledToday ?? true,
-    schedule: Array.isArray(cast.schedule) ? cast.schedule.map(shift=>({...shift,receptionEnd:shift.receptionEnd ?? shift.end})) : [],
+    schedule,
     visible: cast.visible ?? true,
     unitPrice: cast.unitPrice ?? 0,
     freeUnitPrice: cast.freeUnitPrice ?? cast.unitPrice ?? 0,
@@ -101,7 +118,6 @@ export function saveCasts(casts:Cast[]) {
   appendAuditLog("キャスト","キャスト情報を保存",`${casts.length}件`);
 }
 
-
 function normalizeHotel(hotel:Hotel):Hotel {
   return {
     ...hotel,
@@ -129,7 +145,6 @@ export function saveHotels(hotels:Hotel[]) {
   window.dispatchEvent(new Event("nightdesk:hotels"));
   appendAuditLog("ホテル","ホテル情報を保存",`${hotels.length}件`);
 }
-
 
 function normalizeStaff(staff:Staff):Staff {
   return {
@@ -160,7 +175,6 @@ export function saveStaff(staff:Staff[]) {
   window.dispatchEvent(new Event("nightdesk:staff"));
   appendAuditLog("スタッフ","スタッフ情報を保存",`${staff.length}件`);
 }
-
 
 function normalizeDriver(driver:Driver):Driver {
   return {
@@ -193,7 +207,6 @@ export function saveDrivers(drivers:Driver[]) {
   appendAuditLog("ドライバー","ドライバー情報を保存",`${drivers.length}件`);
 }
 
-
 function normalizeOption(option:StoreOption):StoreOption {
   return {
     ...option,
@@ -222,7 +235,6 @@ export function saveOptions(options:StoreOption[]) {
   window.dispatchEvent(new Event("nightdesk:options"));
   appendAuditLog("オプション","オプション情報を保存",`${options.length}件`);
 }
-
 
 function normalizeCustomer(customer:Customer):Customer {
   return {
@@ -340,7 +352,6 @@ export function loadAuditLogs():AuditLog[] {
     return [];
   }
 }
-
 
 export function loadStoreSettings(defaultSettings:StoreSettings):StoreSettings {
   if (typeof window === "undefined") return defaultSettings;
