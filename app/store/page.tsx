@@ -7,16 +7,18 @@ import { loadStoreSettings, saveStoreSettings } from "@/lib/storage";
 export default function StoreSettingsPage(){
   const [openTime,setOpenTime]=useState(defaultStoreSettings.openTime);
   const [closeTime,setCloseTime]=useState(defaultStoreSettings.closeTime);
+  const [cardFeeRate,setCardFeeRate]=useState(defaultStoreSettings.cardFeeRate);
   const [saved,setSaved]=useState(false);
 
   useEffect(()=>{
     const settings=loadStoreSettings(defaultStoreSettings);
     setOpenTime(settings.openTime);
     setCloseTime(settings.closeTime);
+    setCardFeeRate(settings.cardFeeRate ?? 0);
   },[]);
 
   function save(){
-    saveStoreSettings({openTime,closeTime});
+    saveStoreSettings({openTime,closeTime,cardFeeRate});
     setSaved(true);
     window.setTimeout(()=>setSaved(false),1400);
   }
@@ -47,6 +49,17 @@ export default function StoreSettingsPage(){
       <div className="storeHoursNote">
         <strong>キャストの時間とは別設定です</strong>
         <p>店舗営業時間は店全体の営業枠です。キャストごとの「出勤・受付終了・上がり」はキャスト出勤管理から日別に設定できます。</p>
+      </div>
+
+      <div className="storePaymentSettings">
+        <h3>カード決済</h3>
+        <label>カード手数料
+          <div className="storePercentInput">
+            <input type="number" min="0" step="0.1" value={cardFeeRate} onChange={e=>setCardFeeRate(Math.max(0,Number(e.target.value)))}/>
+            <span>%</span>
+          </div>
+        </label>
+        <p>仕事登録で「カード」を選択した場合、この料率で手数料を自動加算します。</p>
       </div>
     </section>
   </div>;

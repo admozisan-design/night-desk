@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { deleteOrder, loadCasts, loadCustomers, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadStoreSettings, saveCasts, saveOrder, updateOrder } from "@/lib/storage";
+import { deleteOrder, loadCasts, loadCustomers, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadStoreSettings, saveCasts, saveCustomers, saveOrder, updateOrder } from "@/lib/storage";
 import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
@@ -72,6 +72,9 @@ function dateInputValue(date:Date){
 }
 function normalizePhone(value:string){
   return value.replace(/\D/g,"");
+}
+function clockTimeValue(value=new Date()){
+  return `${String(value.getHours()).padStart(2,"0")}:${String(value.getMinutes()).padStart(2,"0")}`;
 }
 function orderServiceDate(order:Order){
   if(order.serviceDate) return order.serviceDate;
@@ -155,18 +158,22 @@ export default function DashboardPage(){
   const [editingOrderId,setEditingOrderId] = useState<string|null>(null);
   const [extensionCount,setExtensionCount] = useState(1);
   const [copyNotice,setCopyNotice] = useState("");
+  const [customerNotice,setCustomerNotice] = useState("");
+  const [optionModalOpen,setOptionModalOpen] = useState(false);
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
   const [courseId,setCourseId] = useState(defaultPricingConfig.courses[0]?.id ?? "");
   const [nominationType,setNominationType] = useState<"free"|"photo"|"repeat">("free");
-  const [scheduledStart,setScheduledStart] = useState("13:30");
+  const [scheduledStart,setScheduledStart] = useState(()=>clockTimeValue());
   const [locationName,setLocationName] = useState("");
   const [room,setRoom] = useState("101");
   const [phone,setPhone] = useState("090-0000-0000");
   const [note,setNote] = useState("サンプル備考");
   const [travelFee,setTravelFee] = useState(defaultPricingConfig.defaultTravelFee);
   const [discount,setDiscount] = useState(0);
+  const [surcharge,setSurcharge] = useState(0);
+  const [paymentMethod,setPaymentMethod] = useState<"cash"|"card">("cash");
   const [selectedOptionIds,setSelectedOptionIds] = useState<string[]>([]);
 
   useEffect(()=>{
@@ -304,7 +311,7 @@ export default function DashboardPage(){
   const editingExtensionMinutes = editingOrder ? resolveOrderExtensionMinutes(editingOrder,pricing) : 0;
   const editingExtensionTotal = editingOrder ? resolveOrderExtensionTotal(editingOrder,pricing) : 0;
   const editingAdjustment = editingOrder?.adjustment ?? 0;
-  const total = useMemo(()=>calculateOrderTotal({
+  const subtotalBeforeCard = useMemo(()=>calculateOrderTotal({
     course,
     nominationType,
     photoNominationFee:pricing.photoNominationFee,
@@ -312,8 +319,12 @@ export default function DashboardPage(){
     optionsTotal,
     travelFee,
     discount,
-    adjustment:editingAdjustment+editingExtensionTotal
-  }),[course,nominationType,optionsTotal,travelFee,discount,pricing.photoNominationFee,pricing.repeatNominationFee,editingAdjustment,editingExtensionTotal]);
+    adjustment:editingAdjustment+editingExtensionTotal+surcharge
+  }),[course,nominationType,optionsTotal,travelFee,discount,surcharge,pricing.photoNominationFee,pricing.repeatNominationFee,editingAdjustment,editingExtensionTotal]);
+  const cardFee = paymentMethod==="card"
+    ? Math.round(subtotalBeforeCard*((storeSettings.cardFeeRate??0)/100))
+    : 0;
+  const total = subtotalBeforeCard+cardFee;
 
   const activeOrders = useMemo(()=>orders.filter(o=>o.status!=="completed"&&o.status!=="cancelled"),[orders]);
   const todaySales = useMemo(()=>orders.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+o.total,0),[orders]);
@@ -427,7 +438,10 @@ export default function DashboardPage(){
     setNote(selectedOrder.note ?? "");
     setTravelFee(selectedOrder.travelFee);
     setDiscount(selectedOrder.discount);
+    setSurcharge(selectedOrder.surcharge??0);
+    setPaymentMethod(selectedOrder.paymentMethod??"cash");
     setSelectedOptionIds(optionIds);
+    setCustomerNotice("");
 
     closeOrderMenu();
     window.setTimeout(()=>{
@@ -441,7 +455,7 @@ export default function DashboardPage(){
     setDriverId(availableDrivers[0]?.id ?? "");
     setCourseId(pricing.courses[0]?.id ?? "");
     setNominationType("free");
-    setScheduledStart("13:30");
+    setScheduledStart(clockTimeValue());
     const firstHotel=availableHotels[0];
     setLocationName(firstHotel?.name ?? "");
     setTravelFee(firstHotel?.travelFee ?? pricing.defaultTravelFee);
@@ -449,7 +463,34 @@ export default function DashboardPage(){
     setPhone("090-0000-0000");
     setNote("サンプル備考");
     setSelectedOptionIds([]);
+    setOptionModalOpen(false);
     setDiscount(0);
+    setSurcharge(0);
+    setPaymentMethod("cash");
+    setCustomerNotice("");
+  }
+
+  function registerSelectedCastAsCustomerNg(){
+    if(!editingOrderId || !selectedCast || !phoneKey) return;
+    const current=loadCustomers();
+    const index=current.findIndex(customer=>normalizePhone(customer.phone)===phoneKey);
+    const label=`NGキャスト：${selectedCast.name}`;
+    let next:Customer[];
+    if(index>=0){
+      const target=current[index];
+      const existing=(target.ngInfo??"").trim();
+      if(existing.toLowerCase().includes(selectedCast.name.toLowerCase())){
+        setCustomerNotice(`${selectedCast.name} はすでにNG登録されています`);
+        return;
+      }
+      const updated={...target,ngInfo:existing ? `${existing}\n${label}` : label};
+      next=current.map((customer,i)=>i===index?updated:customer);
+    }else{
+      next=[...current,{id:crypto.randomUUID(),phone,name:"",notes:"",ngInfo:label,active:true}];
+    }
+    saveCustomers(next);
+    setCustomerList(next);
+    setCustomerNotice(`${selectedCast.name} をNGキャストに登録しました`);
   }
 
   function beginExtension(){
@@ -529,6 +570,9 @@ export default function DashboardPage(){
       optionsTotal,
       travelFee,
       discount,
+      surcharge,
+      paymentMethod,
+      cardFee,
       total,
       serviceDate:date,
       scheduledStart,
@@ -625,11 +669,17 @@ export default function DashboardPage(){
                     <span>顧客情報</span>
                     <strong>{matchedCustomer?.name || "名前未登録"}</strong>
                   </div>
-                  <div className="customerLookupStats">
-                    <span>利用 <strong>{customerHistory.length}回</strong></span>
-                    <span>最終 <strong>{customerHistory[0] ? orderServiceDate(customerHistory[0]) : "—"}</strong></span>
+                  <div className="customerLookupHeadActions">
+                    <div className="customerLookupStats">
+                      <span>利用 <strong>{customerHistory.length}回</strong></span>
+                      <span>最終 <strong>{customerHistory[0] ? orderServiceDate(customerHistory[0]) : "—"}</strong></span>
+                    </div>
+                    {editingOrderId && selectedCast && <button type="button" className="customerNgRegisterButton" onClick={registerSelectedCastAsCustomerNg}>
+                      {selectedCast.name}をNG登録
+                    </button>}
                   </div>
                 </div>
+                {customerNotice && <div className="customerLookupNotice">{customerNotice}</div>
 
                 {(matchedCustomer?.active===false || matchedCustomer?.ngInfo) && <div className="customerNgWarning">
                   <strong>⚠ NG警告</strong>
@@ -741,38 +791,53 @@ export default function DashboardPage(){
               </label>
             </div>
 
-            <div className="orderOptionPicker">
+            <div className="orderOptionPicker optionPopupPicker">
               <div className="orderOptionPickerHead">
                 <span>オプション</span>
-                <strong>{formatYen(optionsTotal)}</strong>
+                <div>
+                  <strong>{formatYen(optionsTotal)}</strong>
+                  <button type="button" className="optionOpenButton" onClick={()=>setOptionModalOpen(true)} disabled={!selectedCast || !selectableOptions.length}>選択</button>
+                </div>
               </div>
-              <div className="orderOptionChoices">
-                {selectableOptions.map(option=>{
-                  const checked=selectedOptionIds.includes(option.id);
-                  return <button key={option.id} type="button" className={checked?"active":""} onClick={()=>toggleOrderOption(option.id)}>
-                    <span>{option.name}</span>
-                    <small>{option.price===0?"無料":formatYen(option.price)}</small>
-                  </button>
-                })}
-                {selectedCast && selectableOptions.length===0 && <span className="orderOptionEmpty">対応可能なオプションはありません</span>}
+              <div className="selectedOptionLabels">
+                {selectedOptionIds.length
+                  ? selectableOptions.filter(option=>selectedOptionIds.includes(option.id)).map(option=><span key={option.id}>
+                      {option.name}<small>{option.price===0?"無料":formatYen(option.price)}</small>
+                      <button type="button" onClick={()=>toggleOrderOption(option.id)}>×</button>
+                    </span>)
+                  : <em>{selectedCast ? "オプション未選択" : "キャストを選択してください"}</em>}
               </div>
             </div>
 
-            <div className="workGrid two">
+            <div className="workGrid three">
               <label>交通費<input type="number" value={travelFee} onChange={e=>setTravelFee(Number(e.target.value))}/></label>
               <label>割引<input type="number" value={discount} onChange={e=>setDiscount(Number(e.target.value))}/></label>
+              <label>割増<input type="number" value={surcharge} onChange={e=>setSurcharge(Number(e.target.value))}/></label>
             </div>
 
-            <label>開始時間
-              <input type="time" value={scheduledStart} onChange={e=>setScheduledStart(e.target.value)}/>
-            </label>
+            <div className="paymentAndTimeGrid">
+              <label>支払方法
+                <div className="paymentMethodChoices">
+                  <button type="button" className={paymentMethod==="cash"?"active":""} onClick={()=>setPaymentMethod("cash")}>現金</button>
+                  <button type="button" className={paymentMethod==="card"?"active":""} onClick={()=>setPaymentMethod("card")}>カード</button>
+                </div>
+              </label>
+              <label>開始時間
+                <input type="time" value={scheduledStart} onChange={e=>setScheduledStart(e.target.value)}/>
+              </label>
+            </div>
+
+            {paymentMethod==="card" && <div className="cardFeePreview">
+              <span>カード手数料 {storeSettings.cardFeeRate??0}%</span>
+              <strong>＋{formatYen(cardFee)}</strong>
+            </div>
 
             <label>備考
               <textarea rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="サンプル備考を入力"/>
             </label>
 
             <div className="workFooter">
-              <div><small>自動計算</small><strong>{formatYen(total)}</strong></div>
+              <div className="workTotalSummary"><small>自動計算</small>{paymentMethod==="card" && <span>カード手数料込み</span>}<strong>{formatYen(total)}</strong></div>
               <div className="workButtons">
                 <button className="registerBtn" type="submit" disabled={!selectedCast}>{editingOrderId?"変更を保存":"仕事を入れる"}</button>
                 {!editingOrderId && <Link href="/orders/new">詳細入力</Link>}
@@ -893,6 +958,28 @@ export default function DashboardPage(){
         </div>
       </div>
     </section>
+
+    {optionModalOpen && <div className="optionSelectBackdrop" onMouseDown={e=>{if(e.currentTarget===e.target)setOptionModalOpen(false);}}>
+      <div className="optionSelectModal" role="dialog" aria-modal="true">
+        <div className="optionSelectHead">
+          <div><span>OPTION</span><h2>オプション選択</h2><small>{selectedCast?.name} が対応可能なものだけ表示</small></div>
+          <button type="button" onClick={()=>setOptionModalOpen(false)}>×</button>
+        </div>
+        <div className="optionSelectBody">
+          {selectableOptions.map(option=>{
+            const checked=selectedOptionIds.includes(option.id);
+            return <button type="button" key={option.id} className={checked?"active":""} onClick={()=>toggleOrderOption(option.id)}>
+              <span>{option.name}</span><small>{option.price===0?"無料":formatYen(option.price)}</small><b>{checked?"✓":""}</b>
+            </button>
+          })}
+          {!selectableOptions.length && <p>このキャストに設定されている対応可能オプションはありません</p>}
+        </div>
+        <div className="optionSelectFooter">
+          <span>{selectedOptionIds.length}件 / {formatYen(optionsTotal)}</span>
+          <button type="button" className="primaryButton" onClick={()=>setOptionModalOpen(false)}>決定</button>
+        </div>
+      </div>
+    </div>}
 
     {selectedOrder && <div className="orderActionBackdrop" onMouseDown={e=>{if(e.currentTarget===e.target)closeOrderMenu();}}>
       <div className="orderActionModal" role="dialog" aria-modal="true" aria-labelledby="order-action-title">

@@ -2317,3 +2317,37 @@ button:disabled{opacity:.45;cursor:not-allowed}
   background:#ffd9de;
   color:#a32538;
 }
+
+
+/* ===== Work registration convenience ===== */
+.customerLookupHeadActions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.customerNgRegisterButton{min-height:30px;padding:5px 9px;border:1px solid #df7f8d;border-radius:7px;background:#fff0f2;color:#a22639;font-size:9px;font-weight:900;cursor:pointer}
+.customerLookupNotice{padding:8px 12px;border-bottom:1px solid #e8edf0;background:#fff8df;color:#735800;font-size:10px;font-weight:900}
+.workGrid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.paymentAndTimeGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.paymentAndTimeGrid>label{display:grid;gap:6px}
+.paymentMethodChoices{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.paymentMethodChoices button{min-height:42px;border:1px solid #d5dce2;border-radius:8px;background:#fff;color:#65717c;font-size:12px;font-weight:900;cursor:pointer}
+.paymentMethodChoices button.active{border-color:#7db638;background:#eaf6d9;color:#4a701a}
+.cardFeePreview{display:flex;align-items:center;justify-content:space-between;margin:9px 0 12px;padding:9px 11px;border:1px solid #c9ddec;border-radius:8px;background:#f2f8fc}
+.cardFeePreview span{font-size:10px;color:#5d7181;font-weight:900}.cardFeePreview strong{font-size:13px;color:#316b95}
+.workTotalSummary span{display:block;margin-top:2px;font-size:9px;color:#78904e;font-weight:900}
+.optionPopupPicker .orderOptionPickerHead>div{display:flex;align-items:center;gap:8px}
+.optionOpenButton{min-height:32px;padding:5px 11px;border:1px solid #8dbb52;border-radius:7px;background:#eff8e3;color:#4e741f;font-size:10px;font-weight:900;cursor:pointer}
+.optionOpenButton:disabled{opacity:.45;cursor:not-allowed}
+.selectedOptionLabels{display:flex;gap:6px;flex-wrap:wrap;min-height:34px;align-items:center}
+.selectedOptionLabels>span{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;border:1px solid #c6dda6;border-radius:999px;background:#f1f9e7;color:#4d711f;font-size:10px;font-weight:900}
+.selectedOptionLabels small{font-size:8px;color:#7c905f}.selectedOptionLabels>span>button{width:18px;height:18px;padding:0;border:0;border-radius:50%;background:#d9edbd;color:#4f711f;font-size:11px;font-weight:900;cursor:pointer}
+.selectedOptionLabels em{font-size:10px;font-style:normal;color:#939ca5}
+.optionSelectBackdrop{position:fixed;inset:0;z-index:1350;display:grid;place-items:center;padding:18px;background:rgba(10,14,18,.5)}
+.optionSelectModal{width:min(520px,96vw);overflow:hidden;border-radius:14px;background:#fff;box-shadow:0 28px 80px rgba(10,20,30,.3)}
+.optionSelectHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid #e5eaee;background:#fafcfd}
+.optionSelectHead span{font-size:9px;font-weight:900;color:#8b959e}.optionSelectHead h2{margin:2px 0 0;font-size:20px}.optionSelectHead small{display:block;margin-top:3px;color:#7c8791;font-size:9px}
+.optionSelectHead>button{width:34px;height:34px;border:1px solid #d6dde3;border-radius:8px;background:#fff;font-size:19px;cursor:pointer}
+.optionSelectBody{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:360px;overflow:auto;padding:14px}
+.optionSelectBody>button{position:relative;display:grid;gap:3px;min-height:66px;padding:11px 34px 11px 11px;border:1px solid #dce2e7;border-radius:9px;background:#fff;text-align:left;cursor:pointer}
+.optionSelectBody>button.active{border-color:#8dbd50;background:#eef8e1}.optionSelectBody>button span{font-size:12px;font-weight:900}.optionSelectBody>button small{font-size:9px;color:#78848e}.optionSelectBody>button b{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#5f8e22;font-size:17px}
+.optionSelectBody>p{grid-column:1/-1;margin:0;padding:24px;text-align:center;color:#89939c;font-size:11px}
+.optionSelectFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;border-top:1px solid #e5eaee;background:#fafcfd}.optionSelectFooter span{font-size:11px;font-weight:900;color:#65717b}
+.storePaymentSettings{margin-top:16px;padding:14px;border:1px solid #dfe5e9;border-radius:10px;background:#f8fafb}.storePaymentSettings h3{margin:0 0 11px;font-size:13px}.storePaymentSettings label{display:grid;gap:6px;max-width:240px;font-size:11px;font-weight:900}.storePercentInput{display:grid;grid-template-columns:1fr 42px}.storePercentInput input{border-radius:8px 0 0 8px}.storePercentInput span{display:grid;place-items:center;border:1px solid #d5dce2;border-left:0;border-radius:0 8px 8px 0;background:#fff;font-weight:900}.storePaymentSettings p{margin:8px 0 0;color:#7b8690;font-size:10px}
+@media(max-width:650px){.workGrid.three,.paymentAndTimeGrid{grid-template-columns:1fr}.optionSelectBody{grid-template-columns:1fr}}

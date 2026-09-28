@@ -363,6 +363,7 @@ export function loadStoreSettings(defaultSettings:StoreSettings):StoreSettings {
     return {
       openTime:parsed.openTime ?? defaultSettings.openTime,
       closeTime:parsed.closeTime ?? defaultSettings.closeTime,
+      cardFeeRate:parsed.cardFeeRate ?? defaultSettings.cardFeeRate ?? 0,
     };
   } catch {
     return defaultSettings;
