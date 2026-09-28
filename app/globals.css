@@ -2015,3 +2015,48 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .nowLine{
   z-index:9;
 }
+
+
+/* ===== Order action popup ===== */
+.timelineOrder{font:inherit;text-align:left;cursor:pointer}
+.orderActionBackdrop{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:18px;background:rgba(10,14,18,.55)}
+.orderActionModal{width:min(410px,96vw);overflow:hidden;border:1px solid #3e4650;border-radius:13px;background:#222831;color:#fff;box-shadow:0 30px 90px rgba(0,0,0,.4)}
+.orderActionSummary{padding:17px 18px 14px;border-bottom:1px solid #39414b;background:#262d36}
+.orderActionSummary>div{display:flex;align-items:baseline;justify-content:space-between;gap:14px}
+.orderActionSummary span{font-size:15px;font-weight:900;color:#ecd99e}
+.orderActionSummary strong{font-size:16px;color:#f4e4ad}
+.orderActionSummary small{display:block;margin-top:6px;font-size:11px;color:#aeb8c3}
+.orderActionNotice{margin:10px 14px 0;padding:9px 11px;border-radius:8px;background:#34404c;color:#d9e5ef;font-size:11px;font-weight:800;text-align:center}
+.orderActionButtons{display:grid;gap:10px;padding:14px}
+.orderActionButtons button{min-height:58px;border:0;border-radius:10px;color:#fff;font-size:19px;font-weight:900;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 2px 5px rgba(0,0,0,.22)}
+.orderActionButtons button:hover{filter:brightness(1.06)}
+.orderActionIn{background:#138477}
+.orderActionSend{background:#287fce}
+.orderActionPickup{background:#f5a00d}
+.orderActionEdit{background:#8754ee}
+.orderActionExtend{background:#f04449}
+.orderActionDelete{background:#737d8d}
+.orderActionClose{background:#777}
+.orderActionSubpanel{padding:16px}
+.orderActionSubpanel h3{margin:0 0 14px;font-size:18px}
+.orderActionEditGrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.orderActionEditGrid label{display:grid;gap:6px;font-size:11px;font-weight:900;color:#c8d0d8}
+.orderActionEditGrid input,.orderActionEditGrid select,.orderActionEditGrid textarea{width:100%;min-height:42px;padding:9px 10px;border:1px solid #4c5661;border-radius:8px;background:#f9fafb;color:#1f2831;font-size:13px}
+.orderActionEditGrid textarea{resize:vertical}
+.orderActionFull{grid-column:1/-1}
+.orderActionSubButtons{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}
+.orderActionSubButtons button{min-height:42px;padding:8px 15px;border:1px solid #59636e;border-radius:8px;background:#59636e;color:#fff;font-weight:900;cursor:pointer}
+.orderActionSubButtons .primary{border-color:#6cae16;background:#7fbe22}
+.orderActionSubButtons .danger{border-color:#d9363d;background:#e44147}
+.extensionControl{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:10px}
+.extensionControl>button{height:52px;border:1px solid #505a65;border-radius:10px;background:#343c46;color:#fff;font-size:24px;font-weight:900;cursor:pointer}
+.extensionControl>div{display:grid;place-items:center;min-height:70px;border:1px solid #46515c;border-radius:10px;background:#29313a}
+.extensionControl strong{font-size:22px}
+.extensionControl span{margin-top:3px;font-size:11px;color:#bec8d2}
+.extensionPreview{margin:13px 0 0;padding:10px;border-radius:8px;background:#2c343e;color:#cbd4dc;font-size:12px;text-align:center}
+.extensionPreview strong{color:#fff}
+@media(max-width:520px){
+  .orderActionButtons button{min-height:54px;font-size:17px}
+  .orderActionEditGrid{grid-template-columns:1fr}
+  .orderActionFull{grid-column:auto}
+}
