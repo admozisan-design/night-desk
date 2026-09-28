@@ -1843,7 +1843,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .castScheduleWeekSummary span{font-size:10px;color:#89939d;font-weight:800}
 .castScheduleWeekSummary strong{margin-top:4px;font-size:13px}
 .castScheduleTable{display:grid}
-.castScheduleRow{display:grid;grid-template-columns:minmax(150px,1.3fr) 120px 130px 130px 130px;align-items:center;gap:12px;min-height:64px;padding:9px 18px;border-bottom:1px solid #edf0f3}
+.castScheduleRow{display:grid;grid-template-columns:minmax(150px,1.3fr) 120px 130px 150px 130px;align-items:center;gap:12px;min-height:64px;padding:9px 18px;border-bottom:1px solid #edf0f3}
 .castScheduleRow:last-child{border-bottom:0}
 .castScheduleTableHead{min-height:42px;background:#f6f8f9;color:#7b8691;font-size:10px;font-weight:900}
 .castScheduleRow.isWorking{background:#fbfff7}
@@ -1851,6 +1851,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .castScheduleRow>strong{font-size:13px}
 .castScheduleRow input[type="time"]{min-height:42px;padding:8px 10px;border:1px solid #d6dde3;border-radius:8px;background:#fff;font-size:14px;font-weight:800}
 .castScheduleRow input[type="time"]:disabled{background:#f2f4f5;color:#adb4bb}
+.castScheduleRow select{min-height:42px;padding:8px 10px;border:1px solid #d6dde3;border-radius:8px;background:#fff;font-size:12px;font-weight:900}
+.castScheduleRow select:disabled{background:#f2f4f5;color:#adb4bb}
 .castScheduleToggle{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:900}
 .castScheduleToggle input{width:18px;height:18px}
 .castScheduleToggle span{display:inline-flex;min-width:48px;justify-content:center;padding:5px 8px;border-radius:999px;background:#eef1f3;color:#78838d}
@@ -1915,7 +1917,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .shiftQuickModal{width:min(480px,96vw)}
 .shiftQuickForm{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:20px}
 .shiftQuickForm label{display:grid;gap:7px;font-size:12px;font-weight:900;color:#5d6975}
-.shiftQuickForm input{min-height:46px;padding:9px 11px;border:1px solid #d5dce2;border-radius:9px;background:#fff;font-size:16px;font-weight:900}
+.shiftQuickForm input,.shiftQuickForm select{min-height:46px;padding:9px 11px;border:1px solid #d5dce2;border-radius:9px;background:#fff;font-size:16px;font-weight:900}
 @media(max-width:600px){
   .attendanceModalInfo{grid-template-columns:1fr}
   .attendanceModalInfo>div+div{border-left:0;border-top:1px solid #edf0f3}
