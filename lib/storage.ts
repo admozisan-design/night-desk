@@ -43,6 +43,7 @@ function normalizeCast(cast:Cast):Cast {
   return {
     ...cast,
     scheduledToday: cast.scheduledToday ?? true,
+    schedule: Array.isArray(cast.schedule) ? cast.schedule : [],
     visible: cast.visible ?? true,
     unitPrice: cast.unitPrice ?? 0,
     freeUnitPrice: cast.freeUnitPrice ?? cast.unitPrice ?? 0,
