@@ -43,7 +43,7 @@ export type Course = { id:string; minutes:number; price:number; };
 export type Hotel = { id:string; name:string; travelFee:number; visible?:boolean; };
 export type Staff = { id:string; name:string; displayName:string; loginId:string; notes?:string; active?:boolean; };
 export type StoreOption = { id:string; name:string; price:number; notes?:string; active?:boolean; };
-export type StoreSettings = { openTime:string; closeTime:string; cardFeeRate:number; };
+export type StoreSettings = { openTime:string; closeTime:string; cardFeeRate:number; priceUnit:10|100|500|1000; };
 export type CastSettlementAdjustment = {
   orderId:string;
   optionBack:number;

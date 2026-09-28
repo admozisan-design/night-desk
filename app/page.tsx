@@ -76,6 +76,10 @@ function normalizePhone(value:string){
 function clockTimeValue(value=new Date()){
   return `${String(value.getHours()).padStart(2,"0")}:${String(value.getMinutes()).padStart(2,"0")}`;
 }
+function roundUpToUnit(value:number,unit:number){
+  if(unit<=1) return Math.round(value);
+  return Math.ceil(value/unit)*unit;
+}
 function orderServiceDate(order:Order){
   if(order.serviceDate) return order.serviceDate;
   return dateInputValue(new Date(order.createdAt));
@@ -323,7 +327,7 @@ export default function DashboardPage(){
     adjustment:editingAdjustment+editingExtensionTotal+surcharge
   }),[course,nominationType,optionsTotal,travelFee,discount,surcharge,pricing.photoNominationFee,pricing.repeatNominationFee,editingAdjustment,editingExtensionTotal]);
   const cardFee = paymentMethod==="card"
-    ? Math.round(subtotalBeforeCard*((storeSettings.cardFeeRate??0)/100))
+    ? roundUpToUnit(subtotalBeforeCard*((storeSettings.cardFeeRate??0)/100),storeSettings.priceUnit??100)
     : 0;
   const total = subtotalBeforeCard+cardFee;
 
@@ -825,9 +829,9 @@ export default function DashboardPage(){
             </div>
 
             <div className="workGrid three">
-              <label>交通費<input type="number" value={travelFee} onChange={e=>setTravelFee(Number(e.target.value))}/></label>
-              <label>割引<input type="number" value={discount} onChange={e=>setDiscount(Number(e.target.value))}/></label>
-              <label>割増<input type="number" value={surcharge} onChange={e=>setSurcharge(Number(e.target.value))}/></label>
+              <label>交通費<input type="number" step={storeSettings.priceUnit??100} value={travelFee} onChange={e=>setTravelFee(Number(e.target.value))}/></label>
+              <label>割引<input type="number" step={storeSettings.priceUnit??100} value={discount} onChange={e=>setDiscount(Number(e.target.value))}/></label>
+              <label>割増<input type="number" step={storeSettings.priceUnit??100} value={surcharge} onChange={e=>setSurcharge(Number(e.target.value))}/></label>
             </div>
 
             <div className="paymentAndTimeGrid">
@@ -843,7 +847,7 @@ export default function DashboardPage(){
             </div>
 
             {paymentMethod==="card" && <div className="cardFeePreview">
-              <span>カード手数料 {storeSettings.cardFeeRate??0}%</span>
+              <span>カード手数料 {storeSettings.cardFeeRate??0}% / {new Intl.NumberFormat("ja-JP").format(storeSettings.priceUnit??100)}円単位</span>
               <strong>＋{formatYen(cardFee)}</strong>
             </div>}
 

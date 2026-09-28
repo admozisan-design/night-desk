@@ -2359,3 +2359,5 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .inTimeControl input{width:100%;min-height:56px;padding:10px 12px;border:1px solid #53606d;border-radius:9px;background:#f8fafb;color:#1d2730;font-size:22px;font-weight:900;text-align:center}
 .inTimeControl small{display:block;color:#9fabb6;font-size:10px;line-height:1.5;text-align:center}
 .orderActionSubButtons button:disabled{opacity:.45;cursor:not-allowed}
+
+.storePaymentSettings select{min-height:44px;padding:8px 10px;border:1px solid #d5dce2;border-radius:8px;background:#fff;font-size:13px;font-weight:900}

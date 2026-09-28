@@ -364,6 +364,7 @@ export function loadStoreSettings(defaultSettings:StoreSettings):StoreSettings {
       openTime:parsed.openTime ?? defaultSettings.openTime,
       closeTime:parsed.closeTime ?? defaultSettings.closeTime,
       cardFeeRate:parsed.cardFeeRate ?? defaultSettings.cardFeeRate ?? 0,
+      priceUnit:(parsed.priceUnit ?? defaultSettings.priceUnit ?? 100) as StoreSettings["priceUnit"],
     };
   } catch {
     return defaultSettings;
