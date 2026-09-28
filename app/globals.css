@@ -2060,3 +2060,28 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .orderActionEditGrid{grid-template-columns:1fr}
   .orderActionFull{grid-column:auto}
 }
+
+
+/* ===== Main form order edit state ===== */
+.workRegister.isEditingOrder{
+  border-color:#9a73ee;
+  box-shadow:0 0 0 2px rgba(135,84,238,.12);
+}
+.workRegisterTitleRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.workRegisterTitleRow h2{margin:0}
+.workEditBadge{
+  display:inline-flex;
+  align-items:center;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#eee5ff;
+  color:#6f3bc0;
+  font-size:10px;
+  font-weight:900;
+}
