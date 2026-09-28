@@ -32,6 +32,25 @@ export function updateOrderStatus(id:string,status:Order["status"]){
   return orders;
 }
 
+export function updateOrder(id:string,changes:Partial<Order>){
+  const orders=loadOrders().map(order=>order.id===id?{...order,...changes}:order);
+  localStorage.setItem(ORDER_KEY,JSON.stringify(orders));
+  window.dispatchEvent(new Event("nightdesk:orders"));
+  const order=orders.find(order=>order.id===id);
+  appendAuditLog("受付","オーダー編集",`${order?.castName ?? id}`);
+  return orders;
+}
+
+export function deleteOrder(id:string){
+  const current=loadOrders();
+  const target=current.find(order=>order.id===id);
+  const orders=current.filter(order=>order.id!==id);
+  localStorage.setItem(ORDER_KEY,JSON.stringify(orders));
+  window.dispatchEvent(new Event("nightdesk:orders"));
+  appendAuditLog("受付","オーダー削除",`${target?.castName ?? id}`);
+  return orders;
+}
+
 function normalizeCast(cast:Cast):Cast {
   const legacyNg = (cast as unknown as { ngDetails?: string | string[] }).ngDetails;
   const normalizedNg = Array.isArray(legacyNg)
