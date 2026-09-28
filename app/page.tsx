@@ -280,6 +280,22 @@ export default function DashboardPage(){
       .filter(order=>normalizePhone(order.customerPhone??"")===phoneKey && order.status!=="cancelled")
       .sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
   },[orders,phoneKey]);
+  const servedCustomerHistory=useMemo(()=>customerHistory.filter(order=>
+    order.id!==editingOrderId &&
+    (order.status==="completed" || Boolean(order.inTime) || orderServiceDate(order)<date)
+  ),[customerHistory,editingOrderId,date]);
+  const visitedCastCounts=useMemo(()=>{
+    const counts=new Map<string,number>();
+    for(const order of servedCustomerHistory){
+      counts.set(order.castId,(counts.get(order.castId)??0)+1);
+    }
+    return counts;
+  },[servedCustomerHistory]);
+  const visitedCastIds=useMemo(()=>new Set(visitedCastCounts.keys()),[visitedCastCounts]);
+  const visitedAvailableCasts=useMemo(
+    ()=>formCastChoices.filter(cast=>visitedCastIds.has(cast.id)),
+    [formCastChoices,visitedCastIds]
+  );
   const selectableOptions = useMemo(
     ()=>optionList.filter(option=>option.active!==false && (selectedCast?.availableOptions??[]).includes(option.name)),
     [optionList,selectedCast]
@@ -665,9 +681,38 @@ export default function DashboardPage(){
                 </select>
               </label>
               <label>キャスト
-                <select value={castId} onChange={e=>setCastId(e.target.value)} disabled={!formCastChoices.length}>
-                  {formCastChoices.map(c=><option key={c.id} value={c.id}>{c.name} / {statusLabels[c.status]}</option>)}
-                </select>
+                <div className="castHistorySelectWrap">
+                  <select
+                    value={castId}
+                    onChange={e=>setCastId(e.target.value)}
+                    disabled={!formCastChoices.length}
+                    className={visitedCastIds.has(castId)?"hasVisitedCast":""}
+                  >
+                    {formCastChoices.map(c=>{
+                      const visited=visitedCastIds.has(c.id);
+                      const count=visitedCastCounts.get(c.id)??0;
+                      return <option
+                        key={c.id}
+                        value={c.id}
+                        className={visited?"visitedCastOption":""}
+                      >
+                        {visited ? `★ ${c.name} / 既遊${count}回 / ${statusLabels[c.status]}` : `${c.name} / ${statusLabels[c.status]}`}
+                      </option>
+                    })}
+                  </select>
+                  {visitedCastIds.has(castId) && <span className="selectedVisitedCastBadge">既遊キャスト</span>}
+                </div>
+                {visitedAvailableCasts.length>0 && <div className="visitedCastChips">
+                  <span className="visitedCastChipsLabel">既遊</span>
+                  {visitedAvailableCasts.map(cast=><button
+                    type="button"
+                    key={cast.id}
+                    className={cast.id===castId?"active":""}
+                    onClick={()=>setCastId(cast.id)}
+                  >
+                    ★ {cast.name} <small>{visitedCastCounts.get(cast.id)??0}回</small>
+                  </button>)}
+                </div>}
               </label>
             </div>
 
