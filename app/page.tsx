@@ -58,6 +58,20 @@ function dateInputValue(date:Date){
 function castShiftForDate(cast:Cast,date:string){
   return cast.schedule?.find(shift=>shift.date===date);
 }
+function shiftAvailabilityPosition(startTime:string,endTime:string){
+  let start=normalizedMinutes(startTime)-BOARD_START;
+  let end=normalizedMinutes(endTime)-BOARD_START;
+  if(end<=start) end+=24*60;
+
+  const visibleStart=Math.max(0,Math.min(BOARD_MINUTES,start));
+  const visibleEnd=Math.max(0,Math.min(BOARD_MINUTES,end));
+
+  return {
+    beforeWidth:`${(visibleStart/BOARD_MINUTES)*100}%`,
+    afterLeft:`${(visibleEnd/BOARD_MINUTES)*100}%`,
+    afterWidth:`${((BOARD_MINUTES-visibleEnd)/BOARD_MINUTES)*100}%`
+  };
+}
 
 export default function DashboardPage(){
   const [orders,setOrders] = useState<Order[]>([]);
@@ -115,11 +129,19 @@ export default function DashboardPage(){
   },[]);
 
   const workingCasts = useMemo(
-    ()=>castList.filter(c=>{
-      if(c.visible===false) return false;
-      const shift=castShiftForDate(c,date);
-      return shift ? shift.working : c.scheduledToday!==false;
-    }),
+    ()=>castList
+      .filter(c=>{
+        if(c.visible===false) return false;
+        const shift=castShiftForDate(c,date);
+        return shift ? shift.working : c.scheduledToday!==false;
+      })
+      .sort((a,b)=>{
+        const aAttendance=castShiftForDate(a,date)?.attendance;
+        const bAttendance=castShiftForDate(b,date)?.attendance;
+        const rank=(attendance:CastAttendanceStatus|undefined)=>
+          attendance==="absent" || attendance==="leftEarly" ? 1 : 0;
+        return rank(aAttendance)-rank(bAttendance);
+      }),
     [castList,date]
   );
   const selectableCasts = useMemo(()=>workingCasts.filter(c=>{
@@ -456,7 +478,12 @@ export default function DashboardPage(){
             const castOrders = orders.filter(o=>o.castId===cast.id && o.status!=="cancelled");
             const visibleOrders = castOrders.filter(o=>eventPosition(o));
             const shift=castShiftForDate(cast,date);
-            return <div className="dispatchRowContents" key={cast.id}>
+            const attendance=shift?.attendance;
+            const unavailable=attendance==="absent" || attendance==="leftEarly";
+            const shiftStart=shift?.start ?? cast.shiftStart ?? "10:00";
+            const shiftEnd=shift?.end ?? cast.shiftEnd ?? "05:00";
+            const availability=shiftAvailabilityPosition(shiftStart,shiftEnd);
+            return <div className={`dispatchRowContents ${unavailable?"isUnavailableCast":""}`} key={cast.id}>
               <div className="dispatchName">
                 <span className={`castStateDot ${cast.status}`}/>
                 <button type="button" className="dispatchCastButton" onClick={()=>setDetailCastId(cast.id)}>
@@ -485,7 +512,16 @@ export default function DashboardPage(){
                     <small>{order.locationName || "場所未入力"} / {order.driverName ?? "配車未割当"}</small>
                   </Link>
                 })}
-                {!visibleOrders.length && <span className="emptyTimeline">空き</span>}
+                {!visibleOrders.length && !unavailable && <span className="emptyTimeline">空き</span>}
+                <div className="offShiftBlock before" style={{width:availability.beforeWidth}} title="出勤時間外">
+                  <span>出勤前</span>
+                </div>
+                <div className="offShiftBlock after" style={{left:availability.afterLeft,width:availability.afterWidth}} title="出勤時間外">
+                  <span>上り後</span>
+                </div>
+                {unavailable && <div className="unavailableCastTimelineBlock">
+                  <strong>{attendance==="absent"?"当欠":"早退"}</strong>
+                </div>}
                 {nowPosition && <span className="nowLine" style={{left:nowPosition}}><b>現在</b></span>}
               </div>
             </div>
