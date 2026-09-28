@@ -4,8 +4,8 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { casts as defaultCasts, defaultPricingConfig, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, saveOrder } from "@/lib/storage";
-import type { Cast, CastStatus, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
+import { loadCasts, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, saveCasts, saveOrder } from "@/lib/storage";
+import type { Cast, CastAttendanceStatus, CastStatus, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
 const BOARD_MINUTES = 19 * 60;
@@ -18,6 +18,9 @@ const statusLabels: Record<CastStatus,string> = {
 };
 const orderStatusLabels: Record<OrderStatus,string> = {
   accepted:"受付済", dispatching:"配車中", serving:"接客中", completed:"完了", cancelled:"キャンセル"
+};
+const attendanceLabels: Record<CastAttendanceStatus,string> = {
+  present:"出勤", late:"遅刻", absent:"当欠", leftEarly:"早退"
 };
 
 function normalizedMinutes(time:string){
@@ -65,6 +68,9 @@ export default function DashboardPage(){
   const [pricing,setPricing] = useState<PricingConfig>(defaultPricingConfig);
   const [now,setNow] = useState<Date|null>(null);
   const [date,setDate] = useState(()=>dateInputValue(new Date()));
+  const [detailCastId,setDetailCastId] = useState<string|null>(null);
+  const [shiftEditCastId,setShiftEditCastId] = useState<string|null>(null);
+  const [shiftDraft,setShiftDraft] = useState({start:"18:00",end:"04:00"});
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
@@ -116,7 +122,10 @@ export default function DashboardPage(){
     }),
     [castList,date]
   );
-  const selectableCasts = useMemo(()=>workingCasts.filter(c=>c.status!=="off"),[workingCasts]);
+  const selectableCasts = useMemo(()=>workingCasts.filter(c=>{
+    const attendance=castShiftForDate(c,date)?.attendance;
+    return c.status!=="off" && attendance!=="absent" && attendance!=="leftEarly";
+  }),[workingCasts,date]);
   const availableHotels = useMemo(
     ()=>hotelList.filter(h=>h.visible!==false),
     [hotelList]
@@ -180,6 +189,45 @@ export default function DashboardPage(){
   const todaySales = useMemo(()=>orders.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+o.total,0),[orders]);
   const waitingCount = workingCasts.filter(c=>c.status==="waiting").length;
   const nowPosition = now ? currentTimePosition(now) : null;
+  const detailCast = detailCastId ? castList.find(c=>c.id===detailCastId) : undefined;
+  const detailShift = detailCast ? castShiftForDate(detailCast,date) : undefined;
+  const shiftEditCast = shiftEditCastId ? castList.find(c=>c.id===shiftEditCastId) : undefined;
+
+  function replaceCastShift(cast:Cast, changes:Partial<NonNullable<Cast["schedule"]>[number]>){
+    const existing=castShiftForDate(cast,date);
+    const nextShift={
+      date,
+      start:existing?.start ?? cast.shiftStart ?? "18:00",
+      end:existing?.end ?? cast.shiftEnd ?? "04:00",
+      working:existing?.working ?? true,
+      attendance:existing?.attendance,
+      ...changes
+    };
+    const schedule=[...(cast.schedule??[]).filter(item=>item.date!==date),nextShift]
+      .sort((a,b)=>a.date.localeCompare(b.date));
+    const next=castList.map(item=>item.id===cast.id?{...item,schedule}:item);
+    setCastList(next);
+    saveCasts(next);
+  }
+
+  function updateAttendance(cast:Cast, attendance:CastAttendanceStatus){
+    replaceCastShift(cast,{attendance,working:true});
+  }
+
+  function openShiftQuickEdit(cast:Cast){
+    const shift=castShiftForDate(cast,date);
+    setShiftDraft({
+      start:shift?.start ?? cast.shiftStart ?? "18:00",
+      end:shift?.end ?? cast.shiftEnd ?? "04:00"
+    });
+    setShiftEditCastId(cast.id);
+  }
+
+  function saveQuickShift(){
+    if(!shiftEditCast) return;
+    replaceCastShift(shiftEditCast,{start:shiftDraft.start,end:shiftDraft.end,working:true});
+    setShiftEditCastId(null);
+  }
 
   function shiftDate(days:number){
     const base = new Date(date+"T12:00:00");
@@ -411,11 +459,21 @@ export default function DashboardPage(){
             return <div className="dispatchRowContents" key={cast.id}>
               <div className="dispatchName">
                 <span className={`castStateDot ${cast.status}`}/>
-                <div><strong>{cast.name}</strong><small>{statusLabels[cast.status]}</small></div>
+                <button type="button" className="dispatchCastButton" onClick={()=>setDetailCastId(cast.id)}>
+                  <strong>{cast.name}</strong>
+                  <span className="dispatchCastMeta">
+                    <small>{statusLabels[cast.status]}</small>
+                    {shift?.attendance
+                      ? <em className={`attendanceBadge ${shift.attendance}`}>{attendanceLabels[shift.attendance]}</em>
+                      : <em className="attendanceBadge unconfirmed">未確認</em>}
+                  </span>
+                </button>
               </div>
               <div className="dispatchShift">
-                <span>出勤 <b>{shift?.start ?? cast.shiftStart ?? "--:--"}</b></span>
-                <span>上り <b>{shift?.end ?? cast.shiftEnd ?? "--:--"}</b></span>
+                <button type="button" className="dispatchShiftQuick" onClick={()=>openShiftQuickEdit(cast)} title="出勤時間をクイック修正">
+                  <span>出勤 <b>{shift?.start ?? cast.shiftStart ?? "--:--"}</b></span>
+                  <span>上り <b>{shift?.end ?? cast.shiftEnd ?? "--:--"}</b></span>
+                </button>
               </div>
               <div className="dispatchCount"><strong>{castOrders.length}</strong><span>本</span></div>
               <div className="timelineCell longCell">
@@ -440,5 +498,61 @@ export default function DashboardPage(){
         </div>
       </div>
     </section>
+
+    {detailCast && <div className="attendanceModalBackdrop" onMouseDown={e=>{if(e.currentTarget===e.target)setDetailCastId(null);}}>
+      <div className="attendanceModal" role="dialog" aria-modal="true" aria-labelledby="attendance-modal-title">
+        <div className="attendanceModalHead">
+          <div>
+            <span>キャスト詳細</span>
+            <h2 id="attendance-modal-title">{detailCast.name}</h2>
+          </div>
+          <button type="button" onClick={()=>setDetailCastId(null)} aria-label="閉じる">×</button>
+        </div>
+        <div className="attendanceModalInfo">
+          <div><span>日付</span><strong>{date}</strong></div>
+          <div><span>出勤予定</span><strong>{detailShift?.start ?? detailCast.shiftStart ?? "--:--"} 〜 {detailShift?.end ?? detailCast.shiftEnd ?? "--:--"}</strong></div>
+          <div><span>現在状態</span><strong>{statusLabels[detailCast.status]}</strong></div>
+        </div>
+        <div className="attendanceModalSection">
+          <div className="attendanceModalSectionTitle">
+            <span>出勤確認</span>
+            <strong>{detailShift?.attendance ? attendanceLabels[detailShift.attendance] : "未確認"}</strong>
+          </div>
+          <div className="attendanceStatusChoices">
+            <button type="button" className={detailShift?.attendance==="present"?"present active":"present"} onClick={()=>updateAttendance(detailCast,"present")}>出勤</button>
+            <button type="button" className={detailShift?.attendance==="late"?"late active":"late"} onClick={()=>updateAttendance(detailCast,"late")}>遅刻</button>
+            <button type="button" className={detailShift?.attendance==="absent"?"absent active":"absent"} onClick={()=>updateAttendance(detailCast,"absent")}>当欠</button>
+            <button type="button" className={detailShift?.attendance==="leftEarly"?"leftEarly active":"leftEarly"} onClick={()=>updateAttendance(detailCast,"leftEarly")}>早退</button>
+          </div>
+        </div>
+        <div className="attendanceModalFooter">
+          <button type="button" onClick={()=>setDetailCastId(null)}>閉じる</button>
+        </div>
+      </div>
+    </div>}
+
+    {shiftEditCast && <div className="attendanceModalBackdrop" onMouseDown={e=>{if(e.currentTarget===e.target)setShiftEditCastId(null);}}>
+      <div className="attendanceModal shiftQuickModal" role="dialog" aria-modal="true" aria-labelledby="shift-quick-title">
+        <div className="attendanceModalHead">
+          <div>
+            <span>クイック修正</span>
+            <h2 id="shift-quick-title">{shiftEditCast.name} の出勤時間</h2>
+          </div>
+          <button type="button" onClick={()=>setShiftEditCastId(null)} aria-label="閉じる">×</button>
+        </div>
+        <div className="shiftQuickForm">
+          <label>出勤
+            <input type="time" value={shiftDraft.start} onChange={e=>setShiftDraft(current=>({...current,start:e.target.value}))}/>
+          </label>
+          <label>上り
+            <input type="time" value={shiftDraft.end} onChange={e=>setShiftDraft(current=>({...current,end:e.target.value}))}/>
+          </label>
+        </div>
+        <div className="attendanceModalFooter">
+          <button type="button" onClick={()=>setShiftEditCastId(null)}>キャンセル</button>
+          <button type="button" className="primaryButton" onClick={saveQuickShift}>保存</button>
+        </div>
+      </div>
+    </div>}
   </div>
 }
