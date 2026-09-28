@@ -135,7 +135,7 @@ export default function DashboardPage(){
   const [editingOrderId,setEditingOrderId] = useState<string|null>(null);
   const [extensionCount,setExtensionCount] = useState(1);
   const [copyNotice,setCopyNotice] = useState("");
-  const orderClickTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
+  const orderClickTimer = useRef<number|null>(null);
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
