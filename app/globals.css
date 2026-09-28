@@ -1808,3 +1808,61 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .salesKpis{grid-template-columns:1fr}
   .salesFilter{width:100%;flex-wrap:wrap}
 }
+
+
+/* ===== Cast schedule management ===== */
+.castSchedulePage{max-width:none;width:100%}
+.castScheduleHeader{align-items:center}
+.castScheduleHeaderActions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.castScheduleHeaderActions .secondaryButton{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 14px;text-decoration:none}
+.castScheduleLayout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;align-items:start}
+.castScheduleCastList,.castSchedulePanel{background:#fff;border:1px solid #dbe1e6;border-radius:12px;box-shadow:0 1px 3px rgba(25,35,45,.04)}
+.castScheduleCastList{overflow:hidden}
+.castScheduleCastListHead{display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid #e6ebef;background:#fafbfc}
+.castScheduleCastListHead strong{font-size:15px}
+.castScheduleCastListHead span{font-size:11px;color:#7d8893;font-weight:800}
+.castScheduleCastButtons{display:grid;padding:8px}
+.castScheduleCastButtons button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;padding:10px 12px;border:1px solid transparent;border-radius:9px;background:transparent;color:#47535f;text-align:left;cursor:pointer}
+.castScheduleCastButtons button:hover{background:#f7f9fa}
+.castScheduleCastButtons button.active{background:#eef7df;border-color:#cbe6a4;color:#486b18}
+.castScheduleCastButtons button span{font-size:14px;font-weight:900}
+.castScheduleCastButtons button small{font-size:10px;color:#8a949e}
+.castScheduleCastButtons button.active small{color:#648a2f}
+.castSchedulePanel{overflow:hidden}
+.castScheduleToolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:17px 18px;border-bottom:1px solid #e6ebef}
+.castScheduleToolbar>div:first-child span,.castScheduleToolbar>div:first-child strong{display:block}
+.castScheduleToolbar>div:first-child span{font-size:10px;color:#89939d;font-weight:800}
+.castScheduleToolbar>div:first-child strong{margin-top:3px;font-size:20px}
+.castScheduleWeekNav{display:flex;gap:7px}
+.castScheduleWeekNav button{min-height:38px;padding:8px 11px;border:1px solid #d5dce2;border-radius:8px;background:#fff;color:#596672;font-size:12px;font-weight:900;cursor:pointer}
+.castScheduleWeekNav button:hover{background:#f5f7f8}
+.castScheduleWeekSummary{display:grid;grid-template-columns:1fr 180px;border-bottom:1px solid #edf0f3;background:#fbfcfd}
+.castScheduleWeekSummary>div{padding:12px 18px}
+.castScheduleWeekSummary>div+div{border-left:1px solid #edf0f3}
+.castScheduleWeekSummary span,.castScheduleWeekSummary strong{display:block}
+.castScheduleWeekSummary span{font-size:10px;color:#89939d;font-weight:800}
+.castScheduleWeekSummary strong{margin-top:4px;font-size:13px}
+.castScheduleTable{display:grid}
+.castScheduleRow{display:grid;grid-template-columns:minmax(160px,1.4fr) 150px 150px 150px;align-items:center;gap:12px;min-height:64px;padding:9px 18px;border-bottom:1px solid #edf0f3}
+.castScheduleRow:last-child{border-bottom:0}
+.castScheduleTableHead{min-height:42px;background:#f6f8f9;color:#7b8691;font-size:10px;font-weight:900}
+.castScheduleRow.isWorking{background:#fbfff7}
+.castScheduleRow.isOff{color:#87919b}
+.castScheduleRow>strong{font-size:13px}
+.castScheduleRow input[type="time"]{min-height:42px;padding:8px 10px;border:1px solid #d6dde3;border-radius:8px;background:#fff;font-size:14px;font-weight:800}
+.castScheduleRow input[type="time"]:disabled{background:#f2f4f5;color:#adb4bb}
+.castScheduleToggle{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:900}
+.castScheduleToggle input{width:18px;height:18px}
+.castScheduleToggle span{display:inline-flex;min-width:48px;justify-content:center;padding:5px 8px;border-radius:999px;background:#eef1f3;color:#78838d}
+.castScheduleRow.isWorking .castScheduleToggle span{background:#e7f5d2;color:#4f741d}
+@media(max-width:900px){
+  .castScheduleLayout{grid-template-columns:1fr}
+  .castScheduleCastButtons{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .castSchedulePanel{overflow:auto}
+  .castScheduleTable,.castScheduleToolbar,.castScheduleWeekSummary{min-width:720px}
+}
+@media(max-width:600px){
+  .castScheduleCastButtons{grid-template-columns:1fr}
+  .castScheduleHeaderActions{width:100%}
+  .castScheduleHeaderActions .secondaryButton,.castScheduleHeaderActions .primaryButton{flex:1}
+}
