@@ -2420,3 +2420,171 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .reservationCardFooter{align-items:stretch;flex-direction:column}
   .reservationEditButton{width:100%}
 }
+
+
+/* ===== Global readability boost ===== */
+body{
+  font-size:15px;
+  line-height:1.5;
+}
+.pageHeader h1{font-size:31px}
+.pageHeader p:not(.eyebrow){font-size:14px;line-height:1.6}
+.eyebrow{font-size:12px}
+.primaryButton,.secondaryButton{font-size:14px}
+
+.consoleBrand strong{font-size:16px}
+.consoleBrand small{font-size:11px}
+.topConsoleNav a{font-size:14px}
+.consoleShop small{font-size:10px}
+.consoleShop strong{font-size:13px}
+
+.deskKpis span{font-size:12px}
+.deskKpis strong{font-size:18px}
+.deskPanel h2{font-size:15px}
+.panelTitleRow>a,.panelTitleRow>button,.panelTitleRow>span{font-size:11px}
+
+.fieldLabel,
+.compactSearch,
+.workRegister label,
+.formGrid label,
+.fullLabel,
+.addCastForm label,
+.castEditGrid label,
+.settlementFilters label,
+.reservationSearchPanel label,
+.reservationHandoff,
+.storeHoursGrid label,
+.storePaymentSettings label{
+  font-size:12px;
+}
+
+input,
+select,
+textarea{
+  font-size:14px!important;
+}
+
+button{
+  font-size:13px;
+}
+
+.areaGrid button,
+.dateButtons button,
+.courseChips button,
+.workButtons button,
+.workButtons a,
+.boardOps button,
+.boardOps a,
+.reservationQuickDates button{
+  font-size:12px;
+}
+
+.castMiniList strong,
+.driverMiniList strong,
+.todayOrders strong,
+.todayOrders span{
+  font-size:12px;
+}
+.castMiniList small,
+.castMiniList em,
+.driverMiniList span,
+.todayOrders small{
+  font-size:10px;
+}
+
+.selectedCastInfo span,
+.selectedCastInfo small,
+.customerLookupHead span,
+.customerLookupStats span,
+.customerLookupNotes span,
+.customerHistoryTitle span,
+.customerHistoryItem span,
+.customerHistoryBox>small,
+.customerHistoryEmpty,
+.operationGuideList small,
+.operationGuideTips strong,
+.operationGuideTips span{
+  font-size:11px!important;
+}
+.selectedCastInfo strong,
+.customerLookupHead strong,
+.customerLookupNotes p,
+.customerHistoryTitle strong,
+.customerHistoryItem strong,
+.operationGuideList strong{
+  font-size:13px!important;
+}
+
+.boardSectionHead h2{font-size:14px}
+.boardSectionHead span{font-size:11px}
+.boardLegend span{font-size:12px}
+.dispatchHeader,.timelineHeader div{font-size:13px}
+.dispatchName strong{font-size:15px}
+.dispatchName small{font-size:11px}
+.dispatchShift span{font-size:12px}
+.dispatchCount strong{font-size:19px}
+.timelineOrder strong{font-size:12px}
+.timelineOrder span{font-size:12px}
+.timelineOrder small{font-size:10px}
+.emptyTimeline,.holdHint{font-size:11px}
+
+.workRegister label{gap:5px}
+.workRegister input,
+.workRegister select,
+.workRegister textarea{
+  min-height:42px;
+  padding:9px 10px;
+}
+.workFooter small{font-size:10px}
+.workFooter strong{font-size:20px}
+
+.orderOptionPickerHead span,
+.orderOptionPickerHead strong,
+.selectedOptionLabels>span,
+.optionOpenButton{
+  font-size:12px;
+}
+.selectedOptionLabels small{font-size:10px}
+
+.customerFoundBadge,
+.customerNewBadge,
+.historyCastFlag,
+.selectedVisitedCastBadge{
+  font-size:10px;
+}
+.customerNgWarning strong{font-size:13px}
+.customerNgWarning p{font-size:12px}
+
+.reservationListHead strong{font-size:14px}
+.reservationListHead span{font-size:12px}
+.reservationMain>div span{font-size:11px}
+.reservationMain>div strong{font-size:14px}
+.reservationWhen strong{font-size:17px!important}
+.reservationPrice strong{font-size:17px!important}
+.reservationOptions span{font-size:11px}
+.reservationOptions strong{font-size:12px}
+.reservationCardFooter>span{font-size:11px}
+.reservationEditButton{font-size:13px}
+.reservationHandoff small{font-size:10px}
+
+.settlementSummary span{font-size:11px}
+.settlementSummary strong{font-size:20px}
+.settlementSummary small{font-size:10px}
+.settlementTableHead{font-size:12px}
+.settlementOrderInfo strong{font-size:14px}
+.settlementOrderInfo span{font-size:12px}
+.settlementOrderInfo small{font-size:11px}
+.settlementNomination{font-size:12px}
+.settlementSaveButton{font-size:12px}
+.settlementHelp strong{font-size:12px}
+.settlementHelp p{font-size:11px}
+
+.badge{font-size:12px}
+.saveToast{font-size:13px}
+.inlineAlert{font-size:13px}
+
+@media(max-width:850px){
+  body{font-size:14px}
+  .topConsoleNav a{font-size:13px}
+  .pageHeader h1{font-size:27px}
+}
