@@ -4046,3 +4046,70 @@ button{
     grid-template-columns:1fr;
   }
 }
+
+
+/* ===== Read-only board sticky columns ===== */
+.standaloneBoardToolbar{
+  grid-template-columns:minmax(260px,1fr) auto!important;
+}
+.standaloneTimelineOrder{
+  cursor:default!important;
+  pointer-events:none;
+  user-select:none;
+}
+
+/* Keep the three information columns visible while the time axis scrolls. */
+.dispatchScroll{
+  position:relative;
+}
+.wideBoard .dispatchNameHead,
+.wideBoard .dispatchShiftHead,
+.wideBoard .dispatchCountHead{
+  position:sticky!important;
+  z-index:60!important;
+  background:#27323d!important;
+}
+.wideBoard .dispatchName,
+.wideBoard .dispatchShift,
+.wideBoard .dispatchCount{
+  position:sticky!important;
+  z-index:50!important;
+  background:#fff!important;
+}
+.wideBoard .dispatchNameHead,
+.wideBoard .dispatchName{
+  left:0!important;
+}
+.wideBoard .dispatchShiftHead,
+.wideBoard .dispatchShift{
+  left:180px!important;
+}
+.wideBoard .dispatchCountHead,
+.wideBoard .dispatchCount{
+  left:355px!important;
+}
+.wideBoard .dispatchCountHead,
+.wideBoard .dispatchCount{
+  box-shadow:6px 0 9px -8px rgba(20,30,40,.65);
+}
+.wideBoard .totalCell.dispatchName,
+.wideBoard .totalCell.dispatchShift,
+.wideBoard .totalCell.dispatchCount{
+  background:#f4f6f8!important;
+}
+
+@media(max-width:1200px){
+  .wideBoard .dispatchShiftHead,
+  .wideBoard .dispatchShift{
+    left:150px!important;
+  }
+  .wideBoard .dispatchCountHead,
+  .wideBoard .dispatchCount{
+    left:295px!important;
+  }
+}
+@media(max-width:850px){
+  .standaloneBoardToolbar{
+    grid-template-columns:1fr!important;
+  }
+}

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { casts as defaultCasts, defaultStoreSettings } from "@/lib/mock-data";
 import { loadCasts, loadOrders, loadStoreSettings } from "@/lib/storage";
@@ -195,7 +194,7 @@ export default function StandaloneBoardPage(){
       <div>
         <p className="eyebrow">DISPATCH BOARD</p>
         <h1>配車ボード</h1>
-        <span>配車状況を一覧で確認する専用画面</span>
+        <span>閲覧専用画面 / この画面からオーダーや出勤情報は変更できません</span>
       </div>
 
       <div className="standaloneBoardDate">
@@ -205,7 +204,6 @@ export default function StandaloneBoardPage(){
         <button type="button" onClick={()=>shiftDate(1)}>翌日</button>
       </div>
 
-      <Link href="/" className="standaloneBoardManageLink">配車管理を開く</Link>
     </header>
 
     <section className="standaloneBoardStats">
@@ -222,7 +220,7 @@ export default function StandaloneBoardPage(){
 
     <section className="boardSection standaloneBoardSection">
       <div className="boardSectionHead">
-        <div><h2>{date}</h2><span>クリックすると配車管理で編集できます</span></div>
+        <div><h2>{date}</h2><span>閲覧専用</span></div>
       </div>
 
       <div className="dispatchScroll standaloneDispatchScroll" ref={boardScrollRef}>
@@ -275,19 +273,17 @@ export default function StandaloneBoardPage(){
                 {visibleOrders.map(order=>{
                   const pos=eventPosition(order)!;
                   const visualState=orderVisualState(order,date,now);
-                  return <button
-                    type="button"
+                  return <div
                     key={order.id}
-                    className={`timelineOrder orderVisual-${visualState}`}
+                    className={`timelineOrder standaloneTimelineOrder orderVisual-${visualState}`}
                     style={pos}
-                    onClick={()=>window.location.href="/?orderAction="+encodeURIComponent(order.id)}
-                    title="ドライバー設定を開く"
+                    title="閲覧専用"
                   >
                     <strong>{order.scheduledStart}〜{order.scheduledEnd}</strong>
                     <span>{order.locationName || "場所未入力"}{order.room ? ` / ${order.room}号室` : ""}</span>
                     <small>送り：{order.driverName ?? "未設定"}</small>
                     {order.pickupDriverName && <small>迎え：{order.pickupDriverName}</small>}
-                  </button>;
+                  </div>;
                 })}
 
                 {!visibleOrders.length && !unavailable && <span className="emptyTimeline">空き</span>}
