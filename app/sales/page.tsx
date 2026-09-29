@@ -24,15 +24,19 @@ export default function SalesPage(){
     return ()=>window.removeEventListener("nightdesk:orders",refresh);
   },[]);
 
-  const salesOrders=useMemo(()=>orders.filter(order=>{
-    if(order.status==="cancelled") return false;
+  const periodOrders=useMemo(()=>orders.filter(order=>{
     if(allPeriod) return true;
-    return dateValue(new Date(order.createdAt))===date;
+    const serviceDate=order.serviceDate ?? dateValue(new Date(order.createdAt));
+    return serviceDate===date;
   }),[orders,date,allPeriod]);
+  const salesOrders=useMemo(()=>periodOrders.filter(order=>order.status!=="cancelled"),[periodOrders]);
+  const cancelFeeTotal=periodOrders
+    .filter(order=>order.status==="cancelled")
+    .reduce((sum,order)=>sum+(order.cancelFee??0),0);
 
-  const total=salesOrders.reduce((sum,order)=>sum+order.total,0);
+  const total=salesOrders.reduce((sum,order)=>sum+order.total,0)+cancelFeeTotal;
   const optionTotal=salesOrders.reduce((sum,order)=>sum+order.optionsTotal,0);
-  const average=salesOrders.length?Math.round(total/salesOrders.length):0;
+  const average=salesOrders.length?Math.round(salesOrders.reduce((sum,order)=>sum+order.total,0)/salesOrders.length):0;
 
   const castRows=useMemo(()=>{
     const map=new Map<string,{name:string,count:number,total:number}>();
@@ -47,11 +51,11 @@ export default function SalesPage(){
 
   const dailyRows=useMemo(()=>{
     const map=new Map<string,{date:string,count:number,total:number}>();
-    for(const order of orders.filter(order=>order.status!=="cancelled")){
-      const key=dateValue(new Date(order.createdAt));
+    for(const order of orders){
+      const key=order.serviceDate ?? dateValue(new Date(order.createdAt));
       const current=map.get(key)??{date:key,count:0,total:0};
-      current.count+=1;
-      current.total+=order.total;
+      if(order.status!=="cancelled") current.count+=1;
+      current.total+=order.status==="cancelled" ? (order.cancelFee??0) : order.total;
       map.set(key,current);
     }
     return [...map.values()].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,31);
