@@ -159,6 +159,37 @@ export default function StandaloneBoardPage(){
   const today=dateInputValue(new Date());
   const nowPosition=now && date===today ? currentTimePosition(now) : null;
 
+  const boardRows=workingCasts.map(cast=>{
+    const castOrders=selectedOrders.filter(order=>order.castId===cast.id);
+    const visibleOrders=castOrders.filter(order=>eventPosition(order));
+    const shift=castShiftForDate(cast,date);
+    const attendance=shift?.attendance;
+    const unavailable=attendance==="absent" || attendance==="leftEarly";
+    const shiftStart=shift?.start ?? cast.shiftStart ?? storeSettings.openTime;
+    const endType=shift?.endType ?? "leave";
+    const endTime=shift?.endTime ?? cast.shiftEnd ?? storeSettings.closeTime;
+    const timelineEnd=endType==="leave" ? endTime : storeSettings.closeTime;
+    const availability=shiftAvailabilityPosition(shiftStart,timelineEnd);
+    const receptionClosed=endType==="reception"
+      ? receptionClosedPosition(endTime,storeSettings.closeTime)
+      : null;
+    const operationalStatus=castOperationalStatus(cast,selectedDateOrders,date,now);
+
+    return {
+      cast,
+      castOrders,
+      visibleOrders,
+      shift,
+      attendance,
+      unavailable,
+      endType,
+      endTime,
+      availability,
+      receptionClosed,
+      operationalStatus
+    };
+  });
+
   useEffect(()=>{
     if(date!==today){
       lastBoardAutoScrollDateRef.current=null;
@@ -192,15 +223,14 @@ export default function StandaloneBoardPage(){
     }
 
     const update=()=>{
-      const board=boardGridRef.current;
-      const timeline=board?.querySelector<HTMLElement>(".timelineHeader");
-      if(!board || !timeline) return;
+      const timeline=boardGridRef.current?.querySelector<HTMLElement>(".timelineHeader");
+      if(!timeline) return;
 
       let minutes=now.getHours()*60+now.getMinutes();
       if(now.getHours()<10) minutes+=24*60;
       const elapsed=Math.max(0,Math.min(BOARD_MINUTES,minutes-BOARD_START));
       const ratio=elapsed/BOARD_MINUTES;
-      setGlobalNowLineLeft(timeline.offsetLeft+(timeline.offsetWidth*ratio));
+      setGlobalNowLineLeft(timeline.offsetWidth*ratio);
     };
 
     const frame=window.requestAnimationFrame(update);
@@ -251,92 +281,99 @@ export default function StandaloneBoardPage(){
         <div><h2>{date}</h2><span>閲覧専用</span></div>
       </div>
 
-      <div className="dispatchScroll standaloneDispatchScroll" ref={boardScrollRef}>
-        <div className="dispatchBoard wideBoard standaloneDispatchBoard" ref={boardGridRef}>
-          <div className="dispatchHeader dispatchNameHead">キャスト</div>
-          <div className="dispatchHeader dispatchShiftHead">出勤 / 終了条件</div>
-          <div className="dispatchHeader dispatchCountHead">本数</div>
-          <div className="timelineHeader longTimeline">{hourLabels.map(hour=><div key={hour}>{hour}</div>)}</div>
-          {globalNowLineLeft!==null && <span className="globalNowLine" style={{left:globalNowLineLeft}}><b>現在</b></span>}
+      <div className="standaloneBoardSplitViewport">
+        <div className="standaloneBoardFixed">
+          <div className="standaloneBoardFixedHeader">
+            <div>キャスト</div>
+            <div>出勤 / 終了条件</div>
+            <div>本数</div>
+          </div>
 
-          {workingCasts.map(cast=>{
-            const castOrders=selectedOrders.filter(order=>order.castId===cast.id);
-            const visibleOrders=castOrders.filter(order=>eventPosition(order));
-            const shift=castShiftForDate(cast,date);
-            const attendance=shift?.attendance;
-            const unavailable=attendance==="absent" || attendance==="leftEarly";
-            const shiftStart=shift?.start ?? cast.shiftStart ?? storeSettings.openTime;
-            const endType=shift?.endType ?? "leave";
-            const endTime=shift?.endTime ?? cast.shiftEnd ?? storeSettings.closeTime;
-            const timelineEnd=endType==="leave" ? endTime : storeSettings.closeTime;
-            const availability=shiftAvailabilityPosition(shiftStart,timelineEnd);
-            const receptionClosed=endType==="reception"
-              ? receptionClosedPosition(endTime,storeSettings.closeTime)
-              : null;
-            const operationalStatus=castOperationalStatus(cast,selectedDateOrders,date,now);
+          {boardRows.map(row=><div
+            className={`standaloneBoardFixedRow ${row.unavailable?"isUnavailableCast":""}`}
+            key={row.cast.id}
+          >
+            <div className="dispatchName">
+              <span className={`castStateDot ${row.operationalStatus}`}/>
+              <div className="standaloneCastName">
+                <strong>{row.cast.name}</strong>
+                <span className="dispatchCastMeta">
+                  <small>{statusLabels[row.operationalStatus]}</small>
+                  {row.shift?.attendance
+                    ? <em className={`attendanceBadge ${row.shift.attendance}`}>{attendanceLabels[row.shift.attendance]}</em>
+                    : <em className="attendanceBadge unconfirmed">未確認</em>}
+                </span>
+              </div>
+            </div>
 
-            return <div className={`dispatchRowContents ${unavailable?"isUnavailableCast":""}`} key={cast.id}>
-              <div className="dispatchName">
-                <span className={`castStateDot ${operationalStatus}`}/>
-                <div className="standaloneCastName">
-                  <strong>{cast.name}</strong>
-                  <span className="dispatchCastMeta">
-                    <small>{statusLabels[operationalStatus]}</small>
-                    {shift?.attendance
-                      ? <em className={`attendanceBadge ${shift.attendance}`}>{attendanceLabels[shift.attendance]}</em>
-                      : <em className="attendanceBadge unconfirmed">未確認</em>}
-                  </span>
-                </div>
+            <div className="dispatchShift">
+              <div className="dispatchShiftQuick standaloneShiftInfo">
+                <span>出勤 <b>{row.shift?.start ?? row.cast.shiftStart ?? "--:--"}</b></span>
+                <span>{row.endType==="reception"?"受付終了":"上がり"} <b>{row.endTime}</b></span>
+              </div>
+            </div>
+
+            <div className="dispatchCount">
+              <strong>{row.castOrders.length}</strong><span>本</span>
+            </div>
+          </div>)}
+
+          {!boardRows.length && <div className="standaloneBoardFixedEmpty">出勤なし</div>}
+
+          <div className="standaloneBoardFixedTotal">
+            <div><strong>合計</strong></div>
+            <div><strong>{workingCasts.length}人</strong></div>
+            <div><strong>{selectedOrders.length}</strong><span>本</span></div>
+          </div>
+        </div>
+
+        <div className="standaloneBoardTimelineScroll" ref={boardScrollRef}>
+          <div className="standaloneTimelineCanvas" ref={boardGridRef}>
+            <div className="timelineHeader standaloneTimelineHeader">
+              {hourLabels.map(hour=><div key={hour}>{hour}</div>)}
+            </div>
+
+            {globalNowLineLeft!==null && <span className="globalNowLine" style={{left:globalNowLineLeft}}><b>現在</b></span>}
+
+            {boardRows.map(row=><div className="timelineCell standaloneTimelineCell" key={row.cast.id}>
+              {row.visibleOrders.map(order=>{
+                const pos=eventPosition(order)!;
+                const visualState=orderVisualState(order,date,now);
+                return <div
+                  key={order.id}
+                  className={`timelineOrder standaloneTimelineOrder orderVisual-${visualState}`}
+                  style={pos}
+                  title="閲覧専用"
+                >
+                  <strong>{order.scheduledStart}〜{order.scheduledEnd}</strong>
+                  <span>{order.locationName || "場所未入力"}{order.room ? ` / ${order.room}号室` : ""}</span>
+                  <small>送り：{order.driverName ?? "未設定"}</small>
+                  {order.pickupDriverName && <small>迎え：{order.pickupDriverName}</small>}
+                </div>;
+              })}
+
+              {!row.visibleOrders.length && !row.unavailable && <span className="emptyTimeline">空き</span>}
+
+              {row.receptionClosed && <div className="receptionClosedBlock" style={row.receptionClosed} title="受付終了後">
+                <span>受付終了後（事前予約のみ）</span>
+              </div>}
+
+              <div className="offShiftBlock before" style={{width:row.availability.beforeWidth}} title="出勤時間外">
+                <span>出勤前</span>
+              </div>
+              <div className="offShiftBlock after" style={{left:row.availability.afterLeft,width:row.availability.afterWidth}} title="出勤時間外">
+                <span>上り後</span>
               </div>
 
-              <div className="dispatchShift">
-                <div className="dispatchShiftQuick standaloneShiftInfo">
-                  <span>出勤 <b>{shift?.start ?? cast.shiftStart ?? "--:--"}</b></span>
-                  <span>{endType==="reception"?"受付終了":"上がり"} <b>{endTime}</b></span>
-                </div>
-              </div>
+              {row.unavailable && <div className="unavailableCastTimelineBlock">
+                <strong>{row.attendance==="absent"?"当欠":"早退"}</strong>
+              </div>}
+            </div>)}
 
-              <div className="dispatchCount"><strong>{castOrders.length}</strong><span>本</span></div>
+            {!boardRows.length && <div className="standaloneTimelineEmpty">この日の出勤キャストはいません</div>}
 
-              <div className="timelineCell longCell">
-                {visibleOrders.map(order=>{
-                  const pos=eventPosition(order)!;
-                  const visualState=orderVisualState(order,date,now);
-                  return <div
-                    key={order.id}
-                    className={`timelineOrder standaloneTimelineOrder orderVisual-${visualState}`}
-                    style={pos}
-                    title="閲覧専用"
-                  >
-                    <strong>{order.scheduledStart}〜{order.scheduledEnd}</strong>
-                    <span>{order.locationName || "場所未入力"}{order.room ? ` / ${order.room}号室` : ""}</span>
-                    <small>送り：{order.driverName ?? "未設定"}</small>
-                    {order.pickupDriverName && <small>迎え：{order.pickupDriverName}</small>}
-                  </div>;
-                })}
-
-                {!visibleOrders.length && !unavailable && <span className="emptyTimeline">空き</span>}
-
-                {receptionClosed && <div className="receptionClosedBlock" style={receptionClosed} title="受付終了後">
-                  <span>受付終了後（事前予約のみ）</span>
-                </div>}
-
-                <div className="offShiftBlock before" style={{width:availability.beforeWidth}} title="出勤時間外"><span>出勤前</span></div>
-                <div className="offShiftBlock after" style={{left:availability.afterLeft,width:availability.afterWidth}} title="出勤時間外"><span>上り後</span></div>
-
-                {unavailable && <div className="unavailableCastTimelineBlock">
-                  <strong>{attendance==="absent"?"当欠":"早退"}</strong>
-                </div>}
-              </div>
-            </div>;
-          })}
-
-          {!workingCasts.length && <div className="standaloneBoardEmpty">この日の出勤キャストはいません</div>}
-
-          <div className="dispatchName totalCell"><strong>合計</strong></div>
-          <div className="dispatchShift totalCell"><strong>{workingCasts.length}人</strong></div>
-          <div className="dispatchCount totalCell"><strong>{selectedOrders.length}</strong><span>本</span></div>
-          <div className="timelineCell totalTimeline"/>
+            <div className="timelineCell totalTimeline standaloneTimelineTotal"/>
+          </div>
         </div>
       </div>
     </section>
