@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
 import { deleteOrder, loadCasts, loadCustomers, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, saveOrder, saveSharedMemo, updateOrder } from "@/lib/storage";
@@ -201,6 +201,8 @@ export default function DashboardPage(){
   const [surcharge,setSurcharge] = useState(0);
   const [paymentMethod,setPaymentMethod] = useState<"cash"|"card">("cash");
   const [selectedOptionIds,setSelectedOptionIds] = useState<string[]>([]);
+  const boardScrollRef=useRef<HTMLDivElement|null>(null);
+  const lastBoardAutoScrollDateRef=useRef<string|null>(null);
 
   useEffect(()=>{
     const refresh=()=>{
@@ -378,6 +380,33 @@ export default function DashboardPage(){
   const detailShift = detailCast ? castShiftForDate(detailCast,date) : undefined;
   const shiftEditCast = shiftEditCastId ? castList.find(c=>c.id===shiftEditCastId) : undefined;
   const selectedOrder = selectedOrderId ? orders.find(order=>order.id===selectedOrderId) : undefined;
+
+  useEffect(()=>{
+    const today=dateInputValue(new Date());
+    if(date!==today){
+      lastBoardAutoScrollDateRef.current=null;
+      return;
+    }
+    if(!now || lastBoardAutoScrollDateRef.current===date) return;
+
+    const frame=window.requestAnimationFrame(()=>{
+      const scroll=boardScrollRef.current;
+      const timeline=scroll?.querySelector<HTMLElement>(".timelineHeader");
+      if(!scroll || !timeline) return;
+
+      let minutes=now.getHours()*60+now.getMinutes();
+      if(now.getHours()<10) minutes+=24*60;
+      const elapsed=Math.max(0,Math.min(BOARD_MINUTES,minutes-BOARD_START));
+      const ratio=elapsed/BOARD_MINUTES;
+      const contextRatio=30/BOARD_MINUTES;
+      const target=Math.max(0,timeline.offsetWidth*Math.max(0,ratio-contextRatio));
+
+      scroll.scrollTo({left:target,behavior:"auto"});
+      lastBoardAutoScrollDateRef.current=date;
+    });
+
+    return ()=>window.cancelAnimationFrame(frame);
+  },[date,now]);
 
   useEffect(()=>{
     if(!pendingEditOrderId || !orders.length) return;
@@ -993,7 +1022,7 @@ export default function DashboardPage(){
           <span><i className="legend out"/>アウト</span>
         </div>
       </div>
-      <div className="dispatchScroll boardZoomWrap">
+      <div className="dispatchScroll boardZoomWrap" ref={boardScrollRef}>
         <div className="dispatchBoard wideBoard">
           <div className="dispatchHeader dispatchNameHead">キャスト</div>
           <div className="dispatchHeader dispatchShiftHead">出勤 / 終了条件</div>

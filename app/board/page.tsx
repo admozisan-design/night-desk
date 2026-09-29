@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { casts as defaultCasts, defaultStoreSettings } from "@/lib/mock-data";
 import { loadCasts, loadOrders, loadStoreSettings } from "@/lib/storage";
 import type { Cast, CastAttendanceStatus, CastStatus, Order } from "@/lib/types";
@@ -109,6 +109,8 @@ export default function StandaloneBoardPage(){
   const [storeSettings,setStoreSettings]=useState(defaultStoreSettings);
   const [date,setDate]=useState(()=>dateInputValue(new Date()));
   const [now,setNow]=useState<Date|null>(null);
+  const boardScrollRef=useRef<HTMLDivElement|null>(null);
+  const lastBoardAutoScrollDateRef=useRef<string|null>(null);
 
   useEffect(()=>{
     const refresh=()=>{
@@ -156,6 +158,32 @@ export default function StandaloneBoardPage(){
   const today=dateInputValue(new Date());
   const nowPosition=now && date===today ? currentTimePosition(now) : null;
 
+  useEffect(()=>{
+    if(date!==today){
+      lastBoardAutoScrollDateRef.current=null;
+      return;
+    }
+    if(!now || lastBoardAutoScrollDateRef.current===date) return;
+
+    const frame=window.requestAnimationFrame(()=>{
+      const scroll=boardScrollRef.current;
+      const timeline=scroll?.querySelector<HTMLElement>(".timelineHeader");
+      if(!scroll || !timeline) return;
+
+      let minutes=now.getHours()*60+now.getMinutes();
+      if(now.getHours()<10) minutes+=24*60;
+      const elapsed=Math.max(0,Math.min(BOARD_MINUTES,minutes-BOARD_START));
+      const ratio=elapsed/BOARD_MINUTES;
+      const contextRatio=30/BOARD_MINUTES;
+      const target=Math.max(0,timeline.offsetWidth*Math.max(0,ratio-contextRatio));
+
+      scroll.scrollTo({left:target,behavior:"auto"});
+      lastBoardAutoScrollDateRef.current=date;
+    });
+
+    return ()=>window.cancelAnimationFrame(frame);
+  },[date,now,today]);
+
   function shiftDate(days:number){
     const base=new Date(date+"T12:00:00");
     base.setDate(base.getDate()+days);
@@ -197,7 +225,7 @@ export default function StandaloneBoardPage(){
         <div><h2>{date}</h2><span>クリックすると配車管理で編集できます</span></div>
       </div>
 
-      <div className="dispatchScroll standaloneDispatchScroll">
+      <div className="dispatchScroll standaloneDispatchScroll" ref={boardScrollRef}>
         <div className="dispatchBoard wideBoard standaloneDispatchBoard">
           <div className="dispatchHeader dispatchNameHead">キャスト</div>
           <div className="dispatchHeader dispatchShiftHead">出勤 / 終了条件</div>
