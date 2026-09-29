@@ -59,6 +59,16 @@ function orderVisualState(order:Order,serviceDate:string,now:Date|null){
   if(order.status==="dispatching") return "afterDispatch";
   return "beforeDispatch";
 }
+function castOperationalStatus(cast:Cast,dateOrders:Order[],serviceDate:string,now:Date|null):CastStatus{
+  const shift=castShiftForDate(cast,serviceDate);
+  if(shift && (!shift.working || shift.attendance==="absent" || shift.attendance==="leftEarly")) return "off";
+  const states=dateOrders
+    .filter(order=>order.castId===cast.id && order.status!=="cancelled")
+    .map(order=>orderVisualState(order,serviceDate,now));
+  if(states.includes("in")) return "serving";
+  if(states.includes("afterDispatch")) return "moving";
+  return "waiting";
+}
 function addMinutes(time:string, minutes:number){
   const [h,m] = time.split(":").map(Number);
   const total = h*60+m+minutes;
@@ -361,7 +371,7 @@ export default function DashboardPage(){
     ()=>selectedDateOrders.filter(order=>order.status!=="cancelled").reduce((sum,order)=>sum+order.total,0),
     [selectedDateOrders]
   );
-  const waitingCount = workingCasts.filter(c=>c.status==="waiting").length;
+  const waitingCount = workingCasts.filter(c=>castOperationalStatus(c,selectedDateOrders,date,now)==="waiting").length;
   const todayValue=dateInputValue(new Date());
   const nowPosition = now && date===todayValue ? currentTimePosition(now) : null;
   const detailCast = detailCastId ? castList.find(c=>c.id===detailCastId) : undefined;
@@ -827,7 +837,7 @@ export default function DashboardPage(){
               </label>
               <label>キャスト
                 <select value={castId} onChange={e=>setCastId(e.target.value)} disabled={!formCastChoices.length}>
-                  {formCastChoices.map(c=><option key={c.id} value={c.id}>{c.name} / {statusLabels[c.status]}</option>)}
+                  {formCastChoices.map(c=><option key={c.id} value={c.id}>{c.name} / {statusLabels[castOperationalStatus(c,selectedDateOrders,date,now)]}</option>)}
                 </select>
               </label>
             </div>
@@ -945,7 +955,7 @@ export default function DashboardPage(){
               <div className="workTotalSummary"><small>自動計算</small>{paymentMethod==="card" && <span>カード手数料込み</span>}<strong>{formatYen(total)}</strong></div>
               <div className="workButtons">
                 <button className="registerBtn" type="submit" disabled={!selectedCast}>{editingOrderId?"変更を保存":"オーダー登録"}</button>
-                <button type="button" onClick={resetOrderForm}>{editingOrderId?"編集キャンセル":"クリア"}</button>
+                {editingOrderId && <button type="button" onClick={resetOrderForm}>編集キャンセル</button>}
               </div>
             </div>
           </form>
@@ -1004,13 +1014,14 @@ export default function DashboardPage(){
             const receptionClosed=endType==="reception"
               ? receptionClosedPosition(endTime,storeSettings.closeTime)
               : null;
+            const operationalStatus=castOperationalStatus(cast,selectedDateOrders,date,now);
             return <div className={`dispatchRowContents ${unavailable?"isUnavailableCast":""}`} key={cast.id}>
               <div className="dispatchName">
-                <span className={`castStateDot ${cast.status}`}/>
+                <span className={`castStateDot ${operationalStatus}`}/>
                 <button type="button" className="dispatchCastButton" onClick={()=>setDetailCastId(cast.id)}>
                   <strong>{cast.name}</strong>
                   <span className="dispatchCastMeta">
-                    <small>{statusLabels[cast.status]}</small>
+                    <small>{statusLabels[operationalStatus]}</small>
                     {shift?.attendance
                       ? <em className={`attendanceBadge ${shift.attendance}`}>{attendanceLabels[shift.attendance]}</em>
                       : <em className="attendanceBadge unconfirmed">未確認</em>}
@@ -1061,7 +1072,7 @@ export default function DashboardPage(){
 
           <div className="dispatchName totalCell"><strong>合計</strong></div>
           <div className="dispatchShift totalCell"><strong>{workingCasts.length}人</strong></div>
-          <div className="dispatchCount totalCell"><strong>{orders.filter(o=>o.status!=="cancelled").length}</strong><span>本</span></div>
+          <div className="dispatchCount totalCell"><strong>{selectedDateOrders.filter(o=>o.status!=="cancelled").length}</strong><span>本</span></div>
           <div className="timelineCell totalTimeline">{nowPosition && <span className="nowLine" style={{left:nowPosition}}/>}</div>
         </div>
       </div>
@@ -1166,7 +1177,7 @@ export default function DashboardPage(){
         <div className="attendanceModalInfo">
           <div><span>日付</span><strong>{date}</strong></div>
           <div><span>出勤予定</span><strong>{detailShift?.start ?? detailCast.shiftStart ?? "--:--"} / {(detailShift?.endType ?? "leave")==="reception" ? "受付終了" : "上がり"} {detailShift?.endTime ?? detailCast.shiftEnd ?? "--:--"}</strong></div>
-          <div><span>現在状態</span><strong>{statusLabels[detailCast.status]}</strong></div>
+          <div><span>現在状態</span><strong>{statusLabels[castOperationalStatus(detailCast,selectedDateOrders,date,now)]}</strong></div>
         </div>
         <div className="attendanceModalSection">
           <div className="attendanceModalSectionTitle">

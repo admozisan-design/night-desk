@@ -69,6 +69,16 @@ function orderVisualState(order:Order,serviceDate:string,now:Date|null){
   if(order.status==="dispatching") return "afterDispatch";
   return "beforeDispatch";
 }
+function castOperationalStatus(cast:Cast,dateOrders:Order[],serviceDate:string,now:Date|null):CastStatus{
+  const shift=castShiftForDate(cast,serviceDate);
+  if(shift && (!shift.working || shift.attendance==="absent" || shift.attendance==="leftEarly")) return "off";
+  const states=dateOrders
+    .filter(order=>order.castId===cast.id && order.status!=="cancelled")
+    .map(order=>orderVisualState(order,serviceDate,now));
+  if(states.includes("in")) return "serving";
+  if(states.includes("afterDispatch")) return "moving";
+  return "waiting";
+}
 function shiftAvailabilityPosition(startTime:string,endTime:string){
   let start=normalizedMinutes(startTime)-BOARD_START;
   let end=normalizedMinutes(endTime)-BOARD_START;
@@ -208,14 +218,15 @@ export default function StandaloneBoardPage(){
             const receptionClosed=endType==="reception"
               ? receptionClosedPosition(endTime,storeSettings.closeTime)
               : null;
+            const operationalStatus=castOperationalStatus(cast,selectedDateOrders,date,now);
 
             return <div className={`dispatchRowContents ${unavailable?"isUnavailableCast":""}`} key={cast.id}>
               <div className="dispatchName">
-                <span className={`castStateDot ${cast.status}`}/>
+                <span className={`castStateDot ${operationalStatus}`}/>
                 <div className="standaloneCastName">
                   <strong>{cast.name}</strong>
                   <span className="dispatchCastMeta">
-                    <small>{statusLabels[cast.status]}</small>
+                    <small>{statusLabels[operationalStatus]}</small>
                     {shift?.attendance
                       ? <em className={`attendanceBadge ${shift.attendance}`}>{attendanceLabels[shift.attendance]}</em>
                       : <em className="attendanceBadge unconfirmed">未確認</em>}
