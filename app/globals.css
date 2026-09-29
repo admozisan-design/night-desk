@@ -2654,3 +2654,55 @@ button{
   .settlementExpenseControls{display:grid}
   .settlementExpenseControls label{min-width:0}
 }
+
+
+/* ===== Store misc expense rule ===== */
+.storeMiscExpenseMode{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  max-width:320px;
+  margin-bottom:12px;
+}
+.storeMiscExpenseMode button{
+  min-height:42px;
+  border:1px solid #d5dce2;
+  border-radius:8px;
+  background:#fff;
+  color:#65717c;
+  font-weight:900;
+  cursor:pointer;
+}
+.storeMiscExpenseMode button.active{
+  border-color:#84b648;
+  background:#edf7df;
+  color:#4b711c;
+}
+.storeMiscExpenseSettings label{max-width:320px}
+.settlementExpenseRule{
+  display:block;
+  margin-top:5px;
+  color:#78848e;
+  font-size:11px;
+  font-weight:800;
+}
+.settlementExpenseCalculated{
+  min-width:150px;
+  padding:8px 11px;
+  border:1px solid #edc9c9;
+  border-radius:8px;
+  background:#fff7f7;
+  text-align:right;
+}
+.settlementExpenseCalculated span,
+.settlementExpenseCalculated strong{display:block}
+.settlementExpenseCalculated span{
+  font-size:10px;
+  color:#8c6d70;
+  font-weight:900;
+}
+.settlementExpenseCalculated strong{
+  margin-top:2px;
+  color:#b04444;
+  font-size:17px;
+}

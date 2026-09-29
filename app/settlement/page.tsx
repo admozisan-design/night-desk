@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { casts as defaultCasts } from "@/lib/mock-data";
+import { casts as defaultCasts, defaultStoreSettings } from "@/lib/mock-data";
 import { formatYen } from "@/lib/pricing";
-import { loadCastSettlementAdjustments, loadCastSettlementDailyConfigs, loadCasts, loadOrders, saveCastSettlementAdjustment, saveCastSettlementDailyConfig } from "@/lib/storage";
+import { loadCastSettlementAdjustments, loadCastSettlementDailyConfigs, loadCasts, loadOrders, loadStoreSettings, saveCastSettlementAdjustment, saveCastSettlementDailyConfig } from "@/lib/storage";
 import type { Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Order } from "@/lib/types";
 
 function dateValue(date:Date){
@@ -42,6 +42,7 @@ export default function SettlementPage(){
   const [casts,setCasts]=useState<Cast[]>(defaultCasts);
   const [adjustments,setAdjustments]=useState<Record<string,CastSettlementAdjustment>>({});
   const [dailyConfigs,setDailyConfigs]=useState<Record<string,CastSettlementDailyConfig>>({});
+  const [storeSettings,setStoreSettings]=useState(defaultStoreSettings);
   const [date,setDate]=useState(()=>dateValue(new Date()));
   const [castId,setCastId]=useState("");
   const [savedOrderId,setSavedOrderId]=useState<string|null>(null);
@@ -53,16 +54,19 @@ export default function SettlementPage(){
       setCasts(loadedCasts);
       setAdjustments(loadCastSettlementAdjustments());
       setDailyConfigs(loadCastSettlementDailyConfigs());
+      setStoreSettings(loadStoreSettings(defaultStoreSettings));
       setCastId(current=>current || loadedCasts.find(c=>c.visible!==false)?.id || loadedCasts[0]?.id || "");
     };
     refresh();
     window.addEventListener("nightdesk:orders",refresh);
     window.addEventListener("nightdesk:casts",refresh);
     window.addEventListener("nightdesk:settlement",refresh);
+    window.addEventListener("nightdesk:store-settings",refresh);
     return ()=>{
       window.removeEventListener("nightdesk:orders",refresh);
       window.removeEventListener("nightdesk:casts",refresh);
       window.removeEventListener("nightdesk:settlement",refresh);
+      window.removeEventListener("nightdesk:store-settings",refresh);
     };
   },[]);
 
@@ -74,8 +78,7 @@ export default function SettlementPage(){
     key:dailyKey,
     date,
     castId,
-    miscExpenseEnabled:false,
-    miscExpense:0
+    miscExpenseEnabled:false
   };
 
   const settlementOrders=useMemo(()=>orders
@@ -96,7 +99,12 @@ export default function SettlementPage(){
     adjustment:acc.adjustment+row.adjustment.adjustment,
     payoutBeforeExpense:acc.payoutBeforeExpense+row.subtotal
   }),{base:0,option:0,extension:0,adjustment:0,payoutBeforeExpense:0});
-  const miscExpense=dailyConfig.miscExpenseEnabled ? Math.max(0,dailyConfig.miscExpense) : 0;
+  const miscExpenseRuleValue=Math.max(0,storeSettings.miscExpenseValue??0);
+  const miscExpense=dailyConfig.miscExpenseEnabled
+    ? storeSettings.miscExpenseMode==="percent"
+      ? Math.round(totals.payoutBeforeExpense*(miscExpenseRuleValue/100))
+      : miscExpenseRuleValue
+    : 0;
   const payout=Math.max(0,totals.payoutBeforeExpense-miscExpense);
 
   function updateAdjustment(orderId:string,changes:Partial<CastSettlementAdjustment>){
@@ -167,22 +175,22 @@ export default function SettlementPage(){
       <div>
         <span className="settlementExpenseLabel">雑費</span>
         <strong>この日の精算に雑費を適用するか選択</strong>
+        <small className="settlementExpenseRule">
+          店舗設定：
+          {storeSettings.miscExpenseMode==="percent"
+            ? `${storeSettings.miscExpenseValue??0}%（雑費控除前の支給額から計算）`
+            : `${formatYen(storeSettings.miscExpenseValue??0)} 固定`}
+        </small>
       </div>
       <div className="settlementExpenseControls">
         <div className="settlementExpenseToggle">
-          <button type="button" className={!dailyConfig.miscExpenseEnabled?"active":""} onClick={()=>updateDailyConfig({miscExpenseEnabled:false,miscExpense:0})}>雑費なし</button>
+          <button type="button" className={!dailyConfig.miscExpenseEnabled?"active":""} onClick={()=>updateDailyConfig({miscExpenseEnabled:false})}>雑費なし</button>
           <button type="button" className={dailyConfig.miscExpenseEnabled?"active":""} onClick={()=>updateDailyConfig({miscExpenseEnabled:true})}>雑費あり</button>
         </div>
-        {dailyConfig.miscExpenseEnabled && <label>雑費金額
-          <input
-            type="number"
-            min="0"
-            step="500"
-            value={dailyConfig.miscExpense}
-            onChange={e=>updateDailyConfig({miscExpense:Number(e.target.value)})}
-            onBlur={saveDailyConfig}
-          />
-        </label>}
+        {dailyConfig.miscExpenseEnabled && <div className="settlementExpenseCalculated">
+          <span>{storeSettings.miscExpenseMode==="percent" ? `${storeSettings.miscExpenseValue??0}% 計算` : "固定額"}</span>
+          <strong>−{formatYen(miscExpense)}</strong>
+        </div>}
       </div>
     </section>
 
@@ -238,7 +246,7 @@ export default function SettlementPage(){
 
     <section className="settlementHelp">
       <strong>計算ルール</strong>
-      <p>基本バックはキャスト登録の「フリー / 写真指名 / 本指名」単価を使用します。OPバック・延長バック・その他調整を加算後、「雑費あり」の場合だけ雑費を支給合計から控除します。雑費不要のキャストは「雑費なし」を選択してください。</p>
+      <p>基本バックはキャスト登録の「フリー / 写真指名 / 本指名」単価を使用します。雑費の計算方式と金額・率は店舗設定で共通管理し、キャスト精算では「雑費あり / なし」だけを選択します。パーセント方式では雑費控除前の支給額に対して計算します。</p>
     </section>
   </div>;
 }

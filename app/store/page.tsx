@@ -9,6 +9,8 @@ export default function StoreSettingsPage(){
   const [closeTime,setCloseTime]=useState(defaultStoreSettings.closeTime);
   const [cardFeeRate,setCardFeeRate]=useState(defaultStoreSettings.cardFeeRate);
   const [priceUnit,setPriceUnit]=useState(defaultStoreSettings.priceUnit);
+  const [miscExpenseMode,setMiscExpenseMode]=useState<"fixed"|"percent">(defaultStoreSettings.miscExpenseMode);
+  const [miscExpenseValue,setMiscExpenseValue]=useState(defaultStoreSettings.miscExpenseValue);
   const [saved,setSaved]=useState(false);
 
   useEffect(()=>{
@@ -17,10 +19,12 @@ export default function StoreSettingsPage(){
     setCloseTime(settings.closeTime);
     setCardFeeRate(settings.cardFeeRate ?? 0);
     setPriceUnit(settings.priceUnit ?? 100);
+    setMiscExpenseMode(settings.miscExpenseMode ?? "fixed");
+    setMiscExpenseValue(settings.miscExpenseValue ?? 0);
   },[]);
 
   function save(){
-    saveStoreSettings({openTime,closeTime,cardFeeRate,priceUnit});
+    saveStoreSettings({openTime,closeTime,cardFeeRate,priceUnit,miscExpenseMode,miscExpenseValue});
     setSaved(true);
     window.setTimeout(()=>setSaved(false),1400);
   }
@@ -75,6 +79,29 @@ export default function StoreSettingsPage(){
           </select>
         </label>
         <p>割引・割増などの入力刻みと、カード手数料の端数処理に使用します。</p>
+      </div>
+
+      <div className="storePaymentSettings storeMiscExpenseSettings">
+        <h3>キャスト精算・雑費</h3>
+        <div className="storeMiscExpenseMode">
+          <button type="button" className={miscExpenseMode==="fixed"?"active":""} onClick={()=>setMiscExpenseMode("fixed")}>金額指定</button>
+          <button type="button" className={miscExpenseMode==="percent"?"active":""} onClick={()=>setMiscExpenseMode("percent")}>パーセント</button>
+        </div>
+        <label>{miscExpenseMode==="fixed" ? "雑費金額" : "雑費率"}
+          <div className="storePercentInput">
+            <input
+              type="number"
+              min="0"
+              step={miscExpenseMode==="fixed" ? priceUnit : 0.1}
+              value={miscExpenseValue}
+              onChange={e=>setMiscExpenseValue(Math.max(0,Number(e.target.value)))}
+            />
+            <span>{miscExpenseMode==="fixed" ? "円" : "%"}</span>
+          </div>
+        </label>
+        <p>{miscExpenseMode==="fixed"
+          ? "キャスト精算で「雑費あり」を選ぶと、この金額を支給額から控除します。"
+          : "キャスト精算で「雑費あり」を選ぶと、雑費控除前の支給額にこの割合を掛けて自動計算します。"}</p>
       </div>
     </section>
   </div>;

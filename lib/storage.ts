@@ -366,6 +366,8 @@ export function loadStoreSettings(defaultSettings:StoreSettings):StoreSettings {
       closeTime:parsed.closeTime ?? defaultSettings.closeTime,
       cardFeeRate:parsed.cardFeeRate ?? defaultSettings.cardFeeRate ?? 0,
       priceUnit:(parsed.priceUnit ?? defaultSettings.priceUnit ?? 100) as StoreSettings["priceUnit"],
+      miscExpenseMode:(parsed.miscExpenseMode ?? defaultSettings.miscExpenseMode ?? "fixed") as StoreSettings["miscExpenseMode"],
+      miscExpenseValue:parsed.miscExpenseValue ?? defaultSettings.miscExpenseValue ?? 0,
     };
   } catch {
     return defaultSettings;
@@ -415,6 +417,6 @@ export function saveCastSettlementDailyConfig(config:CastSettlementDailyConfig){
   const next={...current,[config.key]:config};
   localStorage.setItem(SETTLEMENT_DAILY_KEY,JSON.stringify(next));
   window.dispatchEvent(new Event("nightdesk:settlement"));
-  appendAuditLog("精算","雑費設定を保存",config.miscExpenseEnabled ? `${config.date} / ${config.miscExpense}円` : `${config.date} / 雑費なし`);
+  appendAuditLog("精算","雑費設定を保存",config.miscExpenseEnabled ? `${config.date} / 雑費あり` : `${config.date} / 雑費なし`);
   return next;
 }
