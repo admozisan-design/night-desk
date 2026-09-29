@@ -11,6 +11,8 @@ export default function StoreSettingsPage(){
   const [priceUnit,setPriceUnit]=useState(defaultStoreSettings.priceUnit);
   const [miscExpenseMode,setMiscExpenseMode]=useState<"fixed"|"percent">(defaultStoreSettings.miscExpenseMode);
   const [miscExpenseValue,setMiscExpenseValue]=useState(defaultStoreSettings.miscExpenseValue);
+  const [changeFee,setChangeFee]=useState(defaultStoreSettings.changeFee);
+  const [cancelFee,setCancelFee]=useState(defaultStoreSettings.cancelFee);
   const [saved,setSaved]=useState(false);
 
   useEffect(()=>{
@@ -21,10 +23,12 @@ export default function StoreSettingsPage(){
     setPriceUnit(settings.priceUnit ?? 100);
     setMiscExpenseMode(settings.miscExpenseMode ?? "fixed");
     setMiscExpenseValue(settings.miscExpenseValue ?? 0);
+    setChangeFee(settings.changeFee ?? 0);
+    setCancelFee(settings.cancelFee ?? 0);
   },[]);
 
   function save(){
-    saveStoreSettings({openTime,closeTime,cardFeeRate,priceUnit,miscExpenseMode,miscExpenseValue});
+    saveStoreSettings({openTime,closeTime,cardFeeRate,priceUnit,miscExpenseMode,miscExpenseValue,changeFee,cancelFee});
     setSaved(true);
     window.setTimeout(()=>setSaved(false),1400);
   }
@@ -102,6 +106,27 @@ export default function StoreSettingsPage(){
         <p>{miscExpenseMode==="fixed"
           ? "キャスト精算で「雑費あり」を選ぶと、この金額を支給額から控除します。"
           : "キャスト精算で「雑費あり」を選ぶと、雑費控除前の支給額にこの割合を掛けて自動計算します。"}</p>
+      </div>
+
+      <div className="storePaymentSettings storeChangeCancelSettings">
+        <h3>チェンジ・キャンセル</h3>
+        <div className="storeChangeCancelGrid">
+          <label>チェンジ料
+            <div className="storePercentInput">
+              <input type="number" min="0" step={priceUnit} value={changeFee}
+                onChange={e=>setChangeFee(Math.max(0,Number(e.target.value)))}/>
+              <span>円</span>
+            </div>
+          </label>
+          <label>キャンセル料
+            <div className="storePercentInput">
+              <input type="number" min="0" step={priceUnit} value={cancelFee}
+                onChange={e=>setCancelFee(Math.max(0,Number(e.target.value)))}/>
+              <span>円</span>
+            </div>
+          </label>
+        </div>
+        <p>配車管理のオーダー操作からチェンジ・キャンセル処理をした時に自動適用します。</p>
       </div>
     </section>
   </div>;
