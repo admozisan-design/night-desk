@@ -170,6 +170,7 @@ export default function DashboardPage(){
   const [inTimeDraft,setInTimeDraft] = useState("");
   const [copyNotice,setCopyNotice] = useState("");
   const [customerNotice,setCustomerNotice] = useState("");
+  const [customerPanelOpen,setCustomerPanelOpen] = useState(false);
   const [optionModalOpen,setOptionModalOpen] = useState(false);
   const [castNotesExpanded,setCastNotesExpanded] = useState(false);
   const [sharedMemo,setSharedMemo] = useState("");
@@ -183,7 +184,7 @@ export default function DashboardPage(){
   const [locationName,setLocationName] = useState("");
   const [room,setRoom] = useState("101");
   const [address,setAddress] = useState("");
-  const [phone,setPhone] = useState("090-0000-0000");
+  const [phone,setPhone] = useState("");
   const [note,setNote] = useState("サンプル備考");
   const [travelFee,setTravelFee] = useState(defaultPricingConfig.defaultTravelFee);
   const [discount,setDiscount] = useState(0);
@@ -496,6 +497,7 @@ export default function DashboardPage(){
     setRoom(order.room ?? "");
     setAddress(order.address ?? "");
     setPhone(order.customerPhone ?? "");
+    setCustomerPanelOpen(Boolean(order.customerPhone));
     setNote(order.note ?? "");
     setTravelFee(order.travelFee);
     setDiscount(order.discount);
@@ -527,7 +529,8 @@ export default function DashboardPage(){
     setTravelFee(firstHotel?.travelFee ?? pricing.defaultTravelFee);
     setAddress(firstHotel?.address ?? "");
     setRoom(firstHotel?.kind==="home" ? "" : "101");
-    setPhone("090-0000-0000");
+    setPhone("");
+    setCustomerPanelOpen(false);
     setNote("サンプル備考");
     setSelectedOptionIds([]);
     setOptionModalOpen(false);
@@ -727,7 +730,11 @@ export default function DashboardPage(){
                     value={phone}
                     inputMode="tel"
                     enterKeyHint="search"
-                    onChange={e=>setPhone(e.target.value)}
+                    onChange={e=>{
+                      const next=e.target.value;
+                      setPhone(next);
+                      setCustomerPanelOpen(normalizePhone(next).length>=4);
+                    }}
                     onKeyDown={e=>{
                       if(e.key==="Enter"){
                         e.preventDefault();
@@ -741,11 +748,12 @@ export default function DashboardPage(){
                 </div>
               </label>
 
-              {phoneKey.length>=4 && <section className={`customerLookupPanel ${matchedCustomer?.ngInfo || matchedCustomer?.active===false ? "hasWarning" : ""}`}>
+              {phoneKey.length>=4 && <section className={`customerLookupPanel ${matchedCustomer?.ngInfo || matchedCustomer?.active===false ? "hasWarning" : ""} ${customerPanelOpen?"isOpen":"isClosed"}`}>
                 <div className="customerLookupHead">
                   <div>
                     <span>顧客情報</span>
                     <strong>{matchedCustomer?.name || "名前未登録"}</strong>
+                    {(matchedCustomer?.active===false || matchedCustomer?.ngInfo) && <em className="customerLookupNgBadge">NGあり</em>}
                   </div>
                   <div className="customerLookupHeadActions">
                     <div className="customerLookupStats">
@@ -755,53 +763,59 @@ export default function DashboardPage(){
                     {editingOrderId && selectedCast && <button type="button" className="customerNgRegisterButton" onClick={registerSelectedCastAsCustomerNg}>
                       {selectedCast.name}をNG登録
                     </button>}
+                    <button type="button" className="customerPanelToggle" onClick={()=>setCustomerPanelOpen(value=>!value)}>
+                      {customerPanelOpen?"閉じる":"開く"}
+                    </button>
                   </div>
                 </div>
-                {customerNotice && <div className="customerLookupNotice">{customerNotice}</div>}
 
-                {(matchedCustomer?.active===false || matchedCustomer?.ngInfo) && <div className="customerNgWarning">
-                  <strong>⚠ NG警告</strong>
-                  <p>{matchedCustomer?.active===false ? "利用不可設定の顧客です。" : ""}{matchedCustomer?.active===false && matchedCustomer?.ngInfo ? " / " : ""}{matchedCustomer?.ngInfo || ""}</p>
-                </div>}
+                {customerPanelOpen && <div className="customerLookupExpanded">
+                  {customerNotice && <div className="customerLookupNotice">{customerNotice}</div>}
 
-                <div className="customerLookupNotes">
-                  <span>顧客備考</span>
-                  <p>{matchedCustomer?.notes || "登録された備考はありません"}</p>
-                </div>
+                  {(matchedCustomer?.active===false || matchedCustomer?.ngInfo) && <div className="customerNgWarning">
+                    <strong>⚠ NG警告</strong>
+                    <p>{matchedCustomer?.active===false ? "利用不可設定の顧客です。" : ""}{matchedCustomer?.active===false && matchedCustomer?.ngInfo ? " / " : ""}{matchedCustomer?.ngInfo || ""}</p>
+                  </div>}
 
-                <div className="customerHistoryBox">
-                  <div className="customerHistoryTitle">
-                    <span>利用履歴</span>
-                    <strong>{customerHistory.length}件</strong>
+                  <div className="customerLookupNotes">
+                    <span>顧客備考</span>
+                    <p>{matchedCustomer?.notes || "登録された備考はありません"}</p>
                   </div>
-                  {customerHistory.length>0
-                    ? <div className="customerHistoryList">
-                        {customerHistory.slice(0,5).map(history=>{
-                        const isWorkingToday=workingCastIdsToday.has(history.castId);
-                        const isNgCast=historyCastIsNg(history);
-                        return <div
-                          key={history.id}
-                          className={`customerHistoryItem ${isNgCast?"isNgCast":isWorkingToday?"isWorkingCast":""}`}
-                        >
-                          <div>
-                            <strong>{orderServiceDate(history)} {history.scheduledStart}</strong>
-                            <span>{history.castName} / {history.courseMinutes+(history.extensionMinutes??0)}分</span>
-                            {isNgCast
-                              ? <em className="historyCastFlag ng">NGキャスト</em>
-                              : isWorkingToday
-                                ? <em className="historyCastFlag working">本日出勤</em>
-                                : null}
+
+                  <div className="customerHistoryBox">
+                    <div className="customerHistoryTitle">
+                      <span>利用履歴</span>
+                      <strong>{customerHistory.length}件</strong>
+                    </div>
+                    {customerHistory.length>0
+                      ? <div className="customerHistoryList">
+                          {customerHistory.slice(0,5).map(history=>{
+                          const isWorkingToday=workingCastIdsToday.has(history.castId);
+                          const isNgCast=historyCastIsNg(history);
+                          return <div
+                            key={history.id}
+                            className={`customerHistoryItem ${isNgCast?"isNgCast":isWorkingToday?"isWorkingCast":""}`}
+                          >
+                            <div>
+                              <strong>{orderServiceDate(history)} {history.scheduledStart}</strong>
+                              <span>{history.castName} / {history.courseMinutes+(history.extensionMinutes??0)}分</span>
+                              {isNgCast
+                                ? <em className="historyCastFlag ng">NGキャスト</em>
+                                : isWorkingToday
+                                  ? <em className="historyCastFlag working">本日出勤</em>
+                                  : null}
+                            </div>
+                            <div>
+                              <span>{history.locationName || "場所未入力"}</span>
+                              <strong>{formatYen(history.total)}</strong>
+                            </div>
                           </div>
-                          <div>
-                            <span>{history.locationName || "場所未入力"}</span>
-                            <strong>{formatYen(history.total)}</strong>
-                          </div>
+                        })}
                         </div>
-                      })}
-                      </div>
-                    : <p className="customerHistoryEmpty">過去の利用履歴はありません</p>}
-                  {customerHistory.length>5 && <small>直近5件を表示しています</small>}
-                </div>
+                      : <p className="customerHistoryEmpty">過去の利用履歴はありません</p>}
+                    {customerHistory.length>5 && <small>直近5件を表示しています</small>}
+                  </div>
+                </div>}
               </section>}
             </div>
 
