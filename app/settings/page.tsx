@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 const masterItems = [
+  { title:"上部メニュー設定", description:"ヘッダーの表示項目・順番・表示名をカスタマイズ", href:"/settings/menu", action:"設定する" },
   { title:"店舗設定", description:"店舗の営業時間を設定", href:"/store", action:"設定する" },
   { title:"キャスト登録", description:"キャスト情報、単価、スペック、NG、可能OPを管理", href:"/casts/manage", action:"管理する" },
   { title:"スタッフ登録", description:"スタッフ名、表示名、ログインIDを管理", href:"/staff", action:"管理する" },
@@ -16,7 +17,6 @@ const operationItems = [
 ];
 
 const systemItems = [
-  { title:"上部メニュー設定", description:"ヘッダーの表示項目・順番・表示名をカスタマイズ", href:"/settings/menu", action:"設定する" },
   { title:"スタッフ権限", description:"閲覧・受付・売上・設定変更などの権限を管理", href:"/permissions", action:"管理する" },
   { title:"操作履歴", description:"誰がいつ何を変更したかを確認", href:"/logs", action:"管理する" },
 ];
