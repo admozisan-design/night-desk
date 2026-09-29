@@ -3607,3 +3607,82 @@ button{
     justify-content:flex-start;
   }
 }
+
+
+/* ===== End of day export ===== */
+.boardSectionActions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.endOfDayExport{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:5px;
+  border:1px solid #d8e0e5;
+  border-radius:9px;
+  background:#fff;
+}
+.endOfDayExport>span{
+  padding:0 6px;
+  color:#6f7b85;
+  font-size:10px;
+  font-weight:900;
+}
+.endOfDayExport button{
+  min-height:34px;
+  padding:6px 10px;
+  border:1px solid #cfd8de;
+  border-radius:7px;
+  background:#f8fafb;
+  color:#40505c;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+}
+.endOfDayExport button:first-of-type{
+  border-color:#92bd59;
+  background:#eef7e3;
+  color:#4d721e;
+}
+.endOfDayExport button:last-of-type{
+  border-color:#d3c9b1;
+  background:#fff9ec;
+  color:#765f25;
+}
+.endOfDayExport button:hover{
+  filter:brightness(.98);
+  transform:translateY(-1px);
+}
+.standaloneBoardToolbarActions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+@media(max-width:1000px){
+  .boardSectionActions{
+    width:100%;
+    justify-content:flex-start;
+  }
+  .standaloneBoardToolbarActions{
+    justify-content:flex-start;
+  }
+}
+@media(max-width:650px){
+  .endOfDayExport{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .endOfDayExport>span{
+    grid-column:1/-1;
+  }
+  .endOfDayExport button{
+    width:100%;
+  }
+}
