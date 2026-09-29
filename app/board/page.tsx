@@ -280,12 +280,13 @@ export default function StandaloneBoardPage(){
                     key={order.id}
                     className={`timelineOrder orderVisual-${visualState}`}
                     style={pos}
-                    onClick={()=>window.location.href="/?editOrder="+encodeURIComponent(order.id)}
-                    title="配車管理でこのオーダーを開く"
+                    onClick={()=>window.location.href="/?orderAction="+encodeURIComponent(order.id)}
+                    title="ドライバー設定を開く"
                   >
                     <strong>{order.scheduledStart}〜{order.scheduledEnd}</strong>
-                    <span>{order.castName}</span>
-                    <small>{order.locationName || "場所未入力"}{order.room ? ` ${order.room}` : ""} / {order.driverName ?? "配車未割当"} / {order.courseMinutes+(order.extensionMinutes??0)}分</small>
+                    <span>{order.locationName || "場所未入力"}{order.room ? ` / ${order.room}号室` : ""}</span>
+                    <small>送り：{order.driverName ?? "未設定"}</small>
+                    {order.pickupDriverName && <small>迎え：{order.pickupDriverName}</small>}
                   </button>;
                 })}
 

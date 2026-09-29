@@ -176,6 +176,7 @@ export default function DashboardPage(){
   const [orderMode,setOrderMode] = useState<"menu"|"inTime"|"extend">("menu");
   const [editingOrderId,setEditingOrderId] = useState<string|null>(null);
   const [pendingEditOrderId,setPendingEditOrderId] = useState<string|null>(null);
+  const [pendingActionOrderId,setPendingActionOrderId] = useState<string|null>(null);
   const [extensionCount,setExtensionCount] = useState(1);
   const [inTimeDraft,setInTimeDraft] = useState("");
   const [copyNotice,setCopyNotice] = useState("");
@@ -218,7 +219,9 @@ export default function DashboardPage(){
     refresh();
     setSharedMemo(loadSharedMemo());
     setNow(new Date());
-    setPendingEditOrderId(new URLSearchParams(window.location.search).get("editOrder"));
+    const searchParams=new URLSearchParams(window.location.search);
+    setPendingEditOrderId(searchParams.get("editOrder"));
+    setPendingActionOrderId(searchParams.get("orderAction"));
     const timer = window.setInterval(()=>setNow(new Date()),60000);
     window.addEventListener("storage",refresh);
     window.addEventListener("nightdesk:orders",refresh);
@@ -380,6 +383,12 @@ export default function DashboardPage(){
   const detailShift = detailCast ? castShiftForDate(detailCast,date) : undefined;
   const shiftEditCast = shiftEditCastId ? castList.find(c=>c.id===shiftEditCastId) : undefined;
   const selectedOrder = selectedOrderId ? orders.find(order=>order.id===selectedOrderId) : undefined;
+  const selectedOrderSendDriver = selectedOrder
+    ? driverList.find(driver=>driver.id===selectedOrder.driverId) ?? driverList.find(driver=>driver.name===selectedOrder.driverName)
+    : undefined;
+  const selectedOrderPickupDriver = selectedOrder
+    ? driverList.find(driver=>driver.id===selectedOrder.pickupDriverId) ?? driverList.find(driver=>driver.name===selectedOrder.pickupDriverName)
+    : undefined;
 
   useEffect(()=>{
     const today=dateInputValue(new Date());
@@ -420,6 +429,20 @@ export default function DashboardPage(){
     setPendingEditOrderId(null);
     window.history.replaceState(null,"","/");
   },[pendingEditOrderId,orders]);
+
+  useEffect(()=>{
+    if(!pendingActionOrderId || !orders.length) return;
+    const target=orders.find(order=>order.id===pendingActionOrderId);
+    if(!target){
+      setPendingActionOrderId(null);
+      window.history.replaceState(null,"","/");
+      return;
+    }
+    setDate(orderServiceDate(target));
+    openOrderMenu(target);
+    setPendingActionOrderId(null);
+    window.history.replaceState(null,"","/");
+  },[pendingActionOrderId,orders]);
 
   function replaceCastShift(cast:Cast, changes:Partial<NonNullable<Cast["schedule"]>[number]>){
     const existing=castShiftForDate(cast,date);
@@ -469,6 +492,45 @@ export default function DashboardPage(){
     setSelectedOrderId(null);
     setOrderMode("menu");
     setCopyNotice("");
+  }
+
+  function changeOrderDriver(kind:"send"|"pickup",nextDriverId:string){
+    if(!selectedOrder) return;
+    const driver=driverList.find(item=>item.id===nextDriverId);
+    const changes=kind==="send"
+      ? {driverId:driver?.id,driverName:driver?.name}
+      : {pickupDriverId:driver?.id,pickupDriverName:driver?.name};
+    setOrders(updateOrder(selectedOrder.id,changes));
+    setCopyNotice(driver
+      ? `${kind==="send"?"送り":"お迎え"}ドライバーを ${driver.name} に設定しました`
+      : `${kind==="send"?"送り":"お迎え"}ドライバーの設定を解除しました`
+    );
+  }
+
+  function sendOrderDriverMail(kind:"send"|"pickup"){
+    if(!selectedOrder) return;
+    const driver=kind==="send" ? selectedOrderSendDriver : selectedOrderPickupDriver;
+    if(!driver?.email) return;
+
+    const serviceDate=orderServiceDate(selectedOrder);
+    const time=kind==="send" ? selectedOrder.scheduledStart : selectedOrder.scheduledEnd;
+    const label=kind==="send" ? "送り" : "お迎え";
+    const roomText=selectedOrder.room ? ` / ${selectedOrder.room}号室` : "";
+    const subject=`【NIGHT DESK】${label}依頼 ${serviceDate} ${time} ${selectedOrder.castName}`;
+    const body=[
+      `ドライバー：${driver.name}`,
+      `依頼：${label}`,
+      `日付：${serviceDate}`,
+      `${label}時間：${time}`,
+      `キャスト：${selectedOrder.castName}`,
+      `ホテル・場所：${selectedOrder.locationName||"未入力"}${roomText}`,
+      selectedOrder.address ? `住所：${selectedOrder.address}` : "",
+      `コース：${selectedOrder.courseMinutes+(selectedOrder.extensionMinutes??0)}分`,
+      selectedOrder.note ? `備考：${selectedOrder.note}` : ""
+    ].filter(Boolean).join("\n");
+
+    window.location.href=`mailto:${encodeURIComponent(driver.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setCopyNotice(`${driver.name} のメールアドレスで ${label}メールを作成しました`);
   }
 
   function currentClockTime(){
@@ -1114,8 +1176,9 @@ export default function DashboardPage(){
                     title={visualState==="beforeDispatch"?"配車前":visualState==="afterDispatch"?"配車後":visualState==="in"?"イン中":visualState==="out"?"アウト":"キャンセル"}
                   >
                     <strong>{order.scheduledStart}〜{order.scheduledEnd}</strong>
-                    <span>{order.castName}</span>
-                    <small>{order.locationName || "場所未入力"}{order.room ? ` ${order.room}` : ""} / {order.driverName ?? "配車未割当"} / {order.courseMinutes+(order.extensionMinutes??0)}分</small>
+                    <span>{order.locationName || "場所未入力"}{order.room ? ` / ${order.room}号室` : ""}</span>
+                    <small>送り：{order.driverName ?? "未設定"}</small>
+                    {order.pickupDriverName && <small>迎え：{order.pickupDriverName}</small>}
                   </button>
                 })}
                 {!visibleOrders.length && !unavailable && <span className="emptyTimeline">空き</span>}
@@ -1178,13 +1241,59 @@ export default function DashboardPage(){
 
         {copyNotice && <div className="orderActionNotice">{copyNotice}</div>}
 
-        {orderMode==="menu" && <div className="orderActionButtons orderActionButtonsSimple">
-          <button type="button" className="orderActionIn" onClick={beginInTimeEntry}>
-            {selectedOrder.inTime ? `イン ${selectedOrder.inTime}` : "イン時間"}
-          </button>
-          <button type="button" className="orderActionEdit" onClick={beginOrderEdit}>編集</button>
-          <button type="button" className="orderActionClose" onClick={closeOrderMenu}>閉じる</button>
-        </div>}
+        {orderMode==="menu" && <>
+          <div className="orderDriverDispatch">
+            <div className="orderDriverDispatchRow">
+              <label>送りドライバー
+                <select
+                  value={selectedOrder.driverId??""}
+                  onChange={e=>changeOrderDriver("send",e.target.value)}
+                >
+                  <option value="">未設定</option>
+                  {availableDrivers.map(driver=><option key={driver.id} value={driver.id}>{driver.name}</option>)}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="orderDriverMailButton"
+                disabled={!selectedOrderSendDriver?.email}
+                onClick={()=>sendOrderDriverMail("send")}
+              >
+                送りメールを送信
+              </button>
+              <small>{selectedOrderSendDriver?.email || "メールアドレス未登録"}</small>
+            </div>
+
+            <div className="orderDriverDispatchRow">
+              <label>お迎えドライバー
+                <select
+                  value={selectedOrder.pickupDriverId??""}
+                  onChange={e=>changeOrderDriver("pickup",e.target.value)}
+                >
+                  <option value="">未設定</option>
+                  {availableDrivers.map(driver=><option key={driver.id} value={driver.id}>{driver.name}</option>)}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="orderDriverMailButton pickup"
+                disabled={!selectedOrderPickupDriver?.email}
+                onClick={()=>sendOrderDriverMail("pickup")}
+              >
+                お迎えメールを送信
+              </button>
+              <small>{selectedOrderPickupDriver?.email || "メールアドレス未登録"}</small>
+            </div>
+          </div>
+
+          <div className="orderActionButtons orderActionButtonsSimple">
+            <button type="button" className="orderActionIn" onClick={beginInTimeEntry}>
+              {selectedOrder.inTime ? `イン ${selectedOrder.inTime}` : "イン時間"}
+            </button>
+            <button type="button" className="orderActionEdit" onClick={beginOrderEdit}>編集</button>
+            <button type="button" className="orderActionClose" onClick={closeOrderMenu}>閉じる</button>
+          </div>
+        </>}
 
         {orderMode==="inTime" && <div className="orderActionSubpanel">
           <h3>イン時間入力</h3>

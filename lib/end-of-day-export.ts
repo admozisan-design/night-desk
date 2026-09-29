@@ -87,6 +87,7 @@ function orderRows(orders:Order[]){
       order.room??"",
       order.address??"",
       order.driverName??"",
+      order.pickupDriverName??"",
       order.customerPhone??"",
       paymentLabel(order),
       order.optionsTotal,
@@ -120,13 +121,13 @@ export async function exportDailyExcel(input:EndOfDayExportInput){
 
   const orderHeaders=[
     "開始","終了","状態","キャスト","分数","指名","利用種別","ホテル・自宅","部屋",
-    "住所","ドライバー","電話番号","支払","OP料金","交通費","割引","割増","カード手数料",
+    "住所","送りドライバー","迎えドライバー","電話番号","支払","OP料金","交通費","割引","割増","カード手数料",
     "合計","備考","引継ぎ備考"
   ];
   const ordersSheet=XLSX.utils.aoa_to_sheet([orderHeaders,...orderRows(input.orders)]);
   ordersSheet["!cols"]=[
     {wch:9},{wch:9},{wch:10},{wch:12},{wch:8},{wch:10},{wch:10},{wch:22},{wch:9},
-    {wch:28},{wch:14},{wch:16},{wch:10},{wch:11},{wch:11},{wch:11},{wch:11},{wch:13},
+    {wch:28},{wch:14},{wch:14},{wch:16},{wch:10},{wch:11},{wch:11},{wch:11},{wch:11},{wch:13},
     {wch:13},{wch:30},{wch:30}
   ];
 
@@ -160,7 +161,7 @@ export function exportDailyPdf(input:EndOfDayExportInput){
   }
 
   const orderHtml=orderRows(input.orders).map(row=>`
-    <tr>${row.map((cell,index)=>`<td class="${index>=13 && index<=18 ? "num" : ""}">${escapeHtml(index>=13 && index<=18 ? formatYenValue(Number(cell)||0) : cell)}</td>`).join("")}</tr>
+    <tr>${row.map((cell,index)=>`<td class="${index>=14 && index<=19 ? "num" : ""}">${escapeHtml(index>=13 && index<=18 ? formatYenValue(Number(cell)||0) : cell)}</td>`).join("")}</tr>
   `).join("");
 
   const castHtml=castRows(input).map(row=>`
@@ -222,7 +223,7 @@ export function exportDailyPdf(input:EndOfDayExportInput){
       <h2>オーダー一覧</h2>
       <table class="orders">
         <thead><tr>
-          ${["開始","終了","状態","キャスト","分","指名","種別","ホテル・自宅","部屋","住所","ドライバー","電話番号","支払","OP","交通費","割引","割増","カード手数料","合計","備考","引継ぎ"].map(value=>`<th>${value}</th>`).join("")}
+          ${["開始","終了","状態","キャスト","分","指名","種別","ホテル・自宅","部屋","住所","送りドライバー","迎えドライバー","電話番号","支払","OP","交通費","割引","割増","カード手数料","合計","備考","引継ぎ"].map(value=>`<th>${value}</th>`).join("")}
         </tr></thead>
         <tbody>${orderHtml}</tbody>
       </table>

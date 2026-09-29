@@ -3959,3 +3959,90 @@ button{
     width:100%;
   }
 }
+
+
+/* ===== Order driver dispatch controls ===== */
+.orderActionModal{
+  width:min(560px,96vw);
+}
+.orderDriverDispatch{
+  display:grid;
+  gap:10px;
+  padding:14px;
+  border-bottom:1px solid #e2e7eb;
+  background:#fbfcfd;
+}
+.orderDriverDispatchRow{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 170px;
+  gap:7px 10px;
+  align-items:end;
+  padding:11px;
+  border:1px solid #dce3e8;
+  border-radius:9px;
+  background:#fff;
+}
+.orderDriverDispatchRow label{
+  display:grid;
+  gap:6px;
+  color:#53616c;
+  font-size:11px;
+  font-weight:900;
+}
+.orderDriverDispatchRow select{
+  min-height:42px;
+  padding:8px 10px;
+  font-size:13px;
+}
+.orderDriverDispatchRow>small{
+  grid-column:1/-1;
+  color:#7b8790;
+  font-size:9px;
+  font-weight:800;
+}
+.orderDriverMailButton{
+  min-height:42px;
+  padding:8px 11px;
+  border:1px solid #a6c47e;
+  border-radius:8px;
+  background:#edf6e2;
+  color:#486d1e;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+}
+.orderDriverMailButton.pickup{
+  border-color:#b7c3cc;
+  background:#eef3f6;
+  color:#465966;
+}
+.orderDriverMailButton:disabled{
+  border-color:#d8dee3;
+  background:#f1f3f4;
+  color:#a0a8ae;
+  cursor:not-allowed;
+}
+.orderActionButtonsSimple{
+  grid-template-columns:repeat(3,1fr);
+}
+.orderActionButtonsSimple button{
+  min-height:46px;
+  font-size:13px;
+}
+.timelineOrder small{
+  display:block;
+}
+@media(max-width:560px){
+  .orderDriverDispatchRow{
+    grid-template-columns:1fr;
+  }
+  .orderDriverDispatchRow>small{
+    grid-column:auto;
+  }
+  .orderDriverMailButton{
+    width:100%;
+  }
+  .orderActionButtonsSimple{
+    grid-template-columns:1fr;
+  }
+}
