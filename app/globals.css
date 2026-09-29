@@ -3820,3 +3820,142 @@ button{
 .standaloneDispatchScroll{
   max-height:calc(100vh - 275px);
 }
+
+
+/* ===== Refined order actions and driver mail ===== */
+.orderActionBackdrop{
+  background:rgba(26,34,42,.36);
+  backdrop-filter:blur(2px);
+}
+.orderActionModal{
+  border:1px solid #d7dee4;
+  background:#fff;
+  color:#26323d;
+  box-shadow:0 24px 70px rgba(20,30,40,.22);
+}
+.orderActionSummary{
+  border-bottom:1px solid #e2e7eb;
+  background:#f7f9fa;
+}
+.orderActionSummary span{
+  color:#2d3944;
+}
+.orderActionSummary strong{
+  color:#27333e;
+}
+.orderActionSummary small{
+  color:#71808b;
+}
+.orderActionNotice{
+  background:#edf4e4;
+  color:#506b2d;
+}
+.orderActionButtonsSimple{
+  grid-template-columns:1fr;
+  gap:9px;
+  padding:13px;
+}
+.orderActionButtonsSimple button{
+  min-height:52px;
+  border:1px solid #d2dae0;
+  box-shadow:none;
+  font-size:16px;
+}
+.orderActionButtonsSimple .orderActionIn{
+  border-color:#a9ca7f;
+  background:#eaf5dc;
+  color:#466a1b;
+}
+.orderActionButtonsSimple .orderActionEdit{
+  border-color:#bdcbd6;
+  background:#edf2f6;
+  color:#40515f;
+}
+.orderActionButtonsSimple .orderActionClose{
+  border-color:#d4d9dd;
+  background:#f4f5f6;
+  color:#5d6871;
+}
+.orderActionButtonsSimple button:hover{
+  filter:none;
+  border-color:#9dadb9;
+  background:#eef1f3;
+}
+.orderActionSubpanel{
+  color:#28343f;
+  background:#fff;
+}
+.orderActionSubpanel h3{
+  color:#26323d;
+}
+.orderActionSubButtons button{
+  border:1px solid #d1d9df;
+  background:#f5f7f8;
+  color:#4f5d68;
+}
+.orderActionSubButtons .primary{
+  border-color:#9fc573;
+  background:#eaf5dc;
+  color:#45691a;
+}
+.inTimeControl label,
+.inTimeControl small{
+  color:#5f6d78;
+}
+
+.driverMailRow{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) auto;
+  gap:7px 10px;
+  align-items:end;
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #dce3e8;
+  border-radius:9px;
+  background:#f8fafb;
+}
+.driverMailRow label{
+  display:grid;
+  gap:6px;
+  font-size:12px;
+  font-weight:900;
+  color:#5f6b76;
+}
+.driverMailRow select{
+  min-height:42px;
+}
+.driverMailButton{
+  min-width:118px;
+  min-height:42px;
+  padding:8px 13px;
+  border:1px solid #9fbe79;
+  border-radius:8px;
+  background:#edf6e2;
+  color:#496c20;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+}
+.driverMailButton:disabled{
+  border-color:#d5dce2;
+  background:#eef1f3;
+  color:#9aa3aa;
+  cursor:not-allowed;
+}
+.driverMailAddress{
+  grid-column:1/-1;
+  font-size:10px;
+  color:#6e7a84;
+  font-weight:800;
+}
+.driverMailAddress.missing{
+  color:#a06d6d;
+}
+@media(max-width:650px){
+  .driverMailRow{
+    grid-template-columns:1fr;
+  }
+  .driverMailButton{
+    width:100%;
+  }
+}

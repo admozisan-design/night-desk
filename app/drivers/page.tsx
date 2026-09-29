@@ -54,6 +54,7 @@ export default function DriversPage(){
       id:crypto.randomUUID(),
       name,
       phone:String(fd.get("phone")||"").trim(),
+      email:String(fd.get("email")||"").trim(),
       vehicle:String(fd.get("vehicle")||"").trim(),
       plate:String(fd.get("plate")||"").trim(),
       notes:String(fd.get("notes")||"").trim(),
@@ -70,7 +71,7 @@ export default function DriversPage(){
       <div>
         <p className="eyebrow">DRIVER MANAGEMENT</p>
         <h1>ドライバー登録</h1>
-        <p>送迎ドライバーの基本情報を管理します。</p>
+        <p>送迎ドライバーの基本情報と、配車メールの送信先を管理します。</p>
       </div>
       <div className="driverHeaderActions masterPageActions">
         {saved && <span className="saveToast">保存しました</span>}
@@ -115,6 +116,12 @@ export default function DriversPage(){
                 placeholder="090-0000-0000"/>
             </label>
 
+            <label>メールアドレス
+              <input type="email" value={current.email??""} disabled={!isEditing}
+                onChange={e=>updateDraft(driver.id,{email:e.target.value})}
+                placeholder="driver@example.com"/>
+            </label>
+
             <label>車両名
               <input value={current.vehicle??""} disabled={!isEditing}
                 onChange={e=>updateDraft(driver.id,{vehicle:e.target.value})}
@@ -155,6 +162,10 @@ export default function DriversPage(){
 
           <label>電話番号
             <input name="phone" inputMode="tel" placeholder="090-0000-0000"/>
+          </label>
+
+          <label>メールアドレス
+            <input name="email" type="email" placeholder="driver@example.com"/>
           </label>
 
           <label>車両名

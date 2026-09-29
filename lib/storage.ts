@@ -31,7 +31,7 @@ const SETTLEMENT_DAILY_KEY = "night-desk-cast-settlement-daily-v01";
 const SHARED_MEMO_KEY = "night-desk-shared-memo-v01";
 const TOP_NAV_KEY = "night-desk-top-nav-v01";
 const DEMO_SEED_KEY = "night-desk-demo-seed-version";
-const DEMO_SEED_VERSION = "2026-09-full-demo-v1";
+const DEMO_SEED_VERSION = "2026-09-full-demo-v2";
 
 function safeJson<T>(raw:string|null,fallback:T):T{
   if(!raw) return fallback;
@@ -67,6 +67,14 @@ function ensureDemoDataSeeded(){
 
   seedArray(CAST_KEY,demoCasts,["c1","c2","c3","c4"]);
   seedArray(DRIVER_KEY,demoDrivers,["d1","d2","d3"]);
+  const demoDriverEmailMigration=new Map(demoDrivers.map(driver=>[driver.id,driver.email??""]));
+  const savedDrivers=safeJson<Driver[]>(localStorage.getItem(DRIVER_KEY),[]);
+  const migratedDrivers=savedDrivers.map(driver=>
+    driver.email===undefined && demoDriverEmailMigration.has(driver.id)
+      ? {...driver,email:demoDriverEmailMigration.get(driver.id)??""}
+      : driver
+  );
+  localStorage.setItem(DRIVER_KEY,JSON.stringify(migratedDrivers));
   seedArray(HOTEL_KEY,demoHotels,["h1","h2","h3","h4"]);
   seedArray(STAFF_KEY,demoStaff,["s1","s2","s3"]);
   seedArray(OPTION_KEY,demoOptions,["op1","op2","op3","op4"]);
@@ -268,6 +276,7 @@ function normalizeDriver(driver:Driver):Driver {
     ...driver,
     name: driver.name ?? "",
     phone: driver.phone ?? "",
+    email: driver.email ?? "",
     vehicle: driver.vehicle ?? "",
     plate: driver.plate ?? "",
     notes: driver.notes ?? "",

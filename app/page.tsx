@@ -655,6 +655,30 @@ export default function DashboardPage(){
     window.setTimeout(()=>setSharedMemoSaved(false),1200);
   }
 
+  function openDriverMail(){
+    if(!selectedDriver?.email) return;
+
+    const selectedNames=selectableOptions
+      .filter(option=>selectedOptionIds.includes(option.id))
+      .map(option=>option.name)
+      .join(" / ");
+    const subject=`【NIGHT DESK】送迎依頼 ${date} ${scheduledStart} ${selectedCast?.name??""}`;
+    const body=[
+      `ドライバー：${selectedDriver.name}`,
+      `日付：${date}`,
+      `開始予定：${scheduledStart}`,
+      `キャスト：${selectedCast?.name??"未選択"}`,
+      `場所：${locationName||"未入力"}${room ? ` / ${room}号室` : ""}`,
+      address ? `住所：${address}` : "",
+      course ? `コース：${course.minutes}分` : "",
+      `指名：${nominationType==="photo"?"写真指名":nominationType==="repeat"?"本指名":"フリー"}`,
+      selectedNames ? `オプション：${selectedNames}` : "",
+      note ? `備考：${note}` : ""
+    ].filter(Boolean).join("\n");
+
+    window.location.href=`mailto:${encodeURIComponent(selectedDriver.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }
+
   function toggleOrderOption(id:string){
     setSelectedOptionIds(current=>current.includes(id)
       ? current.filter(optionId=>optionId!==id)
@@ -858,18 +882,11 @@ export default function DashboardPage(){
               </section>}
             </div>
 
-            <div className="workGrid two">
-              <label>ドライバー
-                <select value={driverId} onChange={e=>setDriverId(e.target.value)}>
-                  {availableDrivers.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
-              </label>
-              <label>キャスト
-                <select value={castId} onChange={e=>setCastId(e.target.value)} disabled={!formCastChoices.length}>
-                  {formCastChoices.map(c=><option key={c.id} value={c.id}>{c.name} / {statusLabels[castOperationalStatus(c,selectedDateOrders,date,now)]}</option>)}
-                </select>
-              </label>
-            </div>
+            <label>キャスト
+              <select value={castId} onChange={e=>setCastId(e.target.value)} disabled={!formCastChoices.length}>
+                {formCastChoices.map(c=><option key={c.id} value={c.id}>{c.name} / {statusLabels[castOperationalStatus(c,selectedDateOrders,date,now)]}</option>)}
+              </select>
+            </label>
 
             {selectedCast && <div className="selectedCastInfo selectedCastInfoWide">
               <div>
@@ -979,6 +996,26 @@ export default function DashboardPage(){
             <label>備考
               <textarea rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="サンプル備考を入力"/>
             </label>
+
+            <div className="driverMailRow">
+              <label>ドライバー
+                <select value={driverId} onChange={e=>setDriverId(e.target.value)}>
+                  {availableDrivers.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="driverMailButton"
+                onClick={openDriverMail}
+                disabled={!selectedDriver?.email}
+                title={selectedDriver?.email ? `${selectedDriver.email} 宛てにメールを作成` : "ドライバー登録でメールアドレスを設定してください"}
+              >
+                メール送信
+              </button>
+              <span className={selectedDriver?.email ? "driverMailAddress" : "driverMailAddress missing"}>
+                {selectedDriver?.email || "メールアドレス未登録"}
+              </span>
+            </div>
 
             <div className="workFooter">
               <div className="workTotalSummary"><small>自動計算</small>{paymentMethod==="card" && <span>カード手数料込み</span>}<strong>{formatYen(total)}</strong></div>
@@ -1141,23 +1178,11 @@ export default function DashboardPage(){
 
         {copyNotice && <div className="orderActionNotice">{copyNotice}</div>}
 
-        {orderMode==="menu" && <div className="orderActionButtons">
-          <button
-            type="button"
-            className="orderActionDispatch"
-            onClick={markOrderDispatched}
-            disabled={selectedOrder.status==="dispatching" || Boolean(selectedOrder.inTime) || selectedOrder.status==="serving" || selectedOrder.status==="completed" || selectedOrder.status==="cancelled"}
-          >
-            {selectedOrder.status==="dispatching" ? "配車済み ✓" : "配車済み"}
-          </button>
+        {orderMode==="menu" && <div className="orderActionButtons orderActionButtonsSimple">
           <button type="button" className="orderActionIn" onClick={beginInTimeEntry}>
             {selectedOrder.inTime ? `イン ${selectedOrder.inTime}` : "イン時間"}
           </button>
-          <button type="button" className="orderActionSend" onClick={()=>copyOrderLine("send")}>送り用LINEコピー</button>
-          <button type="button" className="orderActionPickup" onClick={()=>copyOrderLine("pickup")}>お迎え用LINEコピー</button>
           <button type="button" className="orderActionEdit" onClick={beginOrderEdit}>編集</button>
-          <button type="button" className="orderActionExtend" onClick={beginExtension}>延長処理</button>
-          <button type="button" className="orderActionDelete" onClick={removeSelectedOrder}>削除</button>
           <button type="button" className="orderActionClose" onClick={closeOrderMenu}>閉じる</button>
         </div>}
 

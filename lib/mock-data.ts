@@ -153,10 +153,10 @@ export const casts: Cast[] = [
 ];
 
 export const drivers: Driver[] = [
-  { id:"demo-driver-01", name:"佐々木", phone:"090-0000-2001", vehicle:"プリウス / 白", plate:"札幌 500 あ 12-34", notes:"昼〜深夜。ホテル同行可。", active:true },
-  { id:"demo-driver-02", name:"高橋", phone:"090-0000-2002", vehicle:"アクア / 黒", plate:"札幌 530 い 56-78", notes:"夜帯メイン。23時以降優先。", active:true },
-  { id:"demo-driver-03", name:"山本", phone:"090-0000-2003", vehicle:"ノート / シルバー", plate:"札幌 501 う 90-12", notes:"自宅送迎対応。", active:true },
-  { id:"demo-driver-04", name:"鈴木", phone:"090-0000-2004", vehicle:"フィット / 紺", plate:"札幌 502 え 34-56", notes:"予備稼働。", active:false }
+  { id:"demo-driver-01", name:"佐々木", phone:"090-0000-2001", email:"driver01@example.com", vehicle:"プリウス / 白", plate:"札幌 500 あ 12-34", notes:"昼〜深夜。ホテル同行可。", active:true },
+  { id:"demo-driver-02", name:"高橋", phone:"090-0000-2002", email:"driver02@example.com", vehicle:"アクア / 黒", plate:"札幌 530 い 56-78", notes:"夜帯メイン。23時以降優先。", active:true },
+  { id:"demo-driver-03", name:"山本", phone:"090-0000-2003", email:"driver03@example.com", vehicle:"ノート / シルバー", plate:"札幌 501 う 90-12", notes:"自宅送迎対応。", active:true },
+  { id:"demo-driver-04", name:"鈴木", phone:"090-0000-2004", email:"driver04@example.com", vehicle:"フィット / 紺", plate:"札幌 502 え 34-56", notes:"予備稼働。", active:false }
 ];
 
 export const courses: Course[] = [
