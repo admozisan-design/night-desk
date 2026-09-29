@@ -48,14 +48,19 @@ function shiftLabel(cast:Cast,date:string){
 function activeOrders(orders:Order[]){
   return orders.filter(order=>order.status!=="cancelled");
 }
+function orderRevenue(order:Order){
+  return order.status==="cancelled" ? (order.cancelFee??0) : order.total;
+}
 function summary(input:EndOfDayExportInput){
   const valid=activeOrders(input.orders);
-  const cash=valid.filter(order=>order.paymentMethod!=="card").reduce((sum,order)=>sum+order.total,0);
-  const card=valid.filter(order=>order.paymentMethod==="card").reduce((sum,order)=>sum+order.total,0);
+  const cash=input.orders.filter(order=>order.paymentMethod!=="card").reduce((sum,order)=>sum+orderRevenue(order),0);
+  const card=input.orders.filter(order=>order.paymentMethod==="card").reduce((sum,order)=>sum+orderRevenue(order),0);
   return {
-    total:valid.reduce((sum,order)=>sum+order.total,0),
+    total:input.orders.reduce((sum,order)=>sum+orderRevenue(order),0),
     count:valid.length,
     cancelled:input.orders.filter(order=>order.status==="cancelled").length,
+    changeFees:input.orders.reduce((sum,order)=>sum+(order.changeFee??0),0),
+    cancelFees:input.orders.reduce((sum,order)=>sum+(order.cancelFee??0),0),
     cash,
     card
   };
@@ -95,7 +100,9 @@ function orderRows(orders:Order[]){
       order.discount,
       order.surcharge??0,
       order.cardFee??0,
-      order.total,
+      order.changeFee??0,
+      order.cancelFee??0,
+      order.status==="cancelled" ? (order.cancelFee??0) : order.total,
       order.note??"",
       order.handoffNote??""
     ]);
@@ -114,6 +121,8 @@ export async function exportDailyExcel(input:EndOfDayExportInput){
     ["キャンセル",totals.cancelled],
     ["現金売上",totals.cash],
     ["カード売上",totals.card],
+    ["チェンジ料",totals.changeFees],
+    ["キャンセル料",totals.cancelFees],
     ["売上合計",totals.total],
     ["出力日時",new Date().toLocaleString("ja-JP")]
   ]);
@@ -122,13 +131,13 @@ export async function exportDailyExcel(input:EndOfDayExportInput){
   const orderHeaders=[
     "開始","終了","状態","キャスト","分数","指名","利用種別","ホテル・自宅","部屋",
     "住所","送りドライバー","迎えドライバー","電話番号","支払","OP料金","交通費","割引","割増","カード手数料",
-    "合計","備考","引継ぎ備考"
+    "チェンジ料","キャンセル料","計上額","備考","引継ぎ備考"
   ];
   const ordersSheet=XLSX.utils.aoa_to_sheet([orderHeaders,...orderRows(input.orders)]);
   ordersSheet["!cols"]=[
     {wch:9},{wch:9},{wch:10},{wch:12},{wch:8},{wch:10},{wch:10},{wch:22},{wch:9},
     {wch:28},{wch:14},{wch:14},{wch:16},{wch:10},{wch:11},{wch:11},{wch:11},{wch:11},{wch:13},
-    {wch:13},{wch:30},{wch:30}
+    {wch:12},{wch:12},{wch:13},{wch:30},{wch:30}
   ];
 
   const castsSheet=XLSX.utils.aoa_to_sheet([
@@ -161,7 +170,7 @@ export function exportDailyPdf(input:EndOfDayExportInput){
   }
 
   const orderHtml=orderRows(input.orders).map(row=>`
-    <tr>${row.map((cell,index)=>`<td class="${index>=14 && index<=19 ? "num" : ""}">${escapeHtml(index>=13 && index<=18 ? formatYenValue(Number(cell)||0) : cell)}</td>`).join("")}</tr>
+    <tr>${row.map((cell,index)=>`<td class="${index>=14 && index<=21 ? "num" : ""}">${escapeHtml(index>=14 && index<=21 ? formatYenValue(Number(cell)||0) : cell)}</td>`).join("")}</tr>
   `).join("");
 
   const castHtml=castRows(input).map(row=>`
@@ -223,7 +232,7 @@ export function exportDailyPdf(input:EndOfDayExportInput){
       <h2>オーダー一覧</h2>
       <table class="orders">
         <thead><tr>
-          ${["開始","終了","状態","キャスト","分","指名","種別","ホテル・自宅","部屋","住所","送りドライバー","迎えドライバー","電話番号","支払","OP","交通費","割引","割増","カード手数料","合計","備考","引継ぎ"].map(value=>`<th>${value}</th>`).join("")}
+          ${["開始","終了","状態","キャスト","分","指名","種別","ホテル・自宅","部屋","住所","送りドライバー","迎えドライバー","電話番号","支払","OP","交通費","割引","割増","カード手数料","チェンジ料","キャンセル料","計上額","備考","引継ぎ"].map(value=>`<th>${value}</th>`).join("")}
         </tr></thead>
         <tbody>${orderHtml}</tbody>
       </table>
