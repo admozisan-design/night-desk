@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { defaultDispatchWidgets } from "@/lib/dispatch-widgets";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
@@ -208,6 +209,15 @@ export default function DashboardPage(){
   const lastBoardAutoScrollDateRef=useRef<string|null>(null);
   const boardGridRef=useRef<HTMLDivElement|null>(null);
   const [globalNowLineLeft,setGlobalNowLineLeft]=useState<number|null>(null);
+  const widgetLeftRef=useRef<HTMLDivElement|null>(null);
+  const widgetCenterRef=useRef<HTMLDivElement|null>(null);
+  const widgetRightRef=useRef<HTMLDivElement|null>(null);
+  const widgetBottomRef=useRef<HTMLDivElement|null>(null);
+  const [widgetTargetsReady,setWidgetTargetsReady]=useState(false);
+
+  useEffect(()=>{
+    setWidgetTargetsReady(true);
+  },[]);
 
   useEffect(()=>{
     const refresh=()=>{
@@ -375,15 +385,6 @@ export default function DashboardPage(){
     ()=>orders.filter(order=>orderServiceDate(order)===date),
     [orders,date]
   );
-  const activeOrders = useMemo(
-    ()=>selectedDateOrders.filter(order=>order.status!=="completed"&&order.status!=="cancelled"),
-    [selectedDateOrders]
-  );
-  const todaySales = useMemo(
-    ()=>selectedDateOrders.filter(order=>order.status!=="cancelled").reduce((sum,order)=>sum+order.total,0),
-    [selectedDateOrders]
-  );
-  const waitingCount = workingCasts.filter(c=>castOperationalStatus(c,selectedDateOrders,date,now)==="waiting").length;
   const todayValue=dateInputValue(new Date());
   const nowPosition = now && date===todayValue ? currentTimePosition(now) : null;
   const detailCast = detailCastId ? castList.find(c=>c.id===detailCastId) : undefined;
@@ -794,6 +795,18 @@ export default function DashboardPage(){
     const item=dispatchWidget(id);
     return (item.area==="bottom" ? 100 : 0) + item.order;
   }
+  function widgetTarget(id:DispatchWidgetId){
+    const area=dispatchWidget(id).area;
+    if(area==="left") return widgetLeftRef.current;
+    if(area==="center") return widgetCenterRef.current;
+    if(area==="right") return widgetRightRef.current;
+    return widgetBottomRef.current;
+  }
+  function widgetPortal(id:DispatchWidgetId,node:ReactNode){
+    if(!widgetTargetsReady || !widgetVisible(id)) return null;
+    const target=widgetTarget(id);
+    return target ? createPortal(node,target) : null;
+  }
 
   function registerOrder(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
@@ -853,9 +866,19 @@ export default function DashboardPage(){
   }
 
   return <div className="deskDashboard">
+    <div className="dispatchWidgetCanvas">
+      <div className="dispatchWidgetTopSlots">
+        <div className="dispatchWidgetSlot dispatchWidgetSlotLeft" ref={widgetLeftRef}/>
+        <div className="dispatchWidgetSlot dispatchWidgetSlotCenter" ref={widgetCenterRef}/>
+        <div className="dispatchWidgetSlot dispatchWidgetSlotRight" ref={widgetRightRef}/>
+      </div>
+      <div className="dispatchWidgetSlot dispatchWidgetSlotBottom" ref={widgetBottomRef}/>
+    </div>
+
+    <div className="dispatchWidgetPortalSources">
     <div className="deskColumns dispatchWidgetGrid">
       <aside className="deskLeft">
-        {widgetVisible("date") && <section className={`deskPanel dispatchWidget ${widgetAreaClass("date")}`} style={{order:widgetOrder("date")}}>
+        {widgetPortal("date", <section className={`deskPanel dispatchWidget ${widgetAreaClass("date")}`} style={{order:widgetOrder("date")}}>
           <h2>日付</h2>
           <input type="date" value={date} onChange={e=>setDate(e.target.value)}/>
           <div className="dateButtons">
@@ -863,9 +886,9 @@ export default function DashboardPage(){
             <button onClick={()=>setDate(dateInputValue(new Date()))}>今日</button>
             <button onClick={()=>shiftDate(1)}>翌日</button>
           </div>
-        </section>}
+        </section>)}
 
-        {widgetVisible("sharedMemo") && <section className={`deskPanel sharedMemoPanel dispatchWidget ${widgetAreaClass("sharedMemo")}`} style={{order:widgetOrder("sharedMemo")}}>
+        {widgetPortal("sharedMemo", <section className={`deskPanel sharedMemoPanel dispatchWidget ${widgetAreaClass("sharedMemo")}`} style={{order:widgetOrder("sharedMemo")}}>
           <div className="sharedMemoHead">
             <h2>共有メモ</h2>
             {sharedMemoSaved && <span>保存済み</span>}
@@ -878,11 +901,11 @@ export default function DashboardPage(){
             placeholder="送迎状況、注意事項、次のスタッフへの引継ぎなどを共有"
           />
           <button type="button" onClick={saveSharedMemoNow}>共有メモを保存</button>
-        </section>}
+        </section>)}
       </aside>
 
       <main className="deskCenter">
-        {widgetVisible("orderRegister") && <section className={`deskPanel workRegister dispatchWidget ${widgetAreaClass("orderRegister")} ${editingOrderId?"isEditingOrder":""}`} style={{order:widgetOrder("orderRegister")}} id="work-register">
+        {widgetPortal("orderRegister", <section className={`deskPanel workRegister dispatchWidget ${widgetAreaClass("orderRegister")} ${editingOrderId?"isEditingOrder":""}`} style={{order:widgetOrder("orderRegister")}} id="work-register">
           <div className="workRegisterTitleRow">
             <h2>{editingOrderId?"仕事編集":"仕事登録"}</h2>
             {editingOrderId && <span className="workEditBadge">既存オーダー編集中</span>}
@@ -1127,11 +1150,11 @@ export default function DashboardPage(){
               </div>
             </div>
           </form>
-        </section>}
+        </section>)}
       </main>
 
       <aside className="deskRight">
-        {widgetVisible("reservations") && <section className={`deskPanel dispatchWidget ${widgetAreaClass("reservations")}`} style={{order:widgetOrder("reservations")}}>
+        {widgetPortal("reservations", <section className={`deskPanel dispatchWidget ${widgetAreaClass("reservations")}`} style={{order:widgetOrder("reservations")}}>
           <div className="panelTitleRow">
             <h2>選択日の予約一覧</h2>
             <span>{selectedDateOrders.length}件</span>
@@ -1147,10 +1170,10 @@ export default function DashboardPage(){
               </Link>)}
             {!selectedDateOrders.length && <p>{date} の予約はありません</p>}
           </div>
-        </section>}
+        </section>)}
       </aside>
 
-    {widgetVisible("board") && <section className={`boardSection dispatchWidget ${widgetAreaClass("board")}`} style={{order:widgetOrder("board")}}>
+    {widgetPortal("board", <section className={`boardSection dispatchWidget ${widgetAreaClass("board")}`} style={{order:widgetOrder("board")}}>
       <div className="boardSectionHead">
         <div><h2>配車ボード</h2><span>{date}</span><span>営業時間 {storeSettings.openTime}〜{storeSettings.closeTime}</span></div>
         <div className="boardLegend">
@@ -1244,7 +1267,8 @@ export default function DashboardPage(){
           <div className="timelineCell totalTimeline"/>
         </div>
       </div>
-    </section>}
+    </section>)}
+    </div>
     </div>
 
     {optionModalOpen && <div className="optionSelectBackdrop" onMouseDown={e=>{if(e.currentTarget===e.target)setOptionModalOpen(false);}}>

@@ -4524,3 +4524,66 @@ button{
     grid-template-areas:"left" "center" "right" "bottom";
   }
 }
+
+
+/* ===== Gapless dispatch widget columns ===== */
+.dispatchWidgetCanvas{
+  display:grid;
+  gap:12px;
+  width:100%;
+}
+.dispatchWidgetTopSlots{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  width:100%;
+  min-width:0;
+}
+.dispatchWidgetSlot{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-width:0;
+}
+.dispatchWidgetSlot:empty{
+  display:none;
+}
+.dispatchWidgetSlotLeft{
+  flex:0 0 320px;
+}
+.dispatchWidgetSlotCenter{
+  flex:1 1 720px;
+}
+.dispatchWidgetSlotRight{
+  flex:0 0 330px;
+}
+.dispatchWidgetSlotBottom{
+  width:100%;
+}
+.dispatchWidgetPortalSources{
+  display:none!important;
+}
+.dispatchWidgetSlot .dispatchWidget{
+  width:100%;
+  margin:0!important;
+}
+.dispatchWidgetSlotBottom .boardSection{
+  width:100%;
+}
+
+@media(max-width:1200px){
+  .dispatchWidgetSlotLeft{flex-basis:240px}
+  .dispatchWidgetSlotCenter{flex-basis:520px}
+  .dispatchWidgetSlotRight{flex-basis:260px}
+}
+@media(max-width:900px){
+  .dispatchWidgetTopSlots{
+    flex-direction:column;
+  }
+  .dispatchWidgetSlotLeft,
+  .dispatchWidgetSlotCenter,
+  .dispatchWidgetSlotRight{
+    flex:0 0 auto;
+    width:100%;
+  }
+}
