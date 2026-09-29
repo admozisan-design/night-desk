@@ -62,14 +62,17 @@ export default function ClosingPage(){
   );
 
   const validOrders=selectedOrders.filter(order=>order.status!=="cancelled");
-  const cashSales=validOrders
+  const cancelledOrders=selectedOrders.filter(order=>order.status==="cancelled");
+  const orderRevenue=(order:Order)=>order.status==="cancelled" ? (order.cancelFee??0) : order.total;
+  const cashSales=selectedOrders
     .filter(order=>order.paymentMethod!=="card")
-    .reduce((sum,order)=>sum+order.total,0);
-  const cardSales=validOrders
+    .reduce((sum,order)=>sum+orderRevenue(order),0);
+  const cardSales=selectedOrders
     .filter(order=>order.paymentMethod==="card")
-    .reduce((sum,order)=>sum+order.total,0);
+    .reduce((sum,order)=>sum+orderRevenue(order),0);
   const totalSales=cashSales+cardSales;
-  const cancelledCount=selectedOrders.length-validOrders.length;
+  const cancelledCount=cancelledOrders.length;
+  const cancelFeeTotal=cancelledOrders.reduce((sum,order)=>sum+(order.cancelFee??0),0);
 
   return <div className="closingPage">
     <header className="pageHeader">
@@ -90,7 +93,7 @@ export default function ClosingPage(){
     <section className="closingSummary">
       <div><span>出勤キャスト</span><strong>{workingCasts.length}</strong><small>人</small></div>
       <div><span>オーダー</span><strong>{validOrders.length}</strong><small>件</small></div>
-      <div><span>キャンセル</span><strong>{cancelledCount}</strong><small>件</small></div>
+      <div><span>キャンセル</span><strong>{cancelledCount}件</strong><small>料金 {formatYen(cancelFeeTotal)}</small></div>
       <div><span>現金売上</span><strong>{formatYen(cashSales)}</strong></div>
       <div><span>カード売上</span><strong>{formatYen(cardSales)}</strong></div>
       <div className="closingSummaryTotal"><span>売上合計</span><strong>{formatYen(totalSales)}</strong></div>
