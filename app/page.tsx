@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
+import { defaultDispatchWidgets } from "@/lib/dispatch-widgets";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { deleteOrder, loadCasts, loadCustomers, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, saveOrder, saveSharedMemo, updateOrder } from "@/lib/storage";
-import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
+import { deleteOrder, loadCasts, loadCustomers, loadDispatchWidgets, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, saveOrder, saveSharedMemo, updateOrder } from "@/lib/storage";
+import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, DispatchWidgetId, DispatchWidgetSetting, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
 const BOARD_MINUTES = 19 * 60;
@@ -186,6 +187,7 @@ export default function DashboardPage(){
   const [castNotesExpanded,setCastNotesExpanded] = useState(false);
   const [sharedMemo,setSharedMemo] = useState("");
   const [sharedMemoSaved,setSharedMemoSaved] = useState(false);
+  const [dispatchWidgets,setDispatchWidgets] = useState<DispatchWidgetSetting[]>(defaultDispatchWidgets);
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
@@ -217,6 +219,7 @@ export default function DashboardPage(){
       setCustomerList(loadCustomers());
       setPricing(loadPricing(defaultPricingConfig));
       setStoreSettings(loadStoreSettings(defaultStoreSettings));
+      setDispatchWidgets(loadDispatchWidgets(defaultDispatchWidgets));
     };
     refresh();
     setSharedMemo(loadSharedMemo());
@@ -234,6 +237,7 @@ export default function DashboardPage(){
     window.addEventListener("nightdesk:pricing",refresh);
     window.addEventListener("nightdesk:customers",refresh);
     window.addEventListener("nightdesk:store-settings",refresh);
+    window.addEventListener("nightdesk:dispatch-widgets",refresh);
     return ()=>{
       window.clearInterval(timer);
       window.removeEventListener("storage",refresh);
@@ -245,6 +249,7 @@ export default function DashboardPage(){
       window.removeEventListener("nightdesk:pricing",refresh);
       window.removeEventListener("nightdesk:customers",refresh);
       window.removeEventListener("nightdesk:store-settings",refresh);
+      window.removeEventListener("nightdesk:dispatch-widgets",refresh);
     };
   },[]);
 
@@ -776,6 +781,20 @@ export default function DashboardPage(){
     );
   }
 
+  function dispatchWidget(id:DispatchWidgetId){
+    return dispatchWidgets.find(item=>item.id===id) ?? defaultDispatchWidgets.find(item=>item.id===id)!;
+  }
+  function widgetVisible(id:DispatchWidgetId){
+    return dispatchWidget(id).visible;
+  }
+  function widgetAreaClass(id:DispatchWidgetId){
+    return `widgetArea-${dispatchWidget(id).area}`;
+  }
+  function widgetOrder(id:DispatchWidgetId){
+    const item=dispatchWidget(id);
+    return (item.area==="bottom" ? 100 : 0) + item.order;
+  }
+
   function registerOrder(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
     if(!selectedCast || !course) return;
@@ -834,16 +853,9 @@ export default function DashboardPage(){
   }
 
   return <div className="deskDashboard">
-    <section className="deskKpis">
-      <div><span>出勤人数</span><strong>{workingCasts.length}人</strong></div>
-      <div><span>待機</span><strong>{waitingCount}人</strong></div>
-      <div><span>稼働中</span><strong>{activeOrders.length}件</strong></div>
-      <div><span>売上</span><strong>{formatYen(todaySales)}</strong></div>
-    </section>
-
-    <div className="deskColumns">
+    <div className="deskColumns dispatchWidgetGrid">
       <aside className="deskLeft">
-        <section className="deskPanel">
+        {widgetVisible("date") && <section className={`deskPanel dispatchWidget ${widgetAreaClass("date")}`} style={{order:widgetOrder("date")}}>
           <h2>日付</h2>
           <input type="date" value={date} onChange={e=>setDate(e.target.value)}/>
           <div className="dateButtons">
@@ -851,9 +863,9 @@ export default function DashboardPage(){
             <button onClick={()=>setDate(dateInputValue(new Date()))}>今日</button>
             <button onClick={()=>shiftDate(1)}>翌日</button>
           </div>
-        </section>
+        </section>}
 
-        <section className="deskPanel sharedMemoPanel">
+        {widgetVisible("sharedMemo") && <section className={`deskPanel sharedMemoPanel dispatchWidget ${widgetAreaClass("sharedMemo")}`} style={{order:widgetOrder("sharedMemo")}}>
           <div className="sharedMemoHead">
             <h2>共有メモ</h2>
             {sharedMemoSaved && <span>保存済み</span>}
@@ -866,11 +878,11 @@ export default function DashboardPage(){
             placeholder="送迎状況、注意事項、次のスタッフへの引継ぎなどを共有"
           />
           <button type="button" onClick={saveSharedMemoNow}>共有メモを保存</button>
-        </section>
+        </section>}
       </aside>
 
       <main className="deskCenter">
-        <section className={`deskPanel workRegister ${editingOrderId?"isEditingOrder":""}`} id="work-register">
+        {widgetVisible("orderRegister") && <section className={`deskPanel workRegister dispatchWidget ${widgetAreaClass("orderRegister")} ${editingOrderId?"isEditingOrder":""}`} style={{order:widgetOrder("orderRegister")}} id="work-register">
           <div className="workRegisterTitleRow">
             <h2>{editingOrderId?"仕事編集":"仕事登録"}</h2>
             {editingOrderId && <span className="workEditBadge">既存オーダー編集中</span>}
@@ -1115,11 +1127,11 @@ export default function DashboardPage(){
               </div>
             </div>
           </form>
-        </section>
+        </section>}
       </main>
 
       <aside className="deskRight">
-        <section className="deskPanel">
+        {widgetVisible("reservations") && <section className={`deskPanel dispatchWidget ${widgetAreaClass("reservations")}`} style={{order:widgetOrder("reservations")}}>
           <div className="panelTitleRow">
             <h2>選択日の予約一覧</h2>
             <span>{selectedDateOrders.length}件</span>
@@ -1135,11 +1147,10 @@ export default function DashboardPage(){
               </Link>)}
             {!selectedDateOrders.length && <p>{date} の予約はありません</p>}
           </div>
-        </section>
+        </section>}
       </aside>
-    </div>
 
-    <section className="boardSection">
+    {widgetVisible("board") && <section className={`boardSection dispatchWidget ${widgetAreaClass("board")}`} style={{order:widgetOrder("board")}}>
       <div className="boardSectionHead">
         <div><h2>配車ボード</h2><span>{date}</span><span>営業時間 {storeSettings.openTime}〜{storeSettings.closeTime}</span></div>
         <div className="boardLegend">
@@ -1233,7 +1244,8 @@ export default function DashboardPage(){
           <div className="timelineCell totalTimeline"/>
         </div>
       </div>
-    </section>
+    </section>}
+    </div>
 
     {optionModalOpen && <div className="optionSelectBackdrop" onMouseDown={e=>{if(e.currentTarget===e.target)setOptionModalOpen(false);}}>
       <div className="optionSelectModal" role="dialog" aria-modal="true">

@@ -10,6 +10,7 @@ export const defaultTopNavigation:TopNavItem[]=[
 ];
 
 export const settingsNavigationCatalog:TopNavItem[]=[
+  {id:"nav-dispatch-layout",href:"/settings/dispatch",label:"配車管理レイアウト",visible:true,inMenu:false},
   {id:"nav-menu-settings",href:"/settings/menu",label:"上部メニュー設定",visible:true,inMenu:false},
   {id:"nav-store",href:"/store",label:"店舗設定",visible:true,inMenu:false},
   {id:"nav-cast-manage",href:"/casts/manage",label:"キャスト登録",visible:true,inMenu:false},

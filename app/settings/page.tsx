@@ -45,9 +45,10 @@ const groups:{
   },
   {
     title:"システム",
-    description:"メニュー、権限、操作履歴",
-    countLabel:"3項目",
+    description:"画面レイアウト、メニュー、権限、操作履歴",
+    countLabel:"4項目",
     items:[
+      {title:"配車管理レイアウト",description:"配車管理のウィジェットをドラッグして配置・表示を変更",href:"/settings/dispatch"},
       {title:"上部メニュー設定",description:"ヘッダーの表示・順番・名称をカスタマイズ",href:"/settings/menu"},
       {title:"スタッフ権限",description:"受付・売上・設定変更などの権限を管理",href:"/permissions"},
       {title:"操作履歴",description:"誰がいつ何を変更したかを確認",href:"/logs"},

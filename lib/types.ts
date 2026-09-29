@@ -99,3 +99,14 @@ export type TopNavItem = {
   locked?:boolean;
   inMenu?:boolean;
 };
+
+
+export type DispatchWidgetArea = "left" | "center" | "right" | "bottom";
+export type DispatchWidgetId = "date" | "sharedMemo" | "orderRegister" | "reservations" | "board";
+export type DispatchWidgetSetting = {
+  id:DispatchWidgetId;
+  label:string;
+  area:DispatchWidgetArea;
+  order:number;
+  visible:boolean;
+};

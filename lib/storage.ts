@@ -1,4 +1,4 @@
-import type { AuditLog, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings, TopNavItem } from "./types";
+import type { AuditLog, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, DispatchWidgetSetting, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings, TopNavItem } from "./types";
 import {
   casts as demoCasts,
   defaultPricingConfig as demoPricing,
@@ -30,6 +30,7 @@ const SETTLEMENT_KEY = "night-desk-cast-settlement-v01";
 const SETTLEMENT_DAILY_KEY = "night-desk-cast-settlement-daily-v01";
 const SHARED_MEMO_KEY = "night-desk-shared-memo-v01";
 const TOP_NAV_KEY = "night-desk-top-nav-v01";
+const DISPATCH_WIDGET_KEY = "night-desk-dispatch-widgets-v01";
 const DEMO_SEED_KEY = "night-desk-demo-seed-version";
 const DEMO_SEED_VERSION = "2026-09-full-demo-v2";
 
@@ -592,4 +593,37 @@ export function saveTopNavigation(items:TopNavItem[]){
   localStorage.setItem(TOP_NAV_KEY,JSON.stringify(normalized));
   window.dispatchEvent(new Event("nightdesk:navigation"));
   appendAuditLog("設定","上部メニューを保存",normalized.filter(item=>item.inMenu!==false).map(item=>item.label).join(" / "));
+}
+
+
+export function loadDispatchWidgets(defaultItems:DispatchWidgetSetting[]):DispatchWidgetSetting[]{
+  if(typeof window==="undefined") return defaultItems;
+  try{
+    const raw=localStorage.getItem(DISPATCH_WIDGET_KEY);
+    if(!raw) return defaultItems.map(item=>({...item}));
+    const saved=JSON.parse(raw) as DispatchWidgetSetting[];
+    const savedById=new Map(saved.map(item=>[item.id,item]));
+    return defaultItems.map(defaultItem=>{
+      const current=savedById.get(defaultItem.id);
+      return current
+        ? {
+            ...defaultItem,
+            ...current,
+            label:current.label?.trim() || defaultItem.label,
+            area:current.area || defaultItem.area,
+            order:Number.isFinite(current.order) ? current.order : defaultItem.order,
+            visible:current.visible!==false
+          }
+        : {...defaultItem};
+    });
+  }catch{
+    return defaultItems.map(item=>({...item}));
+  }
+}
+
+export function saveDispatchWidgets(items:DispatchWidgetSetting[]){
+  if(typeof window==="undefined") return;
+  localStorage.setItem(DISPATCH_WIDGET_KEY,JSON.stringify(items));
+  window.dispatchEvent(new Event("nightdesk:dispatch-widgets"));
+  appendAuditLog("設定","配車管理レイアウトを保存",items.filter(item=>item.visible).map(item=>item.label).join(" / "));
 }
