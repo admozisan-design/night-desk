@@ -470,6 +470,8 @@ export function loadStoreSettings(defaultSettings:StoreSettings):StoreSettings {
       priceUnit:(parsed.priceUnit ?? defaultSettings.priceUnit ?? 100) as StoreSettings["priceUnit"],
       miscExpenseMode:(parsed.miscExpenseMode ?? defaultSettings.miscExpenseMode ?? "fixed") as StoreSettings["miscExpenseMode"],
       miscExpenseValue:parsed.miscExpenseValue ?? defaultSettings.miscExpenseValue ?? 0,
+      changeFee:parsed.changeFee ?? defaultSettings.changeFee ?? 0,
+      cancelFee:parsed.cancelFee ?? defaultSettings.cancelFee ?? 0,
     };
   } catch {
     return defaultSettings;
@@ -480,7 +482,7 @@ export function saveStoreSettings(settings:StoreSettings){
   if (typeof window === "undefined") return;
   localStorage.setItem(STORE_SETTINGS_KEY,JSON.stringify(settings));
   window.dispatchEvent(new Event("nightdesk:store-settings"));
-  appendAuditLog("店舗設定","営業時間を保存",`${settings.openTime}〜${settings.closeTime}`);
+  appendAuditLog("店舗設定","店舗設定を保存",`${settings.openTime}〜${settings.closeTime} / チェンジ ${settings.changeFee}円 / キャンセル ${settings.cancelFee}円`);
 }
 
 
