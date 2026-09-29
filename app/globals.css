@@ -2809,3 +2809,105 @@ button{
 @media(max-width:1000px){
   .selectedCastInfo .selectedCastNotesCell{grid-column:1/-1}
 }
+
+
+/* ===== Compact cast cards ===== */
+.castCompactCard{
+  overflow:hidden;
+}
+.castCompactCard .castVerticalHeader{
+  border-bottom:0;
+}
+.castCardHeaderRight{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.castExpandButton{
+  min-height:34px;
+  padding:5px 10px;
+  border:1px solid #cfd7dd;
+  border-radius:7px;
+  background:#fff;
+  color:#53616d;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+}
+.castExpandButton:hover{
+  border-color:#8dbb52;
+  background:#f3faea;
+  color:#4f741f;
+}
+.castCompactSummary{
+  position:relative;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:7px;
+  width:100%;
+  padding:10px 36px 12px 14px;
+  border:0;
+  border-top:1px solid #e6eaee;
+  background:#f8fafb;
+  color:#35414c;
+  text-align:left;
+  cursor:pointer;
+}
+.castCompactSummary>span{
+  min-width:0;
+  padding:7px 8px;
+  border:1px solid #e1e6ea;
+  border-radius:8px;
+  background:#fff;
+}
+.castCompactSummary small,
+.castCompactSummary strong{
+  display:block;
+}
+.castCompactSummary small{
+  margin-bottom:2px;
+  color:#89939c;
+  font-size:9px;
+  font-weight:900;
+}
+.castCompactSummary strong{
+  overflow:hidden;
+  color:#34414c;
+  font-size:12px;
+  font-weight:900;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.castCompactSummary .hasAlert{
+  border-color:#edc5cb;
+  background:#fff3f5;
+}
+.castCompactSummary .hasAlert strong{color:#a22e40}
+.castCompactSummary .hasLink{
+  border-color:#c6dda7;
+  background:#f2f9e9;
+}
+.castCompactSummary .hasLink strong{color:#4e741f}
+.castCompactSummary>b{
+  position:absolute;
+  right:14px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#75808a;
+  font-size:12px;
+}
+.castCompactCard.isExpanded{
+  border-color:#a9c77e;
+  box-shadow:0 5px 18px rgba(25,35,45,.09);
+}
+.castCompactCard.isExpanded .castCompactSummary{
+  border-bottom:1px solid #dfe5e9;
+  background:#f3f8ed;
+}
+@media(max-width:1450px){
+  .castCompactSummary{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:680px){
+  .castCompactSummary{grid-template-columns:1fr 1fr;padding-right:32px}
+  .castCardHeaderRight{width:100%;justify-content:space-between}
+}

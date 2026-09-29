@@ -43,6 +43,7 @@ export default function CastsPage(){
   const [newNgDraft,setNewNgDraft] = useState("");
   const [newNgItems,setNewNgItems] = useState<string[]>([]);
   const [newOptions,setNewOptions] = useState<string[]>([]);
+  const [expandedCastIds,setExpandedCastIds] = useState<string[]>([]);
 
   useEffect(()=>{
     const refresh=()=>{
@@ -141,6 +142,13 @@ export default function CastsPage(){
     setNewOptions([]);
   }
 
+  function toggleCastExpanded(id:string){
+    setExpandedCastIds(current=>current.includes(id)
+      ? current.filter(value=>value!==id)
+      : [...current,id]
+    );
+  }
+
   function addCast(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
     const fd=new FormData(e.currentTarget);
@@ -199,8 +207,9 @@ export default function CastsPage(){
     <section className="castCardGrid">
       {casts.map(cast=>{
         const current=isEditing ? (drafts[cast.id] ?? cloneCast(cast)) : cast;
+        const isExpanded=expandedCastIds.includes(cast.id);
 
-        return <article key={cast.id} className={`castVerticalCard ${current.visible===false?"isHidden":""} ${isEditing?"isEditing":""}`}>
+        return <article key={cast.id} className={`castVerticalCard castCompactCard ${isExpanded?"isExpanded":""} ${current.visible===false?"isHidden":""} ${isEditing?"isEditing":""}`}>
           <div className="castVerticalHeader">
             <input
               className="castVerticalName"
@@ -218,9 +227,24 @@ export default function CastsPage(){
                 />
                 <span>表示</span>
               </label>
+              <button type="button" className="castExpandButton" onClick={()=>toggleCastExpanded(cast.id)}>
+                {isExpanded?"閉じる":"詳細"}
+              </button>
             </div>
           </div>
 
+          <button type="button" className="castCompactSummary" onClick={()=>toggleCastExpanded(cast.id)}>
+            <span><small>フリー</small><strong>{new Intl.NumberFormat("ja-JP").format(current.freeUnitPrice??0)}円</strong></span>
+            <span><small>写指</small><strong>{new Intl.NumberFormat("ja-JP").format(current.photoUnitPrice??0)}円</strong></span>
+            <span><small>本指</small><strong>{new Intl.NumberFormat("ja-JP").format(current.repeatUnitPrice??0)}円</strong></span>
+            <span><small>スペック</small><strong>{current.age||"—"}歳 / {current.heightCm||"—"}cm / {current.cupSize||"—"}cup</strong></span>
+            <span className={(current.ngDetails??[]).length?"hasAlert":""}><small>NG</small><strong>{(current.ngDetails??[]).length}件</strong></span>
+            <span><small>OP</small><strong>{(current.availableOptions??[]).length}件</strong></span>
+            <span className={current.advertisingUrl?"hasLink":""}><small>広告</small><strong>{current.advertisingUrl?"登録済":"未登録"}</strong></span>
+            <b>{isExpanded?"▲":"▼"}</b>
+          </button>
+
+          {isExpanded && <>
           <div className="castVerticalSection">
             <div className="castVerticalSectionTitle">単価設定</div>
             <div className="castVerticalRates">
@@ -330,6 +354,7 @@ export default function CastsPage(){
                 placeholder="受付時に共有したい内容"/>
             </label>
           </div>
+          </>}
         </article>
       })}
     </section>
