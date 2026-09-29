@@ -1,75 +1,92 @@
 import Link from "next/link";
 
-const masterItems = [
-  { title:"上部メニュー設定", description:"ヘッダーの表示項目・順番・表示名をカスタマイズ", href:"/settings/menu", action:"設定する" },
-  { title:"店舗設定", description:"店舗の営業時間を設定", href:"/store", action:"設定する" },
-  { title:"キャスト登録", description:"キャスト情報、単価、スペック、NG、可能OPを管理", href:"/casts/manage", action:"管理する" },
-  { title:"スタッフ登録", description:"スタッフ名、表示名、ログインIDを管理", href:"/staff", action:"管理する" },
-  { title:"ドライバー登録", description:"ドライバー名、電話番号、車両、ナンバーを管理", href:"/drivers", action:"管理する" },
-  { title:"ホテル登録", description:"ホテル名と交通費を管理", href:"/hotels", action:"管理する" },
-];
+type SettingsItem={
+  title:string;
+  description:string;
+  href:string;
+};
 
-const operationItems = [
-  { title:"顧客管理", description:"電話番号、利用履歴、注意事項、NG情報を確認", href:"/customers", action:"管理する" },
-  { title:"売上管理", description:"日別・キャスト別の売上と本数を集計", href:"/sales", action:"管理する" },
-  { title:"料金登録", description:"コース料金、指名料、交通費、延長料金を設定", href:"/pricing", action:"管理する" },
-  { title:"オプション管理", description:"オプション名、料金、有効状態を管理", href:"/options", action:"管理する" },
+const groups:{
+  title:string;
+  description:string;
+  countLabel:string;
+  items:SettingsItem[];
+}[]=[
+  {
+    title:"店舗・料金",
+    description:"営業時間、利用場所、料金、オプション",
+    countLabel:"4項目",
+    items:[
+      {title:"店舗設定",description:"営業時間・カード手数料・雑費ルールなど",href:"/store"},
+      {title:"ホテル・利用場所",description:"ビジネスホテル・ラブホテル・自宅、交通費を管理",href:"/hotels"},
+      {title:"料金登録",description:"コース料金・指名料・延長料金を設定",href:"/pricing"},
+      {title:"オプション管理",description:"オプション名・料金・有効状態を管理",href:"/options"},
+    ]
+  },
+  {
+    title:"人員管理",
+    description:"キャスト、スタッフ、ドライバー",
+    countLabel:"3項目",
+    items:[
+      {title:"キャスト登録",description:"単価・スペック・NG・可能OP・広告URL・備考",href:"/casts/manage"},
+      {title:"スタッフ登録",description:"スタッフ名・表示名・ログインIDを管理",href:"/staff"},
+      {title:"ドライバー登録",description:"電話番号・車両・ナンバー・備考を管理",href:"/drivers"},
+    ]
+  },
+  {
+    title:"営業管理",
+    description:"顧客情報と売上の確認",
+    countLabel:"2項目",
+    items:[
+      {title:"顧客管理",description:"電話番号・利用履歴・注意事項・NG情報を確認",href:"/customers"},
+      {title:"売上管理",description:"日別・キャスト別の売上と本数を集計",href:"/sales"},
+    ]
+  },
+  {
+    title:"システム",
+    description:"メニュー、権限、操作履歴",
+    countLabel:"3項目",
+    items:[
+      {title:"上部メニュー設定",description:"ヘッダーの表示・順番・名称をカスタマイズ",href:"/settings/menu"},
+      {title:"スタッフ権限",description:"受付・売上・設定変更などの権限を管理",href:"/permissions"},
+      {title:"操作履歴",description:"誰がいつ何を変更したかを確認",href:"/logs"},
+    ]
+  }
 ];
-
-const systemItems = [
-  { title:"スタッフ権限", description:"閲覧・受付・売上・設定変更などの権限を管理", href:"/permissions", action:"管理する" },
-  { title:"操作履歴", description:"誰がいつ何を変更したかを確認", href:"/logs", action:"管理する" },
-];
-
-function SettingsCard({item}:{item:{title:string;description:string;href:string;action:string}}){
-  const active = item.href.startsWith("/");
-  return <Link href={item.href} className={`settingsHubCard ${active?"isActive":""}`}>
-    <div>
-      <strong>{item.title}</strong>
-      <p>{item.description}</p>
-    </div>
-    <span>{item.action} →</span>
-  </Link>
-}
 
 export default function SettingsPage(){
-  return <div className="settingsHub">
+  return <div className="settingsHub settingsHubCompact">
     <header className="settingsHubHeader">
       <div>
         <p className="eyebrow">SETTINGS</p>
         <h1>設定・管理</h1>
-        <p>店舗運営で使う基本データや権限、売上情報をここから管理します。</p>
+        <p>必要なカテゴリを開いて設定してください。</p>
       </div>
     </header>
 
-    <section className="settingsGroup">
-      <div className="settingsGroupTitle">
-        <h2>基本マスタ</h2>
-        <span>日々の受付で使用する登録情報</span>
-      </div>
-      <div className="settingsHubGrid">
-        {masterItems.map(item=><SettingsCard key={item.title} item={item}/>)}
-      </div>
-    </section>
+    <section className="settingsAccordionList">
+      {groups.map(group=><details className="settingsAccordion" key={group.title}>
+        <summary>
+          <div className="settingsAccordionTitle">
+            <strong>{group.title}</strong>
+            <span>{group.description}</span>
+          </div>
+          <div className="settingsAccordionMeta">
+            <small>{group.countLabel}</small>
+            <b aria-hidden="true">＋</b>
+          </div>
+        </summary>
 
-    <section className="settingsGroup">
-      <div className="settingsGroupTitle">
-        <h2>営業・会計</h2>
-        <span>顧客・料金・売上に関する設定</span>
-      </div>
-      <div className="settingsHubGrid">
-        {operationItems.map(item=><SettingsCard key={item.title} item={item}/>)}
-      </div>
+        <div className="settingsAccordionBody">
+          {group.items.map(item=><Link href={item.href} className="settingsCompactItem" key={item.href}>
+            <div>
+              <strong>{item.title}</strong>
+              <p>{item.description}</p>
+            </div>
+            <span>開く →</span>
+          </Link>)}
+        </div>
+      </details>)}
     </section>
-
-    <section className="settingsGroup">
-      <div className="settingsGroupTitle">
-        <h2>システム管理</h2>
-        <span>権限と操作履歴</span>
-      </div>
-      <div className="settingsHubGrid">
-        {systemItems.map(item=><SettingsCard key={item.title} item={item}/>)}
-      </div>
-    </section>
-  </div>
+  </div>;
 }
