@@ -2,17 +2,31 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const nav = [
-  ["/", "配車管理"],
-  ["/casts", "キャスト出勤管理"],
-  ["/settlement", "キャスト精算"],
-  ["/orders", "予約一覧"],
-  ["/settings", "設定"],
-] as const;
+import { useEffect, useState } from "react";
+import { defaultTopNavigation } from "@/lib/navigation";
+import { loadTopNavigation } from "@/lib/storage";
+import type { TopNavItem } from "@/lib/types";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [nav,setNav]=useState<TopNavItem[]>(defaultTopNavigation);
+
+  useEffect(()=>{
+    const refresh=()=>setNav(loadTopNavigation(defaultTopNavigation));
+    refresh();
+    window.addEventListener("nightdesk:navigation",refresh);
+    window.addEventListener("storage",refresh);
+    return ()=>{
+      window.removeEventListener("nightdesk:navigation",refresh);
+      window.removeEventListener("storage",refresh);
+    };
+  },[]);
+
+  function isActive(href:string){
+    if(href==="/") return pathname==="/";
+    return pathname===href || pathname.startsWith(href+"/");
+  }
+
   return (
     <div className="appFrame">
       <header className="topConsoleBar">
@@ -24,8 +38,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </Link>
         <nav className="topConsoleNav">
-          {nav.map(([href,label])=>(
-            <Link key={href} href={href} className={pathname===href?"active":""}>{label}</Link>
+          {nav.filter(item=>item.visible || item.id==="settings").map(item=>(
+            <Link key={item.id} href={item.href} className={isActive(item.href)?"active":""}>{item.label}</Link>
           ))}
         </nav>
         <div className="consoleShop">

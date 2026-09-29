@@ -1,4 +1,4 @@
-import type { AuditLog, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings } from "./types";
+import type { AuditLog, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings, TopNavItem } from "./types";
 import {
   casts as demoCasts,
   defaultPricingConfig as demoPricing,
@@ -29,6 +29,7 @@ const STORE_SETTINGS_KEY = "night-desk-store-settings-v01";
 const SETTLEMENT_KEY = "night-desk-cast-settlement-v01";
 const SETTLEMENT_DAILY_KEY = "night-desk-cast-settlement-daily-v01";
 const SHARED_MEMO_KEY = "night-desk-shared-memo-v01";
+const TOP_NAV_KEY = "night-desk-top-nav-v01";
 const DEMO_SEED_KEY = "night-desk-demo-seed-version";
 const DEMO_SEED_VERSION = "2026-09-full-demo-v1";
 
@@ -525,4 +526,39 @@ export function saveSharedMemo(memo:string){
   localStorage.setItem(SHARED_MEMO_KEY,memo);
   window.dispatchEvent(new Event("nightdesk:shared-memo"));
   appendAuditLog("共有","共有メモを保存",memo.slice(0,80));
+}
+
+
+export function loadTopNavigation(defaultItems:TopNavItem[]):TopNavItem[]{
+  if(typeof window==="undefined") return defaultItems;
+  try{
+    const raw=localStorage.getItem(TOP_NAV_KEY);
+    if(!raw) return defaultItems;
+    const saved=JSON.parse(raw) as TopNavItem[];
+    const defaultsById=new Map(defaultItems.map(item=>[item.id,item]));
+    const merged:TopNavItem[]=[];
+    for(const item of saved){
+      const base=defaultsById.get(item.id);
+      if(!base) continue;
+      merged.push({
+        ...base,
+        label:item.label?.trim() || base.label,
+        visible:item.id==="settings" ? true : item.visible!==false,
+        locked:item.id==="settings" ? true : base.locked
+      });
+      defaultsById.delete(item.id);
+    }
+    for(const item of defaultsById.values()) merged.push(item);
+    return merged;
+  }catch{
+    return defaultItems;
+  }
+}
+
+export function saveTopNavigation(items:TopNavItem[]){
+  if(typeof window==="undefined") return;
+  const normalized=items.map(item=>item.id==="settings"?{...item,visible:true,locked:true}:item);
+  localStorage.setItem(TOP_NAV_KEY,JSON.stringify(normalized));
+  window.dispatchEvent(new Event("nightdesk:navigation"));
+  appendAuditLog("設定","上部メニューを保存",normalized.map(item=>item.label).join(" / "));
 }

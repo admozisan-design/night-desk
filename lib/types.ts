@@ -90,3 +90,11 @@ export type Order = {
   courseId?:string; courseMinutes:number; extensionMinutes?:number; extensionTotal?:number; nominationType:"free"|"photo"|"repeat"; selectedOptions?:string[]; optionsTotal:number; travelFee:number;
   discount:number; surcharge?:number; adjustment:number; paymentMethod?:"cash"|"card"; cardFee?:number; total:number; status:OrderStatus; serviceDate?:string; scheduledStart:string; scheduledEnd:string; inTime?:string; note?:string; handoffNote?:string;
 };
+
+export type TopNavItem = {
+  id:"dispatch"|"casts"|"settlement"|"orders"|"settings";
+  href:string;
+  label:string;
+  visible:boolean;
+  locked?:boolean;
+};

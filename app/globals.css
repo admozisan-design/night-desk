@@ -2911,3 +2911,74 @@ button{
   .castCompactSummary{grid-template-columns:1fr 1fr;padding-right:32px}
   .castCardHeaderRight{width:100%;justify-content:space-between}
 }
+
+
+/* ===== Top menu settings ===== */
+.menuSettingsPage{max-width:1100px}
+.menuSettingsPanel{padding:0;overflow:hidden}
+.menuSettingsHelp{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:14px 16px;
+  border-bottom:1px solid #e2e7eb;
+  background:#f7f9fa;
+}
+.menuSettingsHelp strong{font-size:14px}
+.menuSettingsHelp span{font-size:11px;color:#78838d}
+.menuSettingsList{display:grid}
+.menuSettingsRow{
+  display:grid;
+  grid-template-columns:88px 150px minmax(260px,1fr) 130px;
+  align-items:center;
+  gap:14px;
+  padding:14px 16px;
+  border-bottom:1px solid #e7ebee;
+  background:#fff;
+}
+.menuSettingsRow:last-child{border-bottom:0}
+.menuOrderButtons{display:flex;gap:6px}
+.menuOrderButtons button{
+  width:36px;
+  height:36px;
+  border:1px solid #d2d9df;
+  border-radius:7px;
+  background:#fff;
+  color:#52606b;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+}
+.menuOrderButtons button:disabled{opacity:.3;cursor:not-allowed}
+.menuSettingsIdentity span,
+.menuSettingsIdentity strong{display:block}
+.menuSettingsIdentity span{font-size:10px;color:#8a949d;font-weight:900}
+.menuSettingsIdentity strong{margin-top:3px;font-size:12px;color:#48545f}
+.menuLabelEdit{display:grid;gap:5px;font-size:11px;font-weight:900;color:#626e79}
+.menuLabelEdit input{min-height:42px;padding:8px 10px}
+.menuVisibilityToggle{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  font-size:12px;
+  font-weight:900;
+}
+.menuVisibilityToggle input{width:18px;height:18px}
+.menuPreview{margin-top:14px;padding:14px 16px}
+.menuPreview>span{display:block;margin-bottom:9px;font-size:11px;color:#818b94;font-weight:900}
+.menuPreview>div{display:flex;gap:8px;flex-wrap:wrap}
+.menuPreview b{
+  padding:8px 12px;
+  border-radius:8px;
+  background:#eef6df;
+  color:#415d1c;
+  font-size:12px;
+}
+@media(max-width:800px){
+  .menuSettingsRow{grid-template-columns:72px 1fr}
+  .menuLabelEdit{grid-column:1/-1}
+  .menuVisibilityToggle{justify-content:flex-start}
+  .menuSettingsHelp{align-items:flex-start;flex-direction:column}
+}

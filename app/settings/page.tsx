@@ -16,6 +16,7 @@ const operationItems = [
 ];
 
 const systemItems = [
+  { title:"上部メニュー設定", description:"ヘッダーの表示項目・順番・表示名をカスタマイズ", href:"/settings/menu", action:"設定する" },
   { title:"スタッフ権限", description:"閲覧・受付・売上・設定変更などの権限を管理", href:"/permissions", action:"管理する" },
   { title:"操作履歴", description:"誰がいつ何を変更したかを確認", href:"/logs", action:"管理する" },
 ];
