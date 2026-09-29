@@ -92,9 +92,10 @@ export type Order = {
 };
 
 export type TopNavItem = {
-  id:"dispatch"|"casts"|"settlement"|"orders"|"settings";
+  id:string;
   href:string;
   label:string;
   visible:boolean;
   locked?:boolean;
+  inMenu?:boolean;
 };

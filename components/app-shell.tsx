@@ -38,7 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </Link>
         <nav className="topConsoleNav">
-          {nav.filter(item=>item.visible || item.id==="settings").map(item=>(
+          {nav.filter(item=>(item.inMenu!==false) && (item.visible || item.id==="settings")).map(item=>(
             <Link key={item.id} href={item.href} className={isActive(item.href)?"active":""}>{item.label}</Link>
           ))}
         </nav>

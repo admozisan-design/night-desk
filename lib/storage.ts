@@ -537,17 +537,29 @@ export function loadTopNavigation(defaultItems:TopNavItem[]):TopNavItem[]{
     const saved=JSON.parse(raw) as TopNavItem[];
     const defaultsById=new Map(defaultItems.map(item=>[item.id,item]));
     const merged:TopNavItem[]=[];
+
     for(const item of saved){
       const base=defaultsById.get(item.id);
-      if(!base) continue;
-      merged.push({
-        ...base,
-        label:item.label?.trim() || base.label,
-        visible:item.id==="settings" ? true : item.visible!==false,
-        locked:item.id==="settings" ? true : base.locked
-      });
-      defaultsById.delete(item.id);
+      if(base){
+        merged.push({
+          ...base,
+          ...item,
+          label:item.label?.trim() || base.label,
+          visible:item.id==="settings" ? true : item.visible!==false,
+          locked:item.id==="settings" ? true : base.locked,
+          inMenu:item.id==="settings" ? true : item.inMenu!==false
+        });
+        defaultsById.delete(item.id);
+      }else if(item?.id && item?.href){
+        merged.push({
+          ...item,
+          label:item.label?.trim() || item.href,
+          visible:item.visible!==false,
+          inMenu:item.inMenu!==false
+        });
+      }
     }
+
     for(const item of defaultsById.values()) merged.push(item);
     return merged;
   }catch{
@@ -557,8 +569,11 @@ export function loadTopNavigation(defaultItems:TopNavItem[]):TopNavItem[]{
 
 export function saveTopNavigation(items:TopNavItem[]){
   if(typeof window==="undefined") return;
-  const normalized=items.map(item=>item.id==="settings"?{...item,visible:true,locked:true}:item);
+  const normalized=items.map(item=>item.id==="settings"
+    ? {...item,visible:true,locked:true,inMenu:true}
+    : {...item,inMenu:item.inMenu!==false}
+  );
   localStorage.setItem(TOP_NAV_KEY,JSON.stringify(normalized));
   window.dispatchEvent(new Event("nightdesk:navigation"));
-  appendAuditLog("設定","上部メニューを保存",normalized.map(item=>item.label).join(" / "));
+  appendAuditLog("設定","上部メニューを保存",normalized.filter(item=>item.inMenu!==false).map(item=>item.label).join(" / "));
 }

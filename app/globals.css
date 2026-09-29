@@ -3269,3 +3269,142 @@ button{
   .settingsAccordionTitle strong{font-size:16px}
   .settingsAccordionMeta small{display:none}
 }
+
+
+/* ===== Settings menu catalog drag-to-header ===== */
+.dragMenuPanel.isDropActive,
+.settingsMenuCatalog.isDropActive{
+  box-shadow:0 0 0 3px rgba(132,204,22,.16);
+  border-color:#91bf50;
+}
+.dragMenuDestination{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:8px;
+}
+.dragMenuDestination>div{min-width:0}
+.dragMenuDestination button{
+  flex-shrink:0;
+  padding:5px 8px;
+  border:1px solid #e1c8c8;
+  border-radius:6px;
+  background:#fff7f7;
+  color:#a34141;
+  font-size:10px;
+  font-weight:900;
+  cursor:pointer;
+}
+.settingsMenuCatalog{
+  margin-top:16px;
+  padding:0;
+  overflow:hidden;
+}
+.settingsMenuCatalogHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:16px 18px;
+  border-bottom:1px solid #e1e6ea;
+  background:#f8fafb;
+}
+.settingsMenuCatalogHead>div strong,
+.settingsMenuCatalogHead>div span{display:block}
+.settingsMenuCatalogHead>div strong{font-size:16px}
+.settingsMenuCatalogHead>div span{margin-top:4px;color:#6f7c87;font-size:12px}
+.settingsMenuCatalogHead>small{
+  padding:5px 8px;
+  border-radius:999px;
+  background:#edf6df;
+  color:#4f741f;
+  font-size:11px;
+  font-weight:900;
+}
+.settingsMenuCatalogGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  padding:14px;
+  background:#eef1f4;
+}
+.settingsMenuCatalogCard{
+  display:grid;
+  grid-template-columns:36px minmax(0,1fr) auto;
+  align-items:center;
+  gap:9px;
+  min-height:74px;
+  padding:11px;
+  border:1px solid #d4dce2;
+  border-radius:10px;
+  background:#fff;
+  cursor:grab;
+  transition:.12s ease;
+}
+.settingsMenuCatalogCard:hover{
+  border-color:#9bc76a;
+  box-shadow:0 3px 9px rgba(38,55,25,.07);
+  transform:translateY(-1px);
+}
+.settingsMenuCatalogCard:active{cursor:grabbing}
+.settingsMenuCatalogCard.isAdded{
+  background:#f4f6f7;
+  opacity:.68;
+  cursor:default;
+  transform:none;
+}
+.settingsCatalogDrag{
+  display:grid;
+  place-items:center;
+  width:34px;
+  height:34px;
+  border:1px solid #ccd5dc;
+  border-radius:7px;
+  background:#f8fafb;
+  color:#596773;
+  font-size:17px;
+  font-weight:900;
+}
+.settingsCatalogInfo{min-width:0}
+.settingsCatalogInfo strong,
+.settingsCatalogInfo span{display:block}
+.settingsCatalogInfo strong{
+  overflow:hidden;
+  font-size:13px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.settingsCatalogInfo span{
+  margin-top:3px;
+  color:#89939c;
+  font-size:9px;
+}
+.settingsMenuCatalogCard em{
+  padding:4px 7px;
+  border-radius:999px;
+  background:#e7f2d8;
+  color:#547624;
+  font-size:9px;
+  font-style:normal;
+  font-weight:900;
+}
+.settingsMenuCatalogCard>button{
+  min-height:32px;
+  padding:5px 8px;
+  border:1px solid #a9c97f;
+  border-radius:7px;
+  background:#eef7e3;
+  color:#4c721e;
+  font-size:10px;
+  font-weight:900;
+  cursor:pointer;
+}
+@media(max-width:1250px){
+  .settingsMenuCatalogGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:900px){
+  .settingsMenuCatalogGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .settingsMenuCatalogGrid{grid-template-columns:1fr}
+}
