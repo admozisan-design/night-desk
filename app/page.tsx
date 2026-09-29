@@ -4,7 +4,6 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { exportDailyExcel, exportDailyPdf } from "@/lib/end-of-day-export";
 import { deleteOrder, loadCasts, loadCustomers, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, saveOrder, saveSharedMemo, updateOrder } from "@/lib/storage";
 import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
@@ -978,18 +977,11 @@ export default function DashboardPage(){
     <section className="boardSection">
       <div className="boardSectionHead">
         <div><h2>配車ボード</h2><span>{date}</span><span>営業時間 {storeSettings.openTime}〜{storeSettings.closeTime}</span></div>
-        <div className="boardSectionActions">
-          <div className="boardLegend">
-            <span><i className="legend beforeDispatch"/>配車前</span>
-            <span><i className="legend afterDispatch"/>配車後</span>
-            <span><i className="legend inService"/>イン中</span>
-            <span><i className="legend out"/>アウト</span>
-          </div>
-          <div className="endOfDayExport">
-            <span>終業保存</span>
-            <button type="button" onClick={()=>void exportDailyExcel({date,orders:selectedDateOrders,casts:workingCasts,storeSettings})}>Excel保存</button>
-            <button type="button" onClick={()=>exportDailyPdf({date,orders:selectedDateOrders,casts:workingCasts,storeSettings})}>PDF保存</button>
-          </div>
+        <div className="boardLegend">
+          <span><i className="legend beforeDispatch"/>配車前</span>
+          <span><i className="legend afterDispatch"/>配車後</span>
+          <span><i className="legend inService"/>イン中</span>
+          <span><i className="legend out"/>アウト</span>
         </div>
       </div>
       <div className="dispatchScroll boardZoomWrap">

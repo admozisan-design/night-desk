@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { casts as defaultCasts, defaultStoreSettings } from "@/lib/mock-data";
 import { loadCasts, loadOrders, loadStoreSettings } from "@/lib/storage";
-import { exportDailyExcel, exportDailyPdf } from "@/lib/end-of-day-export";
 import type { Cast, CastAttendanceStatus, CastStatus, Order } from "@/lib/types";
 
 const BOARD_START=10*60;
@@ -168,14 +167,7 @@ export default function StandaloneBoardPage(){
         <button type="button" onClick={()=>shiftDate(1)}>翌日</button>
       </div>
 
-      <div className="standaloneBoardToolbarActions">
-        <div className="endOfDayExport">
-          <span>終業保存</span>
-          <button type="button" onClick={()=>void exportDailyExcel({date,orders:selectedDateOrders,casts:workingCasts,storeSettings})}>Excel保存</button>
-          <button type="button" onClick={()=>exportDailyPdf({date,orders:selectedDateOrders,casts:workingCasts,storeSettings})}>PDF保存</button>
-        </div>
-        <Link href="/" className="standaloneBoardManageLink">配車管理を開く</Link>
-      </div>
+      <Link href="/" className="standaloneBoardManageLink">配車管理を開く</Link>
     </header>
 
     <section className="standaloneBoardStats">

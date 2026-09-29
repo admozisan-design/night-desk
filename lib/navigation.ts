@@ -18,6 +18,7 @@ export const settingsNavigationCatalog:TopNavItem[]=[
   {id:"nav-hotels",href:"/hotels",label:"ホテル・利用場所",visible:true,inMenu:false},
   {id:"nav-customers",href:"/customers",label:"顧客管理",visible:true,inMenu:false},
   {id:"nav-sales",href:"/sales",label:"売上管理",visible:true,inMenu:false},
+  {id:"nav-closing",href:"/closing",label:"締め作業",visible:true,inMenu:false},
   {id:"nav-pricing",href:"/pricing",label:"料金登録",visible:true,inMenu:false},
   {id:"nav-options",href:"/options",label:"オプション管理",visible:true,inMenu:false},
   {id:"nav-permissions",href:"/permissions",label:"スタッフ権限",visible:true,inMenu:false},

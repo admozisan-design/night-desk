@@ -3686,3 +3686,128 @@ button{
     width:100%;
   }
 }
+
+
+/* ===== Closing page ===== */
+.closingPage{max-width:1180px}
+.closingDatePanel{
+  display:flex;
+  align-items:end;
+  gap:10px;
+  padding:14px 16px;
+}
+.closingDatePanel label{
+  display:grid;
+  gap:6px;
+  min-width:250px;
+  color:#62707b;
+  font-size:12px;
+  font-weight:900;
+}
+.closingDatePanel input{
+  min-height:44px;
+  padding:8px 10px;
+  border:1px solid #d4dde3;
+  border-radius:8px;
+  background:#fff;
+  font-weight:900;
+}
+.closingDatePanel button{
+  min-height:44px;
+  padding:8px 13px;
+  border:1px solid #d2dbe1;
+  border-radius:8px;
+  background:#f8fafb;
+  color:#52606b;
+  font-weight:900;
+  cursor:pointer;
+}
+.closingSummary{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+.closingSummary>div{
+  min-height:82px;
+  padding:13px 14px;
+  border:1px solid #dce3e8;
+  border-radius:10px;
+  background:#fff;
+}
+.closingSummary span,
+.closingSummary small{display:block;color:#81909a;font-size:10px;font-weight:900}
+.closingSummary strong{display:block;margin-top:7px;font-size:20px}
+.closingSummaryTotal{
+  border-color:#9fc96c!important;
+  background:#f3faea!important;
+}
+.closingSummaryTotal strong{color:#4f741f}
+.closingExportPanel{
+  display:grid;
+  grid-template-columns:minmax(280px,1fr) minmax(460px,1.2fr);
+  gap:20px;
+  align-items:center;
+  margin-top:14px;
+  padding:20px;
+}
+.closingExportInfo strong,
+.closingExportInfo span{display:block}
+.closingExportInfo strong{font-size:18px}
+.closingExportInfo span{margin-top:5px;color:#697681;font-size:12px;font-weight:900}
+.closingExportInfo p{margin:10px 0 0;color:#7c8790;font-size:11px;line-height:1.6}
+.closingExportButtons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.closingExportButtons button{
+  min-height:112px;
+  padding:14px;
+  border:2px solid #d3dce2;
+  border-radius:11px;
+  background:#fff;
+  text-align:left;
+  cursor:pointer;
+}
+.closingExportButtons button>span,
+.closingExportButtons button>strong,
+.closingExportButtons button>small{display:block}
+.closingExportButtons button>span{font-size:10px;font-weight:900}
+.closingExportButtons button>strong{margin-top:8px;font-size:17px}
+.closingExportButtons button>small{margin-top:5px;color:#7a8791;font-size:10px}
+.closingExcelButton{border-color:#9cc969!important;background:#f4faec!important}
+.closingExcelButton>span,.closingExcelButton>strong{color:#4d721f}
+.closingPdfButton{border-color:#dbc98d!important;background:#fffaf0!important}
+.closingPdfButton>span,.closingPdfButton>strong{color:#785f1f}
+.closingCheckPanel{margin-top:14px;padding:0;overflow:hidden}
+.closingCheckHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:13px 15px;
+  border-bottom:1px solid #e2e7eb;
+  background:#f8fafb;
+}
+.closingCheckHead strong{font-size:14px}
+.closingCheckHead span{font-size:10px;color:#818c95}
+.closingCheckGrid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+}
+.closingCheckGrid>div{padding:14px 15px;border-right:1px solid #e4e9ec}
+.closingCheckGrid>div:last-child{border-right:0}
+.closingCheckGrid span{display:block;color:#84909a;font-size:10px;font-weight:900}
+.closingCheckGrid strong{display:block;margin-top:5px;font-size:16px}
+@media(max-width:900px){
+  .closingSummary{grid-template-columns:repeat(3,1fr)}
+  .closingExportPanel{grid-template-columns:1fr}
+}
+@media(max-width:650px){
+  .closingDatePanel{align-items:stretch;flex-direction:column}
+  .closingDatePanel label{min-width:0}
+  .closingSummary{grid-template-columns:1fr 1fr}
+  .closingExportButtons{grid-template-columns:1fr}
+  .closingCheckGrid{grid-template-columns:1fr 1fr}
+}
