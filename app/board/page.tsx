@@ -110,6 +110,8 @@ export default function StandaloneBoardPage(){
   const [now,setNow]=useState<Date|null>(null);
   const boardScrollRef=useRef<HTMLDivElement|null>(null);
   const lastBoardAutoScrollDateRef=useRef<string|null>(null);
+  const boardGridRef=useRef<HTMLDivElement|null>(null);
+  const [globalNowLineLeft,setGlobalNowLineLeft]=useState<number|null>(null);
 
   useEffect(()=>{
     const refresh=()=>{
@@ -183,6 +185,32 @@ export default function StandaloneBoardPage(){
     return ()=>window.cancelAnimationFrame(frame);
   },[date,now,today]);
 
+  useEffect(()=>{
+    if(!now || date!==today){
+      setGlobalNowLineLeft(null);
+      return;
+    }
+
+    const update=()=>{
+      const board=boardGridRef.current;
+      const timeline=board?.querySelector<HTMLElement>(".timelineHeader");
+      if(!board || !timeline) return;
+
+      let minutes=now.getHours()*60+now.getMinutes();
+      if(now.getHours()<10) minutes+=24*60;
+      const elapsed=Math.max(0,Math.min(BOARD_MINUTES,minutes-BOARD_START));
+      const ratio=elapsed/BOARD_MINUTES;
+      setGlobalNowLineLeft(timeline.offsetLeft+(timeline.offsetWidth*ratio));
+    };
+
+    const frame=window.requestAnimationFrame(update);
+    window.addEventListener("resize",update);
+    return ()=>{
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize",update);
+    };
+  },[date,now,today,workingCasts.length]);
+
   function shiftDate(days:number){
     const base=new Date(date+"T12:00:00");
     base.setDate(base.getDate()+days);
@@ -224,11 +252,12 @@ export default function StandaloneBoardPage(){
       </div>
 
       <div className="dispatchScroll standaloneDispatchScroll" ref={boardScrollRef}>
-        <div className="dispatchBoard wideBoard standaloneDispatchBoard">
+        <div className="dispatchBoard wideBoard standaloneDispatchBoard" ref={boardGridRef}>
           <div className="dispatchHeader dispatchNameHead">キャスト</div>
           <div className="dispatchHeader dispatchShiftHead">出勤 / 終了条件</div>
           <div className="dispatchHeader dispatchCountHead">本数</div>
           <div className="timelineHeader longTimeline">{hourLabels.map(hour=><div key={hour}>{hour}</div>)}</div>
+          {globalNowLineLeft!==null && <span className="globalNowLine" style={{left:globalNowLineLeft}}><b>現在</b></span>}
 
           {workingCasts.map(cast=>{
             const castOrders=selectedOrders.filter(order=>order.castId===cast.id);
@@ -298,8 +327,6 @@ export default function StandaloneBoardPage(){
                 {unavailable && <div className="unavailableCastTimelineBlock">
                   <strong>{attendance==="absent"?"当欠":"早退"}</strong>
                 </div>}
-
-                {nowPosition && <span className="nowLine" style={{left:nowPosition}}><b>現在</b></span>}
               </div>
             </div>;
           })}
@@ -309,7 +336,7 @@ export default function StandaloneBoardPage(){
           <div className="dispatchName totalCell"><strong>合計</strong></div>
           <div className="dispatchShift totalCell"><strong>{workingCasts.length}人</strong></div>
           <div className="dispatchCount totalCell"><strong>{selectedOrders.length}</strong><span>本</span></div>
-          <div className="timelineCell totalTimeline">{nowPosition && <span className="nowLine" style={{left:nowPosition}}/>}</div>
+          <div className="timelineCell totalTimeline"/>
         </div>
       </div>
     </section>

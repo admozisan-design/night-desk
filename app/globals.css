@@ -4113,3 +4113,36 @@ button{
     grid-template-columns:1fr!important;
   }
 }
+
+
+/* ===== Single global current-time line ===== */
+.dispatchBoard{
+  position:relative;
+}
+.globalNowLine{
+  position:absolute;
+  top:0;
+  bottom:0;
+  width:2px;
+  background:#e23b51;
+  z-index:45;
+  pointer-events:none;
+}
+.globalNowLine b{
+  position:sticky;
+  top:4px;
+  display:inline-block;
+  transform:translateX(4px);
+  padding:3px 5px;
+  border-radius:4px;
+  background:#e23b51;
+  color:#fff;
+  font-size:9px;
+  font-weight:900;
+  white-space:nowrap;
+  box-shadow:0 1px 3px rgba(0,0,0,.18);
+}
+/* Old per-row marker is no longer used. */
+.nowLine{
+  display:none!important;
+}
