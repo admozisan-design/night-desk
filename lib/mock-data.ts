@@ -45,7 +45,9 @@ export const defaultStoreSettings: StoreSettings = {
   cardFeeRate:10,
   priceUnit:100,
   miscExpenseMode:"percent",
-  miscExpenseValue:6
+  miscExpenseValue:6,
+  changeFee:0,
+  cancelFee:0
 };
 
 export const options: StoreOption[] = [
