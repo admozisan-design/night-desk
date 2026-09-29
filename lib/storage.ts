@@ -1,4 +1,4 @@
-import type { AuditLog, Cast, CastSettlementAdjustment, Customer, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings } from "./types";
+import type { AuditLog, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings } from "./types";
 
 const ORDER_KEY = "night-desk-orders-sample-v02";
 const CAST_KEY = "night-desk-casts-sample-v03";
@@ -12,6 +12,7 @@ const PERMISSION_KEY = "night-desk-permissions-sample-v01";
 const LOG_KEY = "night-desk-audit-log-v01";
 const STORE_SETTINGS_KEY = "night-desk-store-settings-v01";
 const SETTLEMENT_KEY = "night-desk-cast-settlement-v01";
+const SETTLEMENT_DAILY_KEY = "night-desk-cast-settlement-daily-v01";
 
 export function loadOrders():Order[] {
   if (typeof window === "undefined") return [];
@@ -395,5 +396,25 @@ export function saveCastSettlementAdjustment(adjustment:CastSettlementAdjustment
   localStorage.setItem(SETTLEMENT_KEY,JSON.stringify(next));
   window.dispatchEvent(new Event("nightdesk:settlement"));
   appendAuditLog("精算","キャスト精算を保存",adjustment.orderId);
+  return next;
+}
+
+
+export function loadCastSettlementDailyConfigs():Record<string,CastSettlementDailyConfig> {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(SETTLEMENT_DAILY_KEY) ?? "{}") as Record<string,CastSettlementDailyConfig>;
+  } catch {
+    return {};
+  }
+}
+
+export function saveCastSettlementDailyConfig(config:CastSettlementDailyConfig){
+  if (typeof window === "undefined") return;
+  const current=loadCastSettlementDailyConfigs();
+  const next={...current,[config.key]:config};
+  localStorage.setItem(SETTLEMENT_DAILY_KEY,JSON.stringify(next));
+  window.dispatchEvent(new Event("nightdesk:settlement"));
+  appendAuditLog("精算","雑費設定を保存",config.miscExpenseEnabled ? `${config.date} / ${config.miscExpense}円` : `${config.date} / 雑費なし`);
   return next;
 }

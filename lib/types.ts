@@ -51,6 +51,13 @@ export type CastSettlementAdjustment = {
   adjustment:number;
   memo?:string;
 };
+export type CastSettlementDailyConfig = {
+  key:string;
+  date:string;
+  castId:string;
+  miscExpenseEnabled:boolean;
+  miscExpense:number;
+};
 export type Customer = { id:string; phone:string; name?:string; notes?:string; ngInfo?:string; active?:boolean; };
 export type PricingConfig = {
   courses:Course[];

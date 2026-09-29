@@ -2588,3 +2588,69 @@ button{
   .topConsoleNav a{font-size:13px}
   .pageHeader h1{font-size:27px}
 }
+
+
+/* ===== Settlement misc expense ===== */
+.settlementExpensePanel{
+  margin-top:12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:14px 16px;
+}
+.settlementExpensePanel>div:first-child span,
+.settlementExpensePanel>div:first-child strong{display:block}
+.settlementExpenseLabel{font-size:11px;color:#89939c;font-weight:900}
+.settlementExpensePanel>div:first-child strong{margin-top:3px;font-size:14px}
+.settlementExpenseControls{display:flex;align-items:end;gap:12px;flex-wrap:wrap}
+.settlementExpenseToggle{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.settlementExpenseToggle button{
+  min-width:105px;
+  min-height:42px;
+  padding:8px 12px;
+  border:1px solid #d5dce2;
+  border-radius:8px;
+  background:#fff;
+  color:#697580;
+  font-weight:900;
+  cursor:pointer;
+}
+.settlementExpenseToggle button.active{
+  border-color:#85b947;
+  background:#edf7df;
+  color:#4a701a;
+}
+.settlementExpenseControls label{
+  display:grid;
+  gap:5px;
+  min-width:170px;
+  font-size:12px;
+  font-weight:900;
+  color:#626e79;
+}
+.settlementExpenseControls input{
+  min-height:42px;
+  padding:8px 10px;
+  border:1px solid #d6dde3;
+  border-radius:8px;
+  background:#fff;
+  font-size:14px;
+  font-weight:900;
+}
+.settlementExpenseSummary{
+  border-color:#edc9c9!important;
+  background:#fff7f7!important;
+}
+.settlementExpenseSummary strong{color:#b04444!important}
+.settlementSummary{
+  grid-template-columns:110px repeat(5,minmax(120px,1fr)) minmax(160px,1.25fr);
+}
+@media(max-width:1000px){
+  .settlementExpensePanel{align-items:stretch;flex-direction:column}
+  .settlementExpenseControls{align-items:stretch}
+}
+@media(max-width:650px){
+  .settlementExpenseControls{display:grid}
+  .settlementExpenseControls label{min-width:0}
+}

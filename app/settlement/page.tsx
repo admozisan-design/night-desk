@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { casts as defaultCasts } from "@/lib/mock-data";
 import { formatYen } from "@/lib/pricing";
-import { loadCastSettlementAdjustments, loadCasts, loadOrders, saveCastSettlementAdjustment } from "@/lib/storage";
-import type { Cast, CastSettlementAdjustment, Order } from "@/lib/types";
+import { loadCastSettlementAdjustments, loadCastSettlementDailyConfigs, loadCasts, loadOrders, saveCastSettlementAdjustment, saveCastSettlementDailyConfig } from "@/lib/storage";
+import type { Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Order } from "@/lib/types";
 
 function dateValue(date:Date){
   const y=date.getFullYear();
@@ -33,11 +33,15 @@ function baseBack(order:Order,cast:Cast){
 function emptyAdjustment(orderId:string):CastSettlementAdjustment{
   return {orderId,optionBack:0,extensionBack:0,adjustment:0,memo:""};
 }
+function settlementDailyKey(date:string,castId:string){
+  return `${date}:${castId}`;
+}
 
 export default function SettlementPage(){
   const [orders,setOrders]=useState<Order[]>([]);
   const [casts,setCasts]=useState<Cast[]>(defaultCasts);
   const [adjustments,setAdjustments]=useState<Record<string,CastSettlementAdjustment>>({});
+  const [dailyConfigs,setDailyConfigs]=useState<Record<string,CastSettlementDailyConfig>>({});
   const [date,setDate]=useState(()=>dateValue(new Date()));
   const [castId,setCastId]=useState("");
   const [savedOrderId,setSavedOrderId]=useState<string|null>(null);
@@ -48,6 +52,7 @@ export default function SettlementPage(){
       setOrders(loadOrders());
       setCasts(loadedCasts);
       setAdjustments(loadCastSettlementAdjustments());
+      setDailyConfigs(loadCastSettlementDailyConfigs());
       setCastId(current=>current || loadedCasts.find(c=>c.visible!==false)?.id || loadedCasts[0]?.id || "");
     };
     refresh();
@@ -63,6 +68,15 @@ export default function SettlementPage(){
 
   const activeCasts=casts.filter(c=>c.visible!==false);
   const selectedCast=casts.find(c=>c.id===castId);
+
+  const dailyKey=settlementDailyKey(date,castId);
+  const dailyConfig=dailyConfigs[dailyKey] ?? {
+    key:dailyKey,
+    date,
+    castId,
+    miscExpenseEnabled:false,
+    miscExpense:0
+  };
 
   const settlementOrders=useMemo(()=>orders
     .filter(order=>order.status!=="cancelled" && order.castId===castId && orderDate(order)===date)
@@ -80,14 +94,28 @@ export default function SettlementPage(){
     option:acc.option+row.adjustment.optionBack,
     extension:acc.extension+row.adjustment.extensionBack,
     adjustment:acc.adjustment+row.adjustment.adjustment,
-    payout:acc.payout+row.subtotal
-  }),{base:0,option:0,extension:0,adjustment:0,payout:0});
+    payoutBeforeExpense:acc.payoutBeforeExpense+row.subtotal
+  }),{base:0,option:0,extension:0,adjustment:0,payoutBeforeExpense:0});
+  const miscExpense=dailyConfig.miscExpenseEnabled ? Math.max(0,dailyConfig.miscExpense) : 0;
+  const payout=Math.max(0,totals.payoutBeforeExpense-miscExpense);
 
   function updateAdjustment(orderId:string,changes:Partial<CastSettlementAdjustment>){
     setAdjustments(current=>{
       const base=current[orderId] ?? emptyAdjustment(orderId);
       return {...current,[orderId]:{...base,...changes}};
     });
+  }
+
+  function updateDailyConfig(changes:Partial<CastSettlementDailyConfig>){
+    setDailyConfigs(current=>{
+      const base=current[dailyKey] ?? dailyConfig;
+      return {...current,[dailyKey]:{...base,...changes,key:dailyKey,date,castId}};
+    });
+  }
+
+  function saveDailyConfig(){
+    const value=dailyConfigs[dailyKey] ?? dailyConfig;
+    saveCastSettlementDailyConfig(value);
   }
 
   function saveRow(orderId:string){
@@ -101,6 +129,7 @@ export default function SettlementPage(){
     for(const row of rows){
       saveCastSettlementAdjustment(adjustments[row.order.id] ?? emptyAdjustment(row.order.id));
     }
+    saveDailyConfig();
     setSavedOrderId("all");
     window.setTimeout(()=>setSavedOrderId(null),1200);
   }
@@ -134,13 +163,37 @@ export default function SettlementPage(){
       </div>}
     </section>
 
+    <section className="panel settlementExpensePanel">
+      <div>
+        <span className="settlementExpenseLabel">雑費</span>
+        <strong>この日の精算に雑費を適用するか選択</strong>
+      </div>
+      <div className="settlementExpenseControls">
+        <div className="settlementExpenseToggle">
+          <button type="button" className={!dailyConfig.miscExpenseEnabled?"active":""} onClick={()=>updateDailyConfig({miscExpenseEnabled:false,miscExpense:0})}>雑費なし</button>
+          <button type="button" className={dailyConfig.miscExpenseEnabled?"active":""} onClick={()=>updateDailyConfig({miscExpenseEnabled:true})}>雑費あり</button>
+        </div>
+        {dailyConfig.miscExpenseEnabled && <label>雑費金額
+          <input
+            type="number"
+            min="0"
+            step="500"
+            value={dailyConfig.miscExpense}
+            onChange={e=>updateDailyConfig({miscExpense:Number(e.target.value)})}
+            onBlur={saveDailyConfig}
+          />
+        </label>}
+      </div>
+    </section>
+
     <section className="settlementSummary">
       <div><span>本数</span><strong>{rows.length}</strong><small>本</small></div>
       <div><span>基本バック</span><strong>{formatYen(totals.base)}</strong></div>
       <div><span>OPバック</span><strong>{formatYen(totals.option)}</strong></div>
       <div><span>延長バック</span><strong>{formatYen(totals.extension)}</strong></div>
       <div><span>その他調整</span><strong>{formatYen(totals.adjustment)}</strong></div>
-      <div className="settlementPayout"><span>支給合計</span><strong>{formatYen(totals.payout)}</strong></div>
+      <div className="settlementExpenseSummary"><span>雑費</span><strong>{miscExpense>0 ? "−"+formatYen(miscExpense) : formatYen(0)}</strong></div>
+      <div className="settlementPayout"><span>支給合計</span><strong>{formatYen(payout)}</strong></div>
     </section>
 
     <section className="panel settlementPanel">
@@ -185,7 +238,7 @@ export default function SettlementPage(){
 
     <section className="settlementHelp">
       <strong>計算ルール</strong>
-      <p>基本バックはキャスト登録の「フリー / 写真指名 / 本指名」単価を使用します。OPバック・延長バック・その他調整は精算時に入力し、その他調整はマイナス入力で控除にも使えます。</p>
+      <p>基本バックはキャスト登録の「フリー / 写真指名 / 本指名」単価を使用します。OPバック・延長バック・その他調整を加算後、「雑費あり」の場合だけ雑費を支給合計から控除します。雑費不要のキャストは「雑費なし」を選択してください。</p>
     </section>
   </div>;
 }
