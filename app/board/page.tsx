@@ -135,9 +135,13 @@ export default function StandaloneBoardPage(){
       return normalizedMinutes(aStart)-normalizedMinutes(bStart);
     }),[casts,date]);
 
-  const selectedOrders=useMemo(
-    ()=>orders.filter(order=>orderServiceDate(order)===date && order.status!=="cancelled"),
+  const selectedDateOrders=useMemo(
+    ()=>orders.filter(order=>orderServiceDate(order)===date),
     [orders,date]
+  );
+  const selectedOrders=useMemo(
+    ()=>selectedDateOrders.filter(order=>order.status!=="cancelled"),
+    [selectedDateOrders]
   );
 
   const today=dateInputValue(new Date());
@@ -167,8 +171,8 @@ export default function StandaloneBoardPage(){
       <div className="standaloneBoardToolbarActions">
         <div className="endOfDayExport">
           <span>終業保存</span>
-          <button type="button" onClick={()=>void exportDailyExcel({date,orders:selectedOrders,casts:workingCasts,storeSettings})}>Excel保存</button>
-          <button type="button" onClick={()=>exportDailyPdf({date,orders:selectedOrders,casts:workingCasts,storeSettings})}>PDF保存</button>
+          <button type="button" onClick={()=>void exportDailyExcel({date,orders:selectedDateOrders,casts:workingCasts,storeSettings})}>Excel保存</button>
+          <button type="button" onClick={()=>exportDailyPdf({date,orders:selectedDateOrders,casts:workingCasts,storeSettings})}>PDF保存</button>
         </div>
         <Link href="/" className="standaloneBoardManageLink">配車管理を開く</Link>
       </div>
