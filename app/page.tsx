@@ -944,8 +944,7 @@ export default function DashboardPage(){
             <div className="workFooter">
               <div className="workTotalSummary"><small>自動計算</small>{paymentMethod==="card" && <span>カード手数料込み</span>}<strong>{formatYen(total)}</strong></div>
               <div className="workButtons">
-                <button className="registerBtn" type="submit" disabled={!selectedCast}>{editingOrderId?"変更を保存":"仕事を入れる"}</button>
-                {!editingOrderId && <Link href="/orders/new">詳細入力</Link>}
+                <button className="registerBtn" type="submit" disabled={!selectedCast}>{editingOrderId?"変更を保存":"オーダー登録"}</button>
                 <button type="button" onClick={resetOrderForm}>{editingOrderId?"編集キャンセル":"クリア"}</button>
               </div>
             </div>
