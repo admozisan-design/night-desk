@@ -385,6 +385,13 @@ export default function DashboardPage(){
     ()=>orders.filter(order=>orderServiceDate(order)===date),
     [orders,date]
   );
+  const displayedBoardOrderCount = useMemo(
+    ()=>workingCasts.reduce(
+      (sum,cast)=>sum+selectedDateOrders.filter(order=>order.castId===cast.id && order.status!=="cancelled").length,
+      0
+    ),
+    [workingCasts,selectedDateOrders]
+  );
   const todayValue=dateInputValue(new Date());
   const nowPosition = now && date===todayValue ? currentTimePosition(now) : null;
   const detailCast = detailCastId ? castList.find(c=>c.id===detailCastId) : undefined;
@@ -1263,7 +1270,7 @@ export default function DashboardPage(){
 
           <div className="dispatchName totalCell"><strong>合計</strong></div>
           <div className="dispatchShift totalCell"><strong>{workingCasts.length}人</strong></div>
-          <div className="dispatchCount totalCell"><strong>{selectedDateOrders.filter(o=>o.status!=="cancelled").length}</strong><span>本</span></div>
+          <div className="dispatchCount totalCell"><strong>{displayedBoardOrderCount}</strong><span>本</span></div>
           <div className="timelineCell totalTimeline"/>
         </div>
       </div>

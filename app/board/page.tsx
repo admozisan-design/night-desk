@@ -155,6 +155,13 @@ export default function StandaloneBoardPage(){
     ()=>selectedDateOrders.filter(order=>order.status!=="cancelled"),
     [selectedDateOrders]
   );
+  const displayedBoardOrderCount=useMemo(
+    ()=>workingCasts.reduce(
+      (sum,cast)=>sum+selectedOrders.filter(order=>order.castId===cast.id).length,
+      0
+    ),
+    [workingCasts,selectedOrders]
+  );
 
   const today=dateInputValue(new Date());
   const nowPosition=now && date===today ? currentTimePosition(now) : null;
@@ -266,7 +273,7 @@ export default function StandaloneBoardPage(){
 
     <section className="standaloneBoardStats">
       <div><span>出勤</span><strong>{workingCasts.length}</strong><small>人</small></div>
-      <div><span>オーダー</span><strong>{selectedOrders.length}</strong><small>件</small></div>
+      <div><span>オーダー</span><strong>{displayedBoardOrderCount}</strong><small>件</small></div>
       <div><span>営業時間</span><strong>{storeSettings.openTime}〜{storeSettings.closeTime}</strong></div>
       <div className="boardLegend">
         <span><i className="legend beforeDispatch"/>配車前</span>
@@ -323,7 +330,7 @@ export default function StandaloneBoardPage(){
           <div className="standaloneBoardFixedTotal">
             <div><strong>合計</strong></div>
             <div><strong>{workingCasts.length}人</strong></div>
-            <div><strong>{selectedOrders.length}</strong><span>本</span></div>
+            <div><strong>{displayedBoardOrderCount}</strong><span>本</span></div>
           </div>
         </div>
 
