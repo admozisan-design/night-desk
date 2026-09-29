@@ -560,7 +560,14 @@ export function loadTopNavigation(defaultItems:TopNavItem[]):TopNavItem[]{
       }
     }
 
-    for(const item of defaultsById.values()) merged.push(item);
+    for(const item of defaultsById.values()){
+      if(item.id==="board"){
+        const dispatchIndex=merged.findIndex(entry=>entry.id==="dispatch");
+        merged.splice(dispatchIndex>=0?dispatchIndex+1:merged.length,0,item);
+      }else{
+        merged.push(item);
+      }
+    }
     return merged;
   }catch{
     return defaultItems;
