@@ -1,4 +1,19 @@
 import type { AuditLog, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings } from "./types";
+import {
+  casts as demoCasts,
+  defaultPricingConfig as demoPricing,
+  defaultStoreSettings as demoStoreSettings,
+  demoAuditLogs,
+  demoCustomers,
+  demoOrders,
+  demoPermissions,
+  demoSettlementAdjustments,
+  demoSettlementDailyConfigs,
+  drivers as demoDrivers,
+  hotels as demoHotels,
+  options as demoOptions,
+  staff as demoStaff
+} from "./mock-data";
 
 const ORDER_KEY = "night-desk-orders-sample-v02";
 const CAST_KEY = "night-desk-casts-sample-v03";
@@ -13,8 +28,70 @@ const LOG_KEY = "night-desk-audit-log-v01";
 const STORE_SETTINGS_KEY = "night-desk-store-settings-v01";
 const SETTLEMENT_KEY = "night-desk-cast-settlement-v01";
 const SETTLEMENT_DAILY_KEY = "night-desk-cast-settlement-daily-v01";
+const DEMO_SEED_KEY = "night-desk-demo-seed-version";
+const DEMO_SEED_VERSION = "2026-09-full-demo-v1";
+
+function safeJson<T>(raw:string|null,fallback:T):T{
+  if(!raw) return fallback;
+  try{return JSON.parse(raw) as T;}catch{return fallback;}
+}
+
+function seedArray<T extends {id:string}>(key:string,demo:T[],legacyIds:string[]=[]){
+  const raw=localStorage.getItem(key);
+  const current=safeJson<T[]>(raw,[]);
+  const legacySet=new Set(legacyIds);
+  const onlyLegacy=current.length>0 && legacySet.size>0 && current.every(item=>legacySet.has(item.id));
+
+  if(!raw || current.length===0 || onlyLegacy){
+    localStorage.setItem(key,JSON.stringify(demo));
+    return;
+  }
+
+  const byId=new Map(current.map(item=>[item.id,item]));
+  for(const item of demo){
+    if(!byId.has(item.id)) byId.set(item.id,item);
+  }
+  localStorage.setItem(key,JSON.stringify([...byId.values()]));
+}
+
+function seedRecord<T>(key:string,demo:Record<string,T>){
+  const current=safeJson<Record<string,T>>(localStorage.getItem(key),{});
+  localStorage.setItem(key,JSON.stringify({...demo,...current}));
+}
+
+function ensureDemoDataSeeded(){
+  if(typeof window==="undefined") return;
+  if(localStorage.getItem(DEMO_SEED_KEY)===DEMO_SEED_VERSION) return;
+
+  seedArray(CAST_KEY,demoCasts,["c1","c2","c3","c4"]);
+  seedArray(DRIVER_KEY,demoDrivers,["d1","d2","d3"]);
+  seedArray(HOTEL_KEY,demoHotels,["h1","h2","h3","h4"]);
+  seedArray(STAFF_KEY,demoStaff,["s1","s2","s3"]);
+  seedArray(OPTION_KEY,demoOptions,["op1","op2","op3","op4"]);
+  seedArray(ORDER_KEY,demoOrders);
+  seedArray(CUSTOMER_KEY,demoCustomers);
+
+  if(!localStorage.getItem(PRICING_KEY)) localStorage.setItem(PRICING_KEY,JSON.stringify(demoPricing));
+  if(!localStorage.getItem(STORE_SETTINGS_KEY)) localStorage.setItem(STORE_SETTINGS_KEY,JSON.stringify(demoStoreSettings));
+  if(!localStorage.getItem(PERMISSION_KEY)) localStorage.setItem(PERMISSION_KEY,JSON.stringify(demoPermissions));
+
+  seedRecord(SETTLEMENT_KEY,demoSettlementAdjustments);
+  seedRecord(SETTLEMENT_DAILY_KEY,demoSettlementDailyConfigs);
+
+  const currentLogs=safeJson<AuditLog[]>(localStorage.getItem(LOG_KEY),[]);
+  if(currentLogs.length===0){
+    localStorage.setItem(LOG_KEY,JSON.stringify(demoAuditLogs));
+  }else{
+    const ids=new Set(currentLogs.map(log=>log.id));
+    localStorage.setItem(LOG_KEY,JSON.stringify([...currentLogs,...demoAuditLogs.filter(log=>!ids.has(log.id))].slice(0,300)));
+  }
+
+  localStorage.setItem(DEMO_SEED_KEY,DEMO_SEED_VERSION);
+}
+
 
 export function loadOrders():Order[] {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return [];
   try { return JSON.parse(localStorage.getItem(ORDER_KEY) ?? "[]") as Order[]; } catch { return []; }
 }
@@ -102,6 +179,7 @@ function normalizeCast(cast:Cast):Cast {
 }
 
 export function loadCasts(defaultCasts:Cast[]):Cast[] {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return defaultCasts.map(normalizeCast);
   try {
     const raw = localStorage.getItem(CAST_KEY);
@@ -130,6 +208,7 @@ function normalizeHotel(hotel:Hotel):Hotel {
 }
 
 export function loadHotels(defaultHotels:Hotel[]):Hotel[] {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return defaultHotels.map(normalizeHotel);
   try {
     const raw = localStorage.getItem(HOTEL_KEY);
@@ -160,6 +239,7 @@ function normalizeStaff(staff:Staff):Staff {
 }
 
 export function loadStaff(defaultStaff:Staff[]):Staff[] {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return defaultStaff.map(normalizeStaff);
   try {
     const raw = localStorage.getItem(STAFF_KEY);
@@ -191,6 +271,7 @@ function normalizeDriver(driver:Driver):Driver {
 }
 
 export function loadDrivers(defaultDrivers:Driver[]):Driver[] {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return defaultDrivers.map(normalizeDriver);
   try {
     const raw = localStorage.getItem(DRIVER_KEY);
@@ -220,6 +301,7 @@ function normalizeOption(option:StoreOption):StoreOption {
 }
 
 export function loadOptions(defaultOptions:StoreOption[]):StoreOption[] {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return defaultOptions.map(normalizeOption);
   try {
     const raw = localStorage.getItem(OPTION_KEY);
@@ -260,6 +342,7 @@ function derivedCustomersFromOrders():Customer[] {
 }
 
 export function loadCustomers(defaultCustomers:Customer[]=[]):Customer[] {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return defaultCustomers.map(normalizeCustomer);
   let saved:Customer[]=[];
   try {
@@ -283,6 +366,7 @@ export function saveCustomers(customers:Customer[]) {
 }
 
 export function loadPricing(defaultPricing:PricingConfig):PricingConfig {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return defaultPricing;
   try {
     const raw=localStorage.getItem(PRICING_KEY);
@@ -309,6 +393,7 @@ export function savePricing(pricing:PricingConfig) {
 }
 
 export function loadPermissions(defaultPermissions:StaffPermission[]):StaffPermission[] {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return defaultPermissions;
   try {
     const raw=localStorage.getItem(PERMISSION_KEY);
@@ -347,6 +432,7 @@ export function appendAuditLog(category:string,action:string,detail="",actor="ãƒ
 }
 
 export function loadAuditLogs():AuditLog[] {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return [];
   try {
     return JSON.parse(localStorage.getItem(LOG_KEY) ?? "[]") as AuditLog[];
@@ -356,6 +442,7 @@ export function loadAuditLogs():AuditLog[] {
 }
 
 export function loadStoreSettings(defaultSettings:StoreSettings):StoreSettings {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return defaultSettings;
   try {
     const raw=localStorage.getItem(STORE_SETTINGS_KEY);
@@ -383,6 +470,7 @@ export function saveStoreSettings(settings:StoreSettings){
 
 
 export function loadCastSettlementAdjustments():Record<string,CastSettlementAdjustment> {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return {};
   try {
     return JSON.parse(localStorage.getItem(SETTLEMENT_KEY) ?? "{}") as Record<string,CastSettlementAdjustment>;
@@ -403,6 +491,7 @@ export function saveCastSettlementAdjustment(adjustment:CastSettlementAdjustment
 
 
 export function loadCastSettlementDailyConfigs():Record<string,CastSettlementDailyConfig> {
+  ensureDemoDataSeeded();
   if (typeof window === "undefined") return {};
   try {
     return JSON.parse(localStorage.getItem(SETTLEMENT_DAILY_KEY) ?? "{}") as Record<string,CastSettlementDailyConfig>;
