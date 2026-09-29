@@ -30,6 +30,7 @@ export type Cast = {
   ngDetails?:string[];
   availableOptions?:string[];
   notes?:string;
+  advertisingUrl?:string;
   interviewEvaluation?:string;
   age?:number;
   heightCm?:number;
@@ -40,7 +41,7 @@ export type Cast = {
 };
 export type Driver = { id:string; name:string; phone?:string; vehicle?:string; plate?:string; notes?:string; active:boolean; };
 export type Course = { id:string; minutes:number; price:number; };
-export type Hotel = { id:string; name:string; travelFee:number; visible?:boolean; };
+export type Hotel = { id:string; name:string; travelFee:number; visible?:boolean; kind?:"business"|"love"|"home"; address?:string; };
 export type Staff = { id:string; name:string; displayName:string; loginId:string; notes?:string; active?:boolean; };
 export type StoreOption = { id:string; name:string; price:number; notes?:string; active?:boolean; };
 export type StoreSettings = { openTime:string; closeTime:string; cardFeeRate:number; priceUnit:10|100|500|1000; miscExpenseMode:"fixed"|"percent"; miscExpenseValue:number; };
@@ -85,7 +86,7 @@ export type AuditLog = {
 };
 export type Order = {
   id:string; createdAt:string; customerPhone:string; locationType:"hotel"|"home";
-  locationName:string; room?:string; castId:string; castName:string; driverId?:string; driverName?:string;
+  locationName:string; room?:string; address?:string; castId:string; castName:string; driverId?:string; driverName?:string;
   courseId?:string; courseMinutes:number; extensionMinutes?:number; extensionTotal?:number; nominationType:"free"|"photo"|"repeat"; selectedOptions?:string[]; optionsTotal:number; travelFee:number;
   discount:number; surcharge?:number; adjustment:number; paymentMethod?:"cash"|"card"; cardFee?:number; total:number; status:OrderStatus; serviceDate?:string; scheduledStart:string; scheduledEnd:string; inTime?:string; note?:string; handoffNote?:string;
 };

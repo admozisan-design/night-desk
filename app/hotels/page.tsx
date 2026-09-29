@@ -50,6 +50,8 @@ export default function HotelsPage(){
       id:crypto.randomUUID(),
       name,
       travelFee:Number(fd.get("travelFee")||0),
+      kind:String(fd.get("kind")||"love") as Hotel["kind"],
+      address:String(fd.get("address")||"").trim(),
       visible:true
     };
 
@@ -63,7 +65,7 @@ export default function HotelsPage(){
       <div>
         <p className="eyebrow">HOTEL MANAGEMENT</p>
         <h1>ホテル登録</h1>
-        <p>ホテル名と交通費を登録します。</p>
+        <p>ビジネスホテル・ラブホテル・自宅を種別付きで登録し、交通費と住所を管理します。</p>
       </div>
       <div className="hotelHeaderActions masterPageActions">
         {saved && <span className="saveToast">保存しました</span>}
@@ -84,7 +86,7 @@ export default function HotelsPage(){
 
         return <article key={hotel.id} className={`hotelCard ${current.visible===false?"isHidden":""} ${isEditing?"isEditing":""}`}>
           <div className="hotelCardHeader">
-            <strong>{current.name}</strong>
+            <div className="hotelCardTitle"><strong>{current.name}</strong><span className={`hotelKindBadge ${current.kind??"love"}`}>{current.kind==="business"?"ビジネスホテル":current.kind==="home"?"自宅":"ラブホテル"}</span></div>
             <label className="switchLabel">
               <input
                 type="checkbox"
@@ -103,6 +105,21 @@ export default function HotelsPage(){
                 disabled={!isEditing}
                 onChange={e=>updateDraft(hotel.id,{name:e.target.value})}
               />
+            </label>
+
+            <label>種別
+              <select value={current.kind??"love"} disabled={!isEditing}
+                onChange={e=>updateDraft(hotel.id,{kind:e.target.value as Hotel["kind"]})}>
+                <option value="business">ビジネスホテル</option>
+                <option value="love">ラブホテル</option>
+                <option value="home">自宅</option>
+              </select>
+            </label>
+
+            <label>住所（任意）
+              <input value={current.address??""} disabled={!isEditing}
+                onChange={e=>updateDraft(hotel.id,{address:e.target.value})}
+                placeholder="例：札幌市中央区南5条西4丁目"/>
             </label>
 
             <label>交通費
@@ -135,9 +152,23 @@ export default function HotelsPage(){
         </div>
 
         <form className="hotelAddForm" onSubmit={addHotel}>
-          <label>ホテル名
-            <input name="name" required autoFocus placeholder="例：サンプルホテルE"/>
-          </label>          <label>交通費
+          <label>名称
+            <input name="name" required autoFocus placeholder="例：ホテル○○ / ○○様自宅"/>
+          </label>
+
+          <label>種別
+            <select name="kind" defaultValue="love">
+              <option value="business">ビジネスホテル</option>
+              <option value="love">ラブホテル</option>
+              <option value="home">自宅</option>
+            </select>
+          </label>
+
+          <label>住所（任意）
+            <input name="address" placeholder="例：札幌市中央区南5条西4丁目"/>
+          </label>
+
+          <label>交通費
             <input name="travelFee" type="number" min="0" step="500" defaultValue="1000"/>
           </label>
 

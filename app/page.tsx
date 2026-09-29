@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { deleteOrder, loadCasts, loadCustomers, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadStoreSettings, saveCasts, saveCustomers, saveOrder, updateOrder } from "@/lib/storage";
+import { deleteOrder, loadCasts, loadCustomers, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, saveOrder, saveSharedMemo, updateOrder } from "@/lib/storage";
 import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
@@ -83,6 +83,11 @@ function roundUpToUnit(value:number,unit:number){
 function orderServiceDate(order:Order){
   if(order.serviceDate) return order.serviceDate;
   return dateInputValue(new Date(order.createdAt));
+}
+function hotelKindLabel(kind:Hotel["kind"]){
+  if(kind==="business") return "ビジネス";
+  if(kind==="home") return "自宅";
+  return "ラブホテル";
 }
 function castShiftForDate(cast:Cast,date:string){
   return cast.schedule?.find(shift=>shift.date===date);
@@ -166,6 +171,9 @@ export default function DashboardPage(){
   const [copyNotice,setCopyNotice] = useState("");
   const [customerNotice,setCustomerNotice] = useState("");
   const [optionModalOpen,setOptionModalOpen] = useState(false);
+  const [castNotesExpanded,setCastNotesExpanded] = useState(false);
+  const [sharedMemo,setSharedMemo] = useState("");
+  const [sharedMemoSaved,setSharedMemoSaved] = useState(false);
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
@@ -174,6 +182,7 @@ export default function DashboardPage(){
   const [scheduledStart,setScheduledStart] = useState(()=>clockTimeValue());
   const [locationName,setLocationName] = useState("");
   const [room,setRoom] = useState("101");
+  const [address,setAddress] = useState("");
   const [phone,setPhone] = useState("090-0000-0000");
   const [note,setNote] = useState("サンプル備考");
   const [travelFee,setTravelFee] = useState(defaultPricingConfig.defaultTravelFee);
@@ -194,6 +203,7 @@ export default function DashboardPage(){
       setStoreSettings(loadStoreSettings(defaultStoreSettings));
     };
     refresh();
+    setSharedMemo(loadSharedMemo());
     setNow(new Date());
     setPendingEditOrderId(new URLSearchParams(window.location.search).get("editOrder"));
     const timer = window.setInterval(()=>setNow(new Date()),60000);
@@ -255,6 +265,10 @@ export default function DashboardPage(){
   },[selectableCasts,castId,editingOrderId]);
 
   useEffect(()=>{
+    setCastNotesExpanded(false);
+  },[castId]);
+
+  useEffect(()=>{
     if(!availableDrivers.some(d=>d.id===driverId)) setDriverId(availableDrivers[0]?.id ?? "");
   },[availableDrivers,driverId]);
 
@@ -283,6 +297,7 @@ export default function DashboardPage(){
   const course = pricing.courses.find(c=>c.id===courseId);
   const selectedCast = formCastChoices.find(c=>c.id===castId);
   const selectedDriver = availableDrivers.find(d=>d.id===driverId);
+  const selectedHotel = availableHotels.find(h=>h.name===locationName);
   const phoneKey=normalizePhone(phone);
   const matchedCustomer=useMemo(()=>{
     if(phoneKey.length<4) return undefined;
@@ -479,6 +494,7 @@ export default function DashboardPage(){
     setScheduledStart(order.scheduledStart);
     setLocationName(order.locationName);
     setRoom(order.room ?? "");
+    setAddress(order.address ?? "");
     setPhone(order.customerPhone ?? "");
     setNote(order.note ?? "");
     setTravelFee(order.travelFee);
@@ -509,7 +525,8 @@ export default function DashboardPage(){
     const firstHotel=availableHotels[0];
     setLocationName(firstHotel?.name ?? "");
     setTravelFee(firstHotel?.travelFee ?? pricing.defaultTravelFee);
-    setRoom("101");
+    setAddress(firstHotel?.address ?? "");
+    setRoom(firstHotel?.kind==="home" ? "" : "101");
     setPhone("090-0000-0000");
     setNote("サンプル備考");
     setSelectedOptionIds([]);
@@ -583,7 +600,17 @@ export default function DashboardPage(){
   function selectHotel(name:string){
     setLocationName(name);
     const hotel=availableHotels.find(h=>h.name===name);
-    if(hotel) setTravelFee(hotel.travelFee);
+    if(hotel){
+      setTravelFee(hotel.travelFee);
+      setAddress(hotel.address??"");
+      if(hotel.kind==="home") setRoom("");
+    }
+  }
+
+  function saveSharedMemoNow(){
+    saveSharedMemo(sharedMemo);
+    setSharedMemoSaved(true);
+    window.setTimeout(()=>setSharedMemoSaved(false),1200);
   }
 
   function toggleOrderOption(id:string){
@@ -604,9 +631,10 @@ export default function DashboardPage(){
     const effectiveExtensionTotal=editingOrder ? editingExtensionTotal : 0;
     const commonChanges = {
       customerPhone:phone,
-      locationType:"hotel" as const,
+      locationType:(selectedHotel?.kind==="home" ? "home" : "hotel") as "hotel"|"home",
       locationName,
       room,
+      address,
       castId:selectedCast.id,
       castName:selectedCast.name,
       driverId:selectedDriver?.id,
@@ -669,19 +697,19 @@ export default function DashboardPage(){
           </div>
         </section>
 
-        <section className="deskPanel operationGuide">
-          <h2>操作ガイド</h2>
-          <div className="operationGuideList">
-            <div><span className="guideDot beforeDispatch"/><p><strong>紫：配車前</strong><small>オーダーをクリック →「配車済み」で切替</small></p></div>
-            <div><span className="guideDot afterDispatch"/><p><strong>橙：配車後</strong><small>配車済みになったオーダー</small></p></div>
-            <div><span className="guideDot inService"/><p><strong>緑：イン中</strong><small>オーダーをクリック →「イン時間」で切替</small></p></div>
-            <div><span className="guideDot out"/><p><strong>灰：アウト</strong><small>終了予定時間を過ぎると自動でグレー表示</small></p></div>
+        <section className="deskPanel sharedMemoPanel">
+          <div className="sharedMemoHead">
+            <h2>共有メモ</h2>
+            {sharedMemoSaved && <span>保存済み</span>}
           </div>
-          <div className="operationGuideTips">
-            <p><strong>クリック</strong><span>オーダー操作メニューを開く</span></p>
-            <p><strong>キャスト名</strong><span>出勤・遅刻・当欠・早退を変更</span></p>
-            <p><strong>出勤時間</strong><span>クリックでクイック修正</span></p>
-          </div>
+          <textarea
+            rows={9}
+            value={sharedMemo}
+            onChange={e=>setSharedMemo(e.target.value)}
+            onBlur={saveSharedMemoNow}
+            placeholder="送迎状況、注意事項、次のスタッフへの引継ぎなどを共有"
+          />
+          <button type="button" onClick={saveSharedMemoNow}>共有メモを保存</button>
         </section>
       </aside>
 
@@ -811,9 +839,18 @@ export default function DashboardPage(){
                 <span>可能OP</span>
                 <strong>{(selectedCast.availableOptions??[]).length ? (selectedCast.availableOptions??[]).join(" / ") : "なし"}</strong>
               </div>
-              <div>
+              <div className="selectedCastAdCell">
+                <span>広告サイト</span>
+                {selectedCast.advertisingUrl
+                  ? <a href={selectedCast.advertisingUrl} target="_blank" rel="noreferrer">広告ページを開く ↗</a>
+                  : <strong>URL未登録</strong>}
+              </div>
+              <div className={`selectedCastNotesCell ${castNotesExpanded?"expanded":""}`}>
                 <span>備考</span>
                 <strong>{selectedCast.notes || "なし"}</strong>
+                {(selectedCast.notes?.length??0)>24 && <button type="button" onClick={()=>setCastNotesExpanded(value=>!value)}>
+                  {castNotesExpanded?"閉じる":"全文表示"}
+                </button>}
               </div>
             </div>}
 
@@ -830,16 +867,20 @@ export default function DashboardPage(){
             </label>
 
             <div className="workGrid two">
-              <label>ホテル名
+              <label>利用場所
                 <select value={locationName} onChange={e=>selectHotel(e.target.value)} disabled={!availableHotels.length}>
-                  {availableHotels.length===0 && <option value="">ホテル未登録</option>}
-                  {availableHotels.map(hotel=><option key={hotel.id} value={hotel.name}>{hotel.name}</option>)}
+                  {availableHotels.length===0 && <option value="">利用場所未登録</option>}
+                  {availableHotels.map(hotel=><option key={hotel.id} value={hotel.name}>【{hotelKindLabel(hotel.kind)}】{hotel.name}</option>)}
                 </select>
               </label>
               <label>部屋番号
-                <input value={room} onChange={e=>setRoom(e.target.value)} placeholder="例：101"/>
+                <input value={room} onChange={e=>setRoom(e.target.value)} placeholder={selectedHotel?.kind==="home"?"自宅の場合は空欄でOK":"例：101"}/>
               </label>
             </div>
+
+            <label>住所（任意）
+              <input value={address} onChange={e=>setAddress(e.target.value)} placeholder="例：札幌市中央区南5条西4丁目"/>
+            </label>
 
             <div className="orderOptionPicker optionPopupPicker">
               <div className="orderOptionPickerHead">

@@ -2706,3 +2706,106 @@ button{
   color:#b04444;
   font-size:17px;
 }
+
+
+/* ===== Ad URL, shared memo, location types ===== */
+.castAdPreviewLink{
+  display:inline-flex;
+  margin-top:8px;
+  color:#527b1e;
+  font-size:12px;
+  font-weight:900;
+  text-decoration:none;
+}
+.castAdPreviewLink:hover{text-decoration:underline}
+
+.sharedMemoPanel{margin-top:10px}
+.sharedMemoHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sharedMemoHead h2{margin:0}
+.sharedMemoHead span{
+  padding:4px 7px;
+  border-radius:999px;
+  background:#e9f6d8;
+  color:#52791f;
+  font-size:10px;
+  font-weight:900;
+}
+.sharedMemoPanel textarea{
+  min-height:180px;
+  margin-top:10px;
+  resize:vertical;
+  line-height:1.6;
+  background:#fffdf3;
+  border-color:#e7dba4;
+}
+.sharedMemoPanel>button{
+  width:100%;
+  min-height:38px;
+  margin-top:8px;
+  border:1px solid #d3b95b;
+  border-radius:7px;
+  background:#fff4c8;
+  color:#6f5b15;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.selectedCastInfo .selectedCastAdCell a{
+  display:inline-flex;
+  align-items:center;
+  min-height:30px;
+  padding:5px 9px;
+  border:1px solid #a8cb79;
+  border-radius:7px;
+  background:#eef8e2;
+  color:#4c741c;
+  font-size:11px;
+  font-weight:900;
+  text-decoration:none;
+}
+.selectedCastInfo .selectedCastNotesCell{
+  grid-column:span 2;
+  border-right:0;
+}
+.selectedCastInfo .selectedCastNotesCell strong{
+  white-space:normal;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  line-height:1.55;
+}
+.selectedCastInfo .selectedCastNotesCell.expanded strong{
+  display:block;
+  overflow:visible;
+  white-space:pre-wrap;
+}
+.selectedCastNotesCell button{
+  margin-top:6px;
+  padding:4px 8px;
+  border:1px solid #d5dce2;
+  border-radius:6px;
+  background:#fff;
+  color:#52606d;
+  font-size:10px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.hotelCardTitle{min-width:0}
+.hotelCardTitle strong{display:block}
+.hotelKindBadge{
+  display:inline-flex;
+  margin-top:5px;
+  padding:3px 7px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:900;
+}
+.hotelKindBadge.business{background:#e7f1fb;color:#356f9d}
+.hotelKindBadge.love{background:#fceaf2;color:#a44270}
+.hotelKindBadge.home{background:#edf6e3;color:#537b23}
+
+@media(max-width:1000px){
+  .selectedCastInfo .selectedCastNotesCell{grid-column:1/-1}
+}

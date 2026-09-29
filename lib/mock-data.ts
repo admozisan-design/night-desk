@@ -61,7 +61,7 @@ const schedule=(rows:Array<[string,string,"reception"|"leave",string,boolean,("p
 
 export const casts: Cast[] = [
   {
-    id:"demo-cast-hinata", name:"ひなた", status:"waiting", shiftStart:"12:00", shiftEnd:"00:00",
+    id:"demo-cast-hinata", name:"ひなた", advertisingUrl:"https://example.com/cast/hinata", status:"waiting", shiftStart:"12:00", shiftEnd:"00:00",
     freeUnitPrice:6000, photoUnitPrice:7000, repeatUnitPrice:8000,
     ngDetails:["泥酔NG","自宅NG"], availableOptions:["コスプレ","オイル追加","写真指名特典"],
     notes:"明るめ。初回客との相性◎。受付時に自宅利用か確認。",
@@ -76,7 +76,7 @@ export const casts: Cast[] = [
     ])
   },
   {
-    id:"demo-cast-mio", name:"みお", status:"waiting", shiftStart:"14:00", shiftEnd:"23:00",
+    id:"demo-cast-mio", name:"みお", advertisingUrl:"https://example.com/cast/mio", status:"waiting", shiftStart:"14:00", shiftEnd:"23:00",
     freeUnitPrice:6500, photoUnitPrice:7500, repeatUnitPrice:8500,
     ngDetails:["強い香水NG"], availableOptions:["コスプレ","濃厚コース追加","シャワー延長"],
     notes:"リピーター多め。連続ロングは間30分確保。",
@@ -91,7 +91,7 @@ export const casts: Cast[] = [
     ])
   },
   {
-    id:"demo-cast-rena", name:"れな", status:"serving", availableAt:"21:10", shiftStart:"17:00", shiftEnd:"02:00",
+    id:"demo-cast-rena", name:"れな", advertisingUrl:"https://example.com/cast/rena", status:"serving", availableAt:"21:10", shiftStart:"17:00", shiftEnd:"02:00",
     freeUnitPrice:6500, photoUnitPrice:7500, repeatUnitPrice:8500,
     ngDetails:["泥酔NG","乱暴な言動NG"], availableOptions:["オイル追加","濃厚コース追加","写真指名特典"],
     notes:"夜帯の主力。ホテル利用中心。NG確認を受付で徹底。",
@@ -106,7 +106,7 @@ export const casts: Cast[] = [
     ])
   },
   {
-    id:"demo-cast-sakura", name:"さくら", status:"moving", availableAt:"22:00", shiftStart:"18:00", shiftEnd:"04:00",
+    id:"demo-cast-sakura", name:"さくら", advertisingUrl:"https://example.com/cast/sakura", status:"moving", availableAt:"22:00", shiftStart:"18:00", shiftEnd:"04:00",
     freeUnitPrice:7000, photoUnitPrice:8000, repeatUnitPrice:9000,
     ngDetails:[], availableOptions:["コスプレ","オイル追加","濃厚コース追加","写真指名特典","シャワー延長"],
     notes:"ロング対応可。深夜帯まで受付可能。",
@@ -121,7 +121,7 @@ export const casts: Cast[] = [
     ])
   },
   {
-    id:"demo-cast-ema", name:"えま", status:"waiting", shiftStart:"20:00", shiftEnd:"05:00",
+    id:"demo-cast-ema", name:"えま", advertisingUrl:"https://example.com/cast/ema", status:"waiting", shiftStart:"20:00", shiftEnd:"05:00",
     freeUnitPrice:6000, photoUnitPrice:7000, repeatUnitPrice:8000,
     ngDetails:["自宅NG"], availableOptions:["コスプレ","写真指名特典"],
     notes:"深夜帯。自宅不可。ホテルのみ案内。",
@@ -136,7 +136,7 @@ export const casts: Cast[] = [
     ])
   },
   {
-    id:"demo-cast-aoi", name:"あおい", status:"off", shiftStart:"13:00", shiftEnd:"22:00",
+    id:"demo-cast-aoi", name:"あおい", advertisingUrl:"https://example.com/cast/aoi", status:"off", shiftStart:"13:00", shiftEnd:"22:00",
     freeUnitPrice:6000, photoUnitPrice:7000, repeatUnitPrice:8000,
     ngDetails:["喫煙直後NG"], availableOptions:["オイル追加","シャワー延長"],
     notes:"本日は休み。翌日出勤サンプル用。",
@@ -184,12 +184,12 @@ export const defaultPricingConfig: PricingConfig = {
 };
 
 export const hotels: Hotel[] = [
-  { id:"demo-hotel-lumiere", name:"ホテル ルミエール", travelFee:1000, visible:true },
-  { id:"demo-hotel-north", name:"ノースゲート", travelFee:1000, visible:true },
-  { id:"demo-hotel-river", name:"リバーサイド", travelFee:1500, visible:true },
-  { id:"demo-hotel-grand", name:"グランパレス", travelFee:2000, visible:true },
-  { id:"demo-hotel-moon", name:"ムーンテラス", travelFee:2500, visible:true },
-  { id:"demo-hotel-away", name:"郊外サンプルホテル", travelFee:3000, visible:false }
+  { id:"demo-hotel-lumiere", name:"ホテル ルミエール", travelFee:1000, visible:true, kind:"love", address:"札幌市中央区南5条西4丁目" },
+  { id:"demo-hotel-north", name:"ノースゲート", travelFee:1000, visible:true, kind:"business", address:"札幌市北区北7条西4丁目" },
+  { id:"demo-hotel-river", name:"リバーサイド", travelFee:1500, visible:true, kind:"love", address:"札幌市中央区南8条西5丁目" },
+  { id:"demo-hotel-grand", name:"グランパレス", travelFee:2000, visible:true, kind:"business", address:"札幌市中央区北2条西3丁目" },
+  { id:"demo-hotel-moon", name:"ムーンテラス", travelFee:2500, visible:true, kind:"love", address:"札幌市豊平区豊平4条1丁目" },
+  { id:"demo-hotel-away", name:"郊外サンプルホテル", travelFee:3000, visible:false, kind:"business", address:"札幌市白石区サンプル1丁目" }
 ];
 
 export const staff: Staff[] = [

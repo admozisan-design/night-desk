@@ -28,6 +28,7 @@ const LOG_KEY = "night-desk-audit-log-v01";
 const STORE_SETTINGS_KEY = "night-desk-store-settings-v01";
 const SETTLEMENT_KEY = "night-desk-cast-settlement-v01";
 const SETTLEMENT_DAILY_KEY = "night-desk-cast-settlement-daily-v01";
+const SHARED_MEMO_KEY = "night-desk-shared-memo-v01";
 const DEMO_SEED_KEY = "night-desk-demo-seed-version";
 const DEMO_SEED_VERSION = "2026-09-full-demo-v1";
 
@@ -168,6 +169,7 @@ function normalizeCast(cast:Cast):Cast {
     ngDetails: normalizedNg,
     availableOptions: cast.availableOptions ?? [],
     notes: cast.notes ?? "",
+    advertisingUrl: cast.advertisingUrl ?? "",
     interviewEvaluation: cast.interviewEvaluation ?? "",
     age: cast.age ?? 0,
     heightCm: cast.heightCm ?? 0,
@@ -204,6 +206,8 @@ function normalizeHotel(hotel:Hotel):Hotel {
     name: hotel.name ?? "",
     travelFee: hotel.travelFee ?? 0,
     visible: hotel.visible ?? true,
+    kind: hotel.kind ?? "love",
+    address: hotel.address ?? "",
   };
 }
 
@@ -508,4 +512,17 @@ export function saveCastSettlementDailyConfig(config:CastSettlementDailyConfig){
   window.dispatchEvent(new Event("nightdesk:settlement"));
   appendAuditLog("精算","雑費設定を保存",config.miscExpenseEnabled ? `${config.date} / 雑費あり` : `${config.date} / 雑費なし`);
   return next;
+}
+
+
+export function loadSharedMemo():string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem(SHARED_MEMO_KEY) ?? "送迎・予約・引継ぎで全員に共有したい内容を入力してください。";
+}
+
+export function saveSharedMemo(memo:string){
+  if (typeof window === "undefined") return;
+  localStorage.setItem(SHARED_MEMO_KEY,memo);
+  window.dispatchEvent(new Event("nightdesk:shared-memo"));
+  appendAuditLog("共有","共有メモを保存",memo.slice(0,80));
 }

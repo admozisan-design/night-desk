@@ -24,6 +24,7 @@ export default function CastsPage(){
       ngDetails:c.ngDetails??[],
       availableOptions:c.availableOptions??[],
       notes:c.notes??"",
+      advertisingUrl:c.advertisingUrl??"",
       interviewEvaluation:c.interviewEvaluation??"",
       age:c.age??0,
       heightCm:c.heightCm??0,
@@ -160,6 +161,7 @@ export default function CastsPage(){
       ngDetails:newNgItems,
       availableOptions:newOptions,
       notes:String(fd.get("notes")||"").trim(),
+      advertisingUrl:String(fd.get("advertisingUrl")||"").trim(),
       interviewEvaluation:String(fd.get("interviewEvaluation")||"").trim(),
       age:Number(fd.get("age")||0),
       heightCm:Number(fd.get("heightCm")||0),
@@ -179,7 +181,7 @@ export default function CastsPage(){
       <div>
         <p className="eyebrow">CAST MANAGEMENT</p>
         <h1>キャスト登録</h1>
-        <p>キャストごとの単価、スペック、面接評価、NG内容、可能オプション、備考を管理します。</p>
+        <p>キャストごとの単価、広告サイトURL、スペック、面接評価、NG内容、可能オプション、備考を管理します。</p>
       </div>
       <div className="castHeaderActions masterPageActions">
         {saved && <span className="saveToast">保存しました</span>}
@@ -309,6 +311,19 @@ export default function CastsPage(){
           </div>
 
           <div className="castVerticalSection">
+            <label className="castVerticalField">広告サイトURL
+              <input
+                type="url"
+                value={current.advertisingUrl??""}
+                disabled={!isEditing}
+                onChange={e=>updateDraft(cast.id,{advertisingUrl:e.target.value})}
+                placeholder="https://..."
+              />
+            </label>
+            {!isEditing && current.advertisingUrl && <a className="castAdPreviewLink" href={current.advertisingUrl} target="_blank" rel="noreferrer">広告ページを開く ↗</a>}
+          </div>
+
+          <div className="castVerticalSection">
             <label className="castVerticalField">備考
               <textarea rows={4} value={current.notes??""} disabled={!isEditing}
                 onChange={e=>updateDraft(cast.id,{notes:e.target.value})}
@@ -394,6 +409,10 @@ export default function CastsPage(){
               })}
             </div>
           </div>
+
+          <label className="castAddFull">広告サイトURL
+            <input name="advertisingUrl" type="url" placeholder="https://..."/>
+          </label>
 
           <label className="castAddFull">備考
             <textarea name="notes" rows={4} placeholder="受付時に共有したい内容"/>
