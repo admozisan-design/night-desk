@@ -61,9 +61,26 @@ function orderVisualState(order:Order,serviceDate:string,now:Date|null){
   if(order.status==="dispatching") return "afterDispatch";
   return "beforeDispatch";
 }
-function castOperationalStatus(cast:Cast,dateOrders:Order[],serviceDate:string,now:Date|null):CastStatus{
+function castShiftEndDateTime(cast:Cast,serviceDate:string,storeClose:string){
+  const shift=castShiftForDate(cast,serviceDate);
+  const endType=shift?.endType ?? "leave";
+  const endTime=endType==="reception"
+    ? storeClose
+    : (shift?.endTime ?? cast.shiftEnd ?? storeClose);
+  const [year,month,day]=serviceDate.split("-").map(Number);
+  const [hour,minute]=endTime.split(":").map(Number);
+  const result=new Date(year,month-1,day,hour,minute,0,0);
+  if(hour<10) result.setDate(result.getDate()+1);
+  return result;
+}
+function castIsAutoOff(cast:Cast,serviceDate:string,storeClose:string,now:Date|null){
+  if(!now) return false;
+  return now>=castShiftEndDateTime(cast,serviceDate,storeClose);
+}
+function castOperationalStatus(cast:Cast,dateOrders:Order[],serviceDate:string,now:Date|null,storeClose:string):CastStatus{
   const shift=castShiftForDate(cast,serviceDate);
   if(shift && (!shift.working || shift.attendance==="absent" || shift.attendance==="leftEarly")) return "off";
+  if(castIsAutoOff(cast,serviceDate,storeClose,now)) return "off";
   const states=dateOrders
     .filter(order=>order.castId===cast.id && order.status!=="cancelled")
     .map(order=>orderVisualState(order,serviceDate,now));
@@ -1081,7 +1098,7 @@ export default function DashboardPage(){
 
             <label>キャスト
               <select value={castId} onChange={e=>setCastId(e.target.value)} disabled={!formCastChoices.length}>
-                {formCastChoices.map(c=><option key={c.id} value={c.id}>{c.name} / {statusLabels[castOperationalStatus(c,selectedDateOrders,date,now)]}</option>)}
+                {formCastChoices.map(c=><option key={c.id} value={c.id}>{c.name} / {statusLabels[castOperationalStatus(c,selectedDateOrders,date,now,storeSettings.closeTime)]}</option>)}
               </select>
             </label>
 
@@ -1268,7 +1285,8 @@ export default function DashboardPage(){
             const visibleOrders = castOrders.filter(o=>eventPosition(o));
             const shift=castShiftForDate(cast,date);
             const attendance=shift?.attendance;
-            const unavailable=attendance==="absent" || attendance==="leftEarly";
+            const autoOff=castIsAutoOff(cast,date,storeSettings.closeTime,now);
+            const unavailable=attendance==="absent" || attendance==="leftEarly" || autoOff;
             const shiftStart=shift?.start ?? cast.shiftStart ?? storeSettings.openTime;
             const endType=shift?.endType ?? "leave";
             const endTime=shift?.endTime ?? cast.shiftEnd ?? storeSettings.closeTime;
@@ -1277,7 +1295,7 @@ export default function DashboardPage(){
             const receptionClosed=endType==="reception"
               ? receptionClosedPosition(endTime,storeSettings.closeTime)
               : null;
-            const operationalStatus=castOperationalStatus(cast,selectedDateOrders,date,now);
+            const operationalStatus=castOperationalStatus(cast,selectedDateOrders,date,now,storeSettings.closeTime);
             return <div className={`dispatchRowContents ${unavailable?"isUnavailableCast":""}`} key={cast.id}>
               <div className="dispatchName">
                 <span className={`castStateDot ${operationalStatus}`}/>
@@ -1285,9 +1303,11 @@ export default function DashboardPage(){
                   <strong>{cast.name}</strong>
                   <span className="dispatchCastMeta">
                     <small>{statusLabels[operationalStatus]}</small>
-                    {shift?.attendance
-                      ? <em className={`attendanceBadge ${shift.attendance}`}>{attendanceLabels[shift.attendance]}</em>
-                      : <em className="attendanceBadge unconfirmed">未確認</em>}
+                    {autoOff
+                      ? <em className="attendanceBadge autoOff">退勤済</em>
+                      : shift?.attendance
+                        ? <em className={`attendanceBadge ${shift.attendance}`}>{attendanceLabels[shift.attendance]}</em>
+                        : <em className="attendanceBadge unconfirmed">未確認</em>}
                   </span>
                 </button>
               </div>
@@ -1327,7 +1347,7 @@ export default function DashboardPage(){
                   <span>上り後</span>
                 </div>
                 {unavailable && <div className="unavailableCastTimelineBlock">
-                  <strong>{attendance==="absent"?"当欠":"早退"}</strong>
+                  <strong>{attendance==="absent"?"当欠":attendance==="leftEarly"?"早退":"退勤"}</strong>
                 </div>}
               </div>
             </div>
@@ -1528,7 +1548,7 @@ export default function DashboardPage(){
         <div className="attendanceModalInfo">
           <div><span>日付</span><strong>{date}</strong></div>
           <div><span>出勤予定</span><strong>{detailShift?.start ?? detailCast.shiftStart ?? "--:--"} / {(detailShift?.endType ?? "leave")==="reception" ? "受付終了" : "上がり"} {detailShift?.endTime ?? detailCast.shiftEnd ?? "--:--"}</strong></div>
-          <div><span>現在状態</span><strong>{statusLabels[castOperationalStatus(detailCast,selectedDateOrders,date,now)]}</strong></div>
+          <div><span>現在状態</span><strong>{statusLabels[castOperationalStatus(detailCast,selectedDateOrders,date,now,storeSettings.closeTime)]}</strong></div>
         </div>
         <div className="attendanceModalSection">
           <div className="attendanceModalSectionTitle">

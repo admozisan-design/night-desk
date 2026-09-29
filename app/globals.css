@@ -4677,3 +4677,21 @@ button{
     grid-template-columns:1fr 1fr;
   }
 }
+
+
+/* ===== Automatic cast checkout ===== */
+.attendanceBadge.autoOff{
+  background:#e4e8eb!important;
+  color:#68747d!important;
+  border-color:#ccd4da!important;
+}
+.dispatchRowContents.isUnavailableCast .dispatchName,
+.dispatchRowContents.isUnavailableCast .dispatchShift,
+.dispatchRowContents.isUnavailableCast .dispatchCount{
+  background:#f1f3f4!important;
+}
+.standaloneBoardFixedRow.isUnavailableCast .dispatchName,
+.standaloneBoardFixedRow.isUnavailableCast .dispatchShift,
+.standaloneBoardFixedRow.isUnavailableCast .dispatchCount{
+  background:#f1f3f4!important;
+}
