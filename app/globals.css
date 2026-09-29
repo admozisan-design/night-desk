@@ -4587,3 +4587,93 @@ button{
     width:100%;
   }
 }
+
+
+/* ===== Change and cancel processing ===== */
+.storeChangeCancelGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.orderActionButtonsSimple{
+  grid-template-columns:repeat(5,minmax(0,1fr));
+}
+.orderActionButtonsSimple .orderActionChange{
+  border-color:#d5c59d;
+  background:#f8f3e7;
+  color:#745f2d;
+}
+.orderActionButtonsSimple .orderActionCancel{
+  border-color:#d9b8b8;
+  background:#f9eeee;
+  color:#874848;
+}
+.orderActionButtonsSimple button:disabled{
+  opacity:.42;
+  cursor:not-allowed;
+}
+.changeCancelSummary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 12px;
+  border:1px solid #e0e5e9;
+  border-radius:8px;
+  background:#f8fafb;
+}
+.changeCancelSummary span{
+  color:#78848e;
+  font-size:10px;
+  font-weight:900;
+}
+.changeCancelSummary strong{
+  font-size:13px;
+}
+.changeCastSelect{
+  display:grid;
+  gap:6px;
+  color:#596773;
+  font-size:11px;
+  font-weight:900;
+}
+.changeCastSelect select{
+  min-height:44px;
+  padding:8px 10px;
+}
+.changeCancelFee{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px;
+  border:1px solid #dbc992;
+  border-radius:8px;
+  background:#fff9e9;
+}
+.changeCancelFee.cancel{
+  border-color:#dfbbbb;
+  background:#fff2f2;
+}
+.changeCancelFee span{
+  color:#6f7880;
+  font-size:11px;
+  font-weight:900;
+}
+.changeCancelFee strong{
+  font-size:18px;
+}
+.changeCancelHelp{
+  display:block;
+  color:#7b8791;
+  font-size:10px;
+  line-height:1.5;
+}
+@media(max-width:700px){
+  .storeChangeCancelGrid{
+    grid-template-columns:1fr;
+  }
+  .orderActionButtonsSimple{
+    grid-template-columns:1fr 1fr;
+  }
+}
