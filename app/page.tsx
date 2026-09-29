@@ -175,12 +175,13 @@ export default function DashboardPage(){
   const [shiftEditCastId,setShiftEditCastId] = useState<string|null>(null);
   const [shiftDraft,setShiftDraft] = useState<{start:string;endType:CastShiftEndType;endTime:string}>({start:"18:00",endType:"leave",endTime:"04:00"});
   const [selectedOrderId,setSelectedOrderId] = useState<string|null>(null);
-  const [orderMode,setOrderMode] = useState<"menu"|"inTime"|"extend">("menu");
+  const [orderMode,setOrderMode] = useState<"menu"|"inTime"|"extend"|"change"|"cancel">("menu");
   const [editingOrderId,setEditingOrderId] = useState<string|null>(null);
   const [pendingEditOrderId,setPendingEditOrderId] = useState<string|null>(null);
   const [pendingActionOrderId,setPendingActionOrderId] = useState<string|null>(null);
   const [extensionCount,setExtensionCount] = useState(1);
   const [inTimeDraft,setInTimeDraft] = useState("");
+  const [changeCastId,setChangeCastId] = useState("");
   const [copyNotice,setCopyNotice] = useState("");
   const [customerNotice,setCustomerNotice] = useState("");
   const [customerPanelOpen,setCustomerPanelOpen] = useState(false);
@@ -703,6 +704,70 @@ export default function DashboardPage(){
     saveCustomers(next);
     setCustomerList(next);
     setCustomerNotice(`${selectedCast.name} をNGキャストに登録しました`);
+  }
+
+  function beginChange(){
+    if(!selectedOrder) return;
+    const candidates=selectableCasts.filter(cast=>cast.id!==selectedOrder.castId);
+    setChangeCastId(candidates[0]?.id ?? "");
+    setCopyNotice("");
+    setOrderMode("change");
+  }
+
+  function applyChange(){
+    if(!selectedOrder || !changeCastId) return;
+    const nextCast=castList.find(cast=>cast.id===changeCastId);
+    if(!nextCast || nextCast.id===selectedOrder.castId) return;
+
+    const fee=storeSettings.changeFee??0;
+    const currentCardFee=selectedOrder.cardFee??0;
+    const currentBase=Math.max(0,selectedOrder.total-currentCardFee);
+    const nextBase=currentBase+fee;
+    const nextCardFee=selectedOrder.paymentMethod==="card"
+      ? roundUpToUnit(nextBase*((storeSettings.cardFeeRate??0)/100),storeSettings.priceUnit??100)
+      : currentCardFee;
+    const changedAt=new Date().toISOString();
+
+    setOrders(updateOrder(selectedOrder.id,{
+      castId:nextCast.id,
+      castName:nextCast.name,
+      changeFee:(selectedOrder.changeFee??0)+fee,
+      changeCount:(selectedOrder.changeCount??0)+1,
+      changeHistory:[
+        ...(selectedOrder.changeHistory??[]),
+        {
+          fromCastId:selectedOrder.castId,
+          fromCastName:selectedOrder.castName,
+          toCastId:nextCast.id,
+          toCastName:nextCast.name,
+          fee,
+          changedAt
+        }
+      ],
+      cardFee:nextCardFee,
+      total:nextBase+nextCardFee
+    }));
+    setCopyNotice(`${selectedOrder.castName} → ${nextCast.name} にチェンジ / ＋${formatYen(fee)}`);
+    setOrderMode("menu");
+  }
+
+  function beginCancel(){
+    if(!selectedOrder) return;
+    setCopyNotice("");
+    setOrderMode("cancel");
+  }
+
+  function applyCancel(){
+    if(!selectedOrder) return;
+    const fee=storeSettings.cancelFee??0;
+    setOrders(updateOrder(selectedOrder.id,{
+      status:"cancelled",
+      cancelFee:fee,
+      cancelledAt:new Date().toISOString()
+    }));
+    setSelectedOrderId(null);
+    setOrderMode("menu");
+    setCopyNotice("");
   }
 
   function beginExtension(){
@@ -1361,10 +1426,62 @@ export default function DashboardPage(){
             <button type="button" className="orderActionIn" onClick={beginInTimeEntry}>
               {selectedOrder.inTime ? `イン ${selectedOrder.inTime}` : "イン時間"}
             </button>
+            <button
+              type="button"
+              className="orderActionChange"
+              onClick={beginChange}
+              disabled={Boolean(selectedOrder.inTime) || selectedOrder.status==="serving" || selectedOrder.status==="completed" || selectedOrder.status==="cancelled"}
+            >チェンジ</button>
+            <button
+              type="button"
+              className="orderActionCancel"
+              onClick={beginCancel}
+              disabled={Boolean(selectedOrder.inTime) || selectedOrder.status==="serving" || selectedOrder.status==="completed" || selectedOrder.status==="cancelled"}
+            >キャンセル</button>
             <button type="button" className="orderActionEdit" onClick={beginOrderEdit}>編集</button>
             <button type="button" className="orderActionClose" onClick={closeOrderMenu}>閉じる</button>
           </div>
         </>}
+
+        {orderMode==="change" && <div className="orderActionSubpanel">
+          <h3>チェンジ処理</h3>
+          <div className="changeCancelSummary">
+            <span>現在のキャスト</span>
+            <strong>{selectedOrder.castName}</strong>
+          </div>
+          <label className="changeCastSelect">変更後キャスト
+            <select value={changeCastId} onChange={e=>setChangeCastId(e.target.value)}>
+              <option value="">選択してください</option>
+              {selectableCasts.filter(cast=>cast.id!==selectedOrder.castId).map(cast=><option key={cast.id} value={cast.id}>{cast.name}</option>)}
+            </select>
+          </label>
+          <div className="changeCancelFee">
+            <span>チェンジ料</span>
+            <strong>＋{formatYen(storeSettings.changeFee??0)}</strong>
+          </div>
+          <small className="changeCancelHelp">確定するとキャストを変更し、オーダー料金へチェンジ料を加算します。</small>
+          <div className="orderActionSubButtons">
+            <button type="button" onClick={()=>setOrderMode("menu")}>戻る</button>
+            <button type="button" className="primary" onClick={applyChange} disabled={!changeCastId}>チェンジ確定</button>
+          </div>
+        </div>}
+
+        {orderMode==="cancel" && <div className="orderActionSubpanel">
+          <h3>キャンセル処理</h3>
+          <div className="changeCancelSummary">
+            <span>対象</span>
+            <strong>{selectedOrder.castName} / {selectedOrder.scheduledStart}〜{selectedOrder.scheduledEnd}</strong>
+          </div>
+          <div className="changeCancelFee cancel">
+            <span>キャンセル料</span>
+            <strong>{formatYen(storeSettings.cancelFee??0)}</strong>
+          </div>
+          <small className="changeCancelHelp">確定するとオーダーは配車ボードから外れ、キャンセル履歴と料金が記録されます。</small>
+          <div className="orderActionSubButtons">
+            <button type="button" onClick={()=>setOrderMode("menu")}>戻る</button>
+            <button type="button" className="primary danger" onClick={applyCancel}>キャンセル確定</button>
+          </div>
+        </div>}
 
         {orderMode==="inTime" && <div className="orderActionSubpanel">
           <h3>イン時間入力</h3>
