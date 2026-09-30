@@ -75,7 +75,7 @@ export default function CloudTeamPage(){
   return <div className="cloudManagePage">
     <header className="pageHeader">
       <div><p className="eyebrow">STAFF ACCESS</p><h1>クラウド・ログイン管理</h1>
-      <p>店舗データへアクセスできるスタッフのアカウントを管理します。</p></div>
+      <p>現在の担当店舗に限ってスタッフのアクセスを管理します。店長は他店舗の情報を閲覧できません。</p></div>
     </header>
     {!cloudConfigured && <section className="panel cloudManagePanel">
       <h2>現在はデモモード</h2><p>Supabaseプロジェクトの接続設定を完了すると利用できます。</p>
@@ -95,7 +95,7 @@ export default function CloudTeamPage(){
           </select></label>
           <button type="submit" disabled={busy}>アクセスを追加・更新</button>
         </form>
-        <small>店長は各店舗1名です。店長の任命・変更はシステムオーナーだけが行えます。ログイン権限は従来の「スタッフ登録」とは別管理です。</small>
+        <small>店長は各店舗1名、担当店舗へのアクセスに限定されます。店長の任命・変更はシステムオーナーだけが行えます。ログイン権限は従来の「スタッフ登録」とは別管理です。</small>
       </section>
       <section className="panel cloudManagePanel">
         <h2>現在のアクセス許可</h2>

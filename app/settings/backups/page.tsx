@@ -1,7 +1,7 @@
 "use client";
 
 import {useEffect,useState} from "react";
-import {cloudClient,cloudConfigured,cloudStoreId,downloadPreCloudBackup,hasPreCloudBackup} from "@/lib/cloud";
+import {cloudClient,cloudConfigured,cloudRole,cloudStoreId,downloadPreCloudBackup,hasPreCloudBackup} from "@/lib/cloud";
 
 type Daily={backup_date:string;created_at:string};
 type Safety={id:string;created_at:string;restored_from:string};
@@ -86,7 +86,7 @@ export default function BackupManagementPage(){
         </div>)}</div>
       </section>
     </>}
-    {hasPreCloudBackup() && <section className="panel cloudManagePanel">
+    {cloudConfigured && cloudRole()==="owner" && hasPreCloudBackup() && <section className="panel cloudManagePanel">
       <h2>クラウド移行前のローカルデータ</h2>
       <p>旧ブラウザ内データの控えをJSONとして保存できます。クラウドへ自動アップロードはされません。</p>
       <button type="button" className="secondaryButton" onClick={downloadPreCloudBackup}>移行前データを保存</button>

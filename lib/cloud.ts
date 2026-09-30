@@ -274,6 +274,8 @@ export async function startCloudSync(storeId:string){
   isStarting=true;
   emit({busy:true,error:null,storeId});
   try{
+    // Never let writes or subscriptions from a previous store touch this one.
+    if(activeStore && activeStore!==storeId) await stopCloudSync(true);
     if(activeStore!==storeId){
       preserveExistingLocalOnce();
       activeStore=storeId;
@@ -320,6 +322,11 @@ export async function retryCloudSync(){
   for(const def of cloudBuckets) await refreshBucket(def.bucket);
 }
 export async function stopCloudSync(clearCache=true){
+  if(timer){clearTimeout(timer);timer=null;}
+  queuedRefreshes.clear();
+  // Writes are serialized; wait for the previous store before clearing its
+  // identity, otherwise a late async write could target the next store.
+  await tail;
   if(cloudClient && channel){await cloudClient.removeChannel(channel);channel=null;}
   activeStore=null;role=null;snapshots=new Map();pending=new Map();dirtyBuckets.clear();
   if(clearCache) clearManagedCache();

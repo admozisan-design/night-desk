@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import {cloudClient,cloudConfigured,cloudStoreId,downloadPreCloudBackup,hasPreCloudBackup,startCloudSync,stopCloudSync,cloudRole,setCloudRole} from "@/lib/cloud";
+import {cloudClient,cloudConfigured,cloudStoreId,startCloudSync,stopCloudSync,cloudRole,setCloudRole} from "@/lib/cloud";
 
 type Step="loading"|"login"|"waiting"|"ready"|"error";
 type Member={store_id:string;role:"admin"|"staff"};
@@ -69,6 +69,10 @@ export function CloudGate({children}:{children:ReactNode}){
           .select("store_id,role").eq("user_id",user.id);
         if(error) throw error;
         memberships=(data??[]) as Member[];
+        // Defense in depth: store managers only enter their assigned store,
+        // even if older memberships were accidentally left in the database.
+        const manager=memberships.find(member=>member.role==="admin");
+        if(manager)memberships=memberships.filter(member=>member.store_id===manager.store_id);
       }
       if(!alive) return;
       setMemberships(memberships);
@@ -173,7 +177,7 @@ export function CloudGate({children}:{children:ReactNode}){
         <div className="cloudGateHelp">
           {isOwner
             ? "システムオーナーとして認証されました。最初の店舗を作成してください。"
-            : "店舗管理者にこのメールアドレスを伝えてください。管理者がアクセスを許可した後、下のボタンで確認できます。システムオーナーの設定待ちの場合もこちらから更新できます。"}
+            : "担当店舗の店長にこのメールアドレスを伝えてください。アクセス許可後、下のボタンから確認できます。"}
         </div>
         <button type="button" className="cloudGatePrimary" disabled={busy} onClick={()=>setRetry(n=>n+1)}>アクセスを確認</button>
         {isOwner && <form className="cloudGateNewStore" onSubmit={e=>void createStore(e)}>
@@ -192,7 +196,6 @@ export function CloudGate({children}:{children:ReactNode}){
       </>}
       {error && <div className="cloudGateError" role="alert">{error}</div>}
       {notice && <div className="cloudGateSuccess" role="status">{notice}</div>}
-      {hasPreCloudBackup() && <button type="button" className="cloudGateTextButton" onClick={downloadPreCloudBackup}>移行前のブラウザデータを保存（JSON）</button>}
       {memberships.length>1 && step==="error" && <p>アクセス可能な店舗数：{memberships.length}</p>}
     </div>
   </div>;
