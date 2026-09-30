@@ -44,7 +44,7 @@ export type Course = { id:string; minutes:number; price:number; };
 export type Hotel = { id:string; name:string; travelFee:number; visible?:boolean; kind?:"business"|"love"|"home"; address?:string; };
 export type Staff = { id:string; name:string; displayName:string; loginId:string; notes?:string; active?:boolean; };
 export type StoreOption = { id:string; name:string; price:number; notes?:string; active?:boolean; };
-export type StoreSettings = { openTime:string; closeTime:string; cardFeeRate:number; priceUnit:10|100|500|1000; miscExpenseMode:"fixed"|"percent"; miscExpenseValue:number; changeFee:number; cancelFee:number; };
+export type StoreSettings = { openTime:string; closeTime:string; cardFeeRate:number; priceUnit:10|100|500|1000; miscExpenseMode:"fixed"|"percent"; miscExpenseValue:number; changeFee:number; cancelFee:number; bookingBufferMinutes?:number; dispatchBufferMinutes?:number; };
 export type CastSettlementAdjustment = {
   orderId:string;
   optionBack:number;
@@ -60,6 +60,7 @@ export type CastSettlementDailyConfig = {
   /** Legacy value kept for previously saved browser data. The current amount is calculated from StoreSettings. */
   miscExpense?:number;
 };
+export type Expense = {id:string;date:string;category:string;description:string;amount:number;notes?:string};
 export type Customer = { id:string; phone:string; name?:string; notes?:string; ngInfo?:string; active?:boolean; };
 export type PricingConfig = {
   courses:Course[];
