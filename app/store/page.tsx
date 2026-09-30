@@ -13,6 +13,8 @@ export default function StoreSettingsPage(){
   const [miscExpenseValue,setMiscExpenseValue]=useState(defaultStoreSettings.miscExpenseValue);
   const [changeFee,setChangeFee]=useState(defaultStoreSettings.changeFee);
   const [cancelFee,setCancelFee]=useState(defaultStoreSettings.cancelFee);
+  const [bookingBufferMinutes,setBookingBufferMinutes]=useState(defaultStoreSettings.bookingBufferMinutes??15);
+  const [dispatchBufferMinutes,setDispatchBufferMinutes]=useState(defaultStoreSettings.dispatchBufferMinutes??30);
   const [saved,setSaved]=useState(false);
 
   useEffect(()=>{
@@ -25,10 +27,12 @@ export default function StoreSettingsPage(){
     setMiscExpenseValue(settings.miscExpenseValue ?? 0);
     setChangeFee(settings.changeFee ?? 0);
     setCancelFee(settings.cancelFee ?? 0);
+    setBookingBufferMinutes(settings.bookingBufferMinutes??15);
+    setDispatchBufferMinutes(settings.dispatchBufferMinutes??30);
   },[]);
 
   function save(){
-    saveStoreSettings({openTime,closeTime,cardFeeRate,priceUnit,miscExpenseMode,miscExpenseValue,changeFee,cancelFee});
+    saveStoreSettings({openTime,closeTime,cardFeeRate,priceUnit,miscExpenseMode,miscExpenseValue,changeFee,cancelFee,bookingBufferMinutes,dispatchBufferMinutes});
     setSaved(true);
     window.setTimeout(()=>setSaved(false),1400);
   }
@@ -61,6 +65,20 @@ export default function StoreSettingsPage(){
         <p>店舗営業時間は店全体の営業枠です。キャストごとの「出勤・受付終了・上がり」はキャスト出勤管理から日別に設定できます。</p>
       </div>
 
+      <div className="storePaymentSettings">
+        <h3>予約・配車の自動判定</h3>
+        <div className="storeChangeCancelGrid">
+          <label>予約の前後に確保する移動・準備時間（分）
+            <input type="number" min="0" max="180" step="5" value={bookingBufferMinutes}
+              onChange={e=>setBookingBufferMinutes(Math.min(180,Math.max(0,Number(e.target.value))))}/>
+          </label>
+          <label>ドライバーの送迎1件の目安時間（分）
+            <input type="number" min="5" max="180" step="5" value={dispatchBufferMinutes}
+              onChange={e=>setDispatchBufferMinutes(Math.min(180,Math.max(5,Number(e.target.value))))}/>
+          </label>
+        </div>
+        <p>予約の重複防止と配車候補の判定に使用します。移動時間は目安なので、道路状況や実際の送迎距離も確認してください。</p>
+      </div>
       <div className="storePaymentSettings">
         <h3>カード決済</h3>
         <label>カード手数料

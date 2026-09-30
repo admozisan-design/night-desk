@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { formatYen } from "@/lib/pricing";
 import { loadOrders, updateOrder } from "@/lib/storage";
 import type { Order } from "@/lib/types";
+import {activeBusinessDate} from "@/lib/operations";
+import {defaultStoreSettings} from "@/lib/mock-data";
 
 function dateValue(date:Date){
   const y=date.getFullYear();
@@ -27,7 +29,7 @@ type ViewMode="date"|"future";
 
 export default function OrdersPage(){
   const [orders,setOrders]=useState<Order[]>([]);
-  const [selectedDate,setSelectedDate]=useState(()=>dateValue(new Date()));
+  const [selectedDate,setSelectedDate]=useState(()=>activeBusinessDate(new Date(),defaultStoreSettings.openTime));
   const [phoneQuery,setPhoneQuery]=useState("");
   const [viewMode,setViewMode]=useState<ViewMode>("date");
   const [noteDrafts,setNoteDrafts]=useState<Record<string,string>>({});
@@ -53,12 +55,12 @@ export default function OrdersPage(){
     };
   },[]);
 
-  const today=dateValue(new Date());
+  const today=activeBusinessDate(new Date(),defaultStoreSettings.openTime);
   const tomorrow=useMemo(()=>{
-    const d=new Date();
+    const d=new Date(today+'T12:00:00');
     d.setDate(d.getDate()+1);
     return dateValue(d);
-  },[]);
+  },[today]);
 
   const filtered=useMemo(()=>{
     const phone=normalizePhone(phoneQuery);

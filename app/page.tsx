@@ -6,7 +6,8 @@ import { createPortal } from "react-dom";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { defaultDispatchWidgets } from "@/lib/dispatch-widgets";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { deleteOrder, loadCasts, loadCustomers, loadDispatchWidgets, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, saveOrder, saveSharedMemo, updateOrder } from "@/lib/storage";
+import {checkCastAvailability,suggestDrivers,activeBusinessDate} from "@/lib/operations";
+import { deleteOrder, loadCasts, loadCustomers, loadDispatchWidgets, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, confirmReservation, saveSharedMemo, updateOrder } from "@/lib/storage";
 import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, DispatchWidgetId, DispatchWidgetSetting, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
@@ -187,7 +188,7 @@ export default function DashboardPage(){
   const [pricing,setPricing] = useState<PricingConfig>(defaultPricingConfig);
   const [storeSettings,setStoreSettings] = useState(defaultStoreSettings);
   const [now,setNow] = useState<Date|null>(null);
-  const [date,setDate] = useState(()=>dateInputValue(new Date()));
+  const [date,setDate] = useState(()=>activeBusinessDate(new Date(),defaultStoreSettings.openTime));
   const [detailCastId,setDetailCastId] = useState<string|null>(null);
   const [shiftEditCastId,setShiftEditCastId] = useState<string|null>(null);
   const [shiftDraft,setShiftDraft] = useState<{start:string;endType:CastShiftEndType;endTime:string}>({start:"18:00",endType:"leave",endTime:"04:00"});
@@ -399,6 +400,15 @@ export default function DashboardPage(){
     : 0;
   const total = subtotalBeforeCard+cardFee;
 
+  const bookingAvailability=selectedCast&&course?checkCastAvailability({
+    cast:selectedCast,date,start:scheduledStart,minutes:course.minutes+editingExtensionMinutes,
+    orders,settings:storeSettings,ignoreOrderId:editingOrderId??undefined,includeSlots:true
+  }):null;
+  const driverCandidates=suggestDrivers({
+    drivers:availableDrivers,orders,date,start:scheduledStart,
+    settings:storeSettings,ignoreOrderId:editingOrderId??undefined
+  });
+
   const selectedDateOrders = useMemo(
     ()=>orders.filter(order=>orderServiceDate(order)===date),
     [orders,date]
@@ -410,7 +420,7 @@ export default function DashboardPage(){
     ),
     [workingCasts,selectedDateOrders]
   );
-  const todayValue=dateInputValue(new Date());
+  const todayValue=activeBusinessDate(new Date(),storeSettings.openTime);
   const nowPosition = now && date===todayValue ? currentTimePosition(now) : null;
   const detailCast = detailCastId ? castList.find(c=>c.id===detailCastId) : undefined;
   const detailShift = detailCast ? castShiftForDate(detailCast,date) : undefined;
@@ -731,7 +741,7 @@ export default function DashboardPage(){
     setOrderMode("change");
   }
 
-  function applyChange(){
+  async function applyChange(){
     if(!selectedOrder || !changeCastId) return;
     const nextCast=castList.find(cast=>cast.id===changeCastId);
     if(!nextCast || nextCast.id===selectedOrder.castId) return;
@@ -745,7 +755,7 @@ export default function DashboardPage(){
       : currentCardFee;
     const changedAt=new Date().toISOString();
 
-    setOrders(updateOrder(selectedOrder.id,{
+    const updates={
       castId:nextCast.id,
       castName:nextCast.name,
       changeFee:(selectedOrder.changeFee??0)+fee,
@@ -763,9 +773,14 @@ export default function DashboardPage(){
       ],
       cardFee:nextCardFee,
       total:nextBase+nextCardFee
-    }));
-    setCopyNotice(`${selectedOrder.castName} → ${nextCast.name} にチェンジ / ＋${formatYen(fee)}`);
-    setOrderMode("menu");
+    };
+    try{
+      setOrders(await confirmReservation({...selectedOrder,...updates},selectedOrder.id));
+      setCopyNotice(`${selectedOrder.castName} → ${nextCast.name} にチェンジ / ＋${formatYen(fee)}`);
+      setOrderMode("menu");
+    }catch(err){
+      window.alert("チェンジを確定できませんでした："+(err instanceof Error?err.message:"予約時間を確認してください"));
+    }
   }
 
   function beginCancel(){
@@ -792,23 +807,27 @@ export default function DashboardPage(){
     setOrderMode("extend");
   }
 
-  function applyExtension(){
+  async function applyExtension(){
     if(!selectedOrder) return;
     const add=pricing.extensionMinutes*extensionCount;
     const addPrice=pricing.extensionPrice*extensionCount;
     const baseCourse=resolveOrderCourse(selectedOrder,pricing);
     const currentExtensionMinutes=resolveOrderExtensionMinutes(selectedOrder,pricing);
     const currentExtensionTotal=resolveOrderExtensionTotal(selectedOrder,pricing);
-    setOrders(updateOrder(selectedOrder.id,{
-      courseId:baseCourse?.id ?? selectedOrder.courseId,
-      courseMinutes:baseCourse?.minutes ?? selectedOrder.courseMinutes,
-      extensionMinutes:currentExtensionMinutes+add,
-      extensionTotal:currentExtensionTotal+addPrice,
-      scheduledEnd:addMinutes(selectedOrder.scheduledEnd,add),
-      total:selectedOrder.total+addPrice
-    }));
-    setOrderMode("menu");
-    setCopyNotice(`${add}分延長しました`);
+    try{
+      setOrders(await confirmReservation({...selectedOrder,
+        courseId:baseCourse?.id ?? selectedOrder.courseId,
+        courseMinutes:baseCourse?.minutes ?? selectedOrder.courseMinutes,
+        extensionMinutes:currentExtensionMinutes+add,
+        extensionTotal:currentExtensionTotal+addPrice,
+        scheduledEnd:addMinutes(selectedOrder.scheduledEnd,add),
+        total:selectedOrder.total+addPrice
+      },selectedOrder.id));
+      setOrderMode("menu");
+      setCopyNotice(`${add}分延長しました`);
+    }catch(err){
+      window.alert("延長できませんでした："+(err instanceof Error?err.message:"次の予約時間を確認してください"));
+    }
   }
 
   function removeSelectedOrder(){
@@ -897,9 +916,22 @@ export default function DashboardPage(){
     return target ? createPortal(node,target) : null;
   }
 
-  function registerOrder(e:FormEvent<HTMLFormElement>){
+  async function registerOrder(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
     if(!selectedCast || !course) return;
+    const availabilityNow=checkCastAvailability({
+      cast:selectedCast,date,start:scheduledStart,minutes:course.minutes+editingExtensionMinutes,
+      orders:loadOrders(),settings:storeSettings,ignoreOrderId:editingOrderId??undefined
+    });
+    if(!availabilityNow.ok){
+      window.alert("予約できません：" + availabilityNow.message);
+      return;
+    }
+    if(matchedCustomer?.active===false){
+      window.alert("利用不可として登録されているお客様です。顧客情報を確認してください。");
+      return;
+    }
+    if(matchedCustomer?.ngInfo && !window.confirm("NG情報が登録されています。確認して続けますか？\\n"+matchedCustomer.ngInfo))return;
 
     const selectedOptionNames=selectableOptions
       .filter(option=>selectedOptionIds.includes(option.id))
@@ -935,23 +967,24 @@ export default function DashboardPage(){
       note
     };
 
-    if(editingOrderId){
-      const syncedOrders=updateOrder(editingOrderId,commonChanges);
-      setOrders(syncedOrders);
-    }else{
-      const order:Order = {
-        id:crypto.randomUUID(),
-        createdAt:new Date().toISOString(),
-        ...commonChanges,
-        extensionMinutes:0,
-        extensionTotal:0,
-        adjustment:0,
-        status:"accepted"
-      };
-      saveOrder(order);
-      setOrders(loadOrders());
+    const order:Order=editingOrder
+      ? {...editingOrder,...commonChanges}
+      : {
+          id:crypto.randomUUID(),
+          createdAt:new Date().toISOString(),
+          ...commonChanges,
+          extensionMinutes:0,
+          extensionTotal:0,
+          adjustment:0,
+          status:"accepted"
+        };
+    try{
+      const confirmed=await confirmReservation(order,editingOrderId??undefined);
+      setOrders(confirmed);
+      resetOrderForm();
+    }catch(err){
+      window.alert("予約を確定できませんでした："+(err instanceof Error?err.message:"同期エラー"));
     }
-    resetOrderForm();
   }
 
   return <div className="deskDashboard">
@@ -1202,6 +1235,14 @@ export default function DashboardPage(){
               </label>
             </div>
 
+            {bookingAvailability&&<div role="status" style={{margin:"10px 0",padding:12,borderRadius:9,
+              background:bookingAvailability.ok?"#f0fdf4":"#fff7ed"}}>
+              <strong>{bookingAvailability.ok?"予約可能":"予約不可：" + bookingAvailability.message}</strong>
+              {!bookingAvailability.ok&&bookingAvailability.nextSlots.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+                <span>空き候補：</span>{bookingAvailability.nextSlots.map(slot=>
+                  <button type="button" key={slot} onClick={()=>setScheduledStart(slot)}>{slot}</button>)}
+              </div>}
+            </div>}
             {paymentMethod==="card" && <div className="cardFeePreview">
               <span>カード手数料 {storeSettings.cardFeeRate??0}% / {new Intl.NumberFormat("ja-JP").format(storeSettings.priceUnit??100)}円単位</span>
               <strong>＋{formatYen(cardFee)}</strong>
@@ -1214,7 +1255,7 @@ export default function DashboardPage(){
             <div className="driverMailRow">
               <label>ドライバー
                 <select value={driverId} onChange={e=>setDriverId(e.target.value)}>
-                  {availableDrivers.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
+                  {driverCandidates.map(row=><option key={row.driver.id} value={row.driver.id}>{row.driver.name}{row.overlap.length?" ⚠時間重複":""}（当日"+row.load+"件）</option>)}
                 </select>
               </label>
               <button

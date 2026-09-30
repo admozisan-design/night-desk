@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { casts as defaultCasts, defaultStoreSettings } from "@/lib/mock-data";
 import { loadCasts, loadOrders, loadStoreSettings } from "@/lib/storage";
 import type { Cast, CastAttendanceStatus, CastStatus, Order } from "@/lib/types";
+import {activeBusinessDate} from "@/lib/operations";
 
 const BOARD_START=10*60;
 const BOARD_MINUTES=19*60;
@@ -123,7 +124,7 @@ export default function StandaloneBoardPage(){
   const [orders,setOrders]=useState<Order[]>([]);
   const [casts,setCasts]=useState<Cast[]>(defaultCasts);
   const [storeSettings,setStoreSettings]=useState(defaultStoreSettings);
-  const [date,setDate]=useState(()=>dateInputValue(new Date()));
+  const [date,setDate]=useState(()=>activeBusinessDate(new Date(),defaultStoreSettings.openTime));
   const [now,setNow]=useState<Date|null>(null);
   const boardScrollRef=useRef<HTMLDivElement|null>(null);
   const lastBoardAutoScrollDateRef=useRef<string|null>(null);
@@ -180,7 +181,7 @@ export default function StandaloneBoardPage(){
     [workingCasts,selectedOrders]
   );
 
-  const today=dateInputValue(new Date());
+  const today=activeBusinessDate(new Date(),storeSettings.openTime);
   const nowPosition=now && date===today ? currentTimePosition(now) : null;
 
   const boardRows=workingCasts.map(cast=>{

@@ -47,7 +47,9 @@ export const defaultStoreSettings: StoreSettings = {
   miscExpenseMode:"percent",
   miscExpenseValue:6,
   changeFee:0,
-  cancelFee:0
+  cancelFee:0,
+  bookingBufferMinutes:15,
+  dispatchBufferMinutes:30
 };
 
 export const options: StoreOption[] = [
