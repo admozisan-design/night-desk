@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { defaultDispatchWidgets } from "@/lib/dispatch-widgets";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import {checkCastAvailability,suggestDrivers} from "@/lib/operations";
+import {checkCastAvailability,suggestDrivers,activeBusinessDate} from "@/lib/operations";
 import { deleteOrder, loadCasts, loadCustomers, loadDispatchWidgets, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, confirmReservation, saveSharedMemo, updateOrder } from "@/lib/storage";
 import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, DispatchWidgetId, DispatchWidgetSetting, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
@@ -188,7 +188,7 @@ export default function DashboardPage(){
   const [pricing,setPricing] = useState<PricingConfig>(defaultPricingConfig);
   const [storeSettings,setStoreSettings] = useState(defaultStoreSettings);
   const [now,setNow] = useState<Date|null>(null);
-  const [date,setDate] = useState(()=>dateInputValue(new Date()));
+  const [date,setDate] = useState(()=>activeBusinessDate(new Date(),defaultStoreSettings.openTime));
   const [detailCastId,setDetailCastId] = useState<string|null>(null);
   const [shiftEditCastId,setShiftEditCastId] = useState<string|null>(null);
   const [shiftDraft,setShiftDraft] = useState<{start:string;endType:CastShiftEndType;endTime:string}>({start:"18:00",endType:"leave",endTime:"04:00"});
@@ -420,7 +420,7 @@ export default function DashboardPage(){
     ),
     [workingCasts,selectedDateOrders]
   );
-  const todayValue=dateInputValue(new Date());
+  const todayValue=activeBusinessDate(new Date(),storeSettings.openTime);
   const nowPosition = now && date===todayValue ? currentTimePosition(now) : null;
   const detailCast = detailCastId ? castList.find(c=>c.id===detailCastId) : undefined;
   const detailShift = detailCast ? castShiftForDate(detailCast,date) : undefined;
