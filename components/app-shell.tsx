@@ -6,7 +6,7 @@ import { useEffect, useState, type FocusEvent } from "react";
 import { defaultTopNavigation } from "@/lib/navigation";
 import { loadTopNavigation } from "@/lib/storage";
 import { CloudGate } from "@/components/cloud-gate";
-import {cloudClient,cloudConfigured,cloudStatus,retryCloudSync,stopCloudSync,type CloudStatus} from "@/lib/cloud";
+import {cloudClient,cloudConfigured,cloudRole,cloudStatus,retryCloudSync,stopCloudSync,type CloudStatus} from "@/lib/cloud";
 import type { TopNavItem } from "@/lib/types";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -80,11 +80,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {nav.filter(item=>(item.inMenu!==false) && (item.visible || item.id==="settings")).map(item=>(
             <Link key={item.id} href={item.href} className={isActive(item.href)?"active":""}>{item.label}</Link>
           ))}
+          {cloudConfigured && cloudRole()==="owner" && <Link href="/owner" className={isActive("/owner")?"active ownerNav":"ownerNav"}>全店舗管理</Link>}
         </nav>
         {cloudConfigured
           ? <div className="consoleShop cloudConsoleShop">
               <span className={cloud.error?"offlineDot":"onlineDot"}/>
-              <div><small>{cloud.error?"同期エラー":cloud.busy?"同期中…":cloud.connected?"クラウド同期":"接続中"}</small><strong title={email}>{email || "スタッフ"}</strong></div>
+              <div><small>{cloudRole()==="owner"?"システムオーナー":cloud.error?"同期エラー":cloud.busy?"同期中…":cloud.connected?"クラウド同期":"接続中"}</small><strong title={email}>{email || "スタッフ"}</strong></div>
               {cloud.error && <button type="button" onClick={()=>void retryCloudSync()} title={cloud.error}>再試行</button>}
               <button type="button" onClick={()=>void (async()=>{await stopCloudSync(true);await cloudClient?.auth.signOut();})()}>ログアウト</button>
             </div>

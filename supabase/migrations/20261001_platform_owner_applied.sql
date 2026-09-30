@@ -1,0 +1,8 @@
+-- Live migration nightdesk_platform_owner has already been applied.
+-- The following statement is a deployment check for the immutable owner slot:
+-- select * from public.nightdesk_platform_owner; (database admins only)
+-- Insert verified owner's auth user only after their email has been confirmed:
+-- insert into public.nightdesk_platform_owner(singleton,user_id)
+-- select true,id from auth.users where email='<confirmed-owner-email>'
+--   and email_confirmed_at is not null;
+-- DO NOT enable auto-promotion of the first sign-up.

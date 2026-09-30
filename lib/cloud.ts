@@ -51,9 +51,9 @@ export type CloudStatus={
 };
 let status:CloudStatus={connected:false,busy:false,error:null,lastSync:null,storeId:null};
 let activeStore:string|null=null;
-let role:"admin"|"staff"|null=null;
+let role:"owner"|"admin"|"staff"|null=null;
 export function cloudRole(){return cloudConfigured ? role : "admin";}
-export function setCloudRole(value:"admin"|"staff"){role=value;}
+export function setCloudRole(value:"owner"|"admin"|"staff"){role=value;}
 let pending=new Map<string,string>();
 let snapshots=new Map<string,Map<string,string>>();
 let tail:Promise<void>=Promise.resolve();

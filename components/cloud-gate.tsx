@@ -18,6 +18,7 @@ export function CloudGate({children}:{children:ReactNode}){
   const [retry,setRetry]=useState(0);
   const [storeName,setStoreName]=useState("");
   const [memberships,setMemberships]=useState<Member[]>([]);
+  const [isOwner,setIsOwner]=useState(false);
 
   useEffect(()=>{
     if(!cloudConfigured || !cloudClient) return;
@@ -33,7 +34,7 @@ export function CloudGate({children}:{children:ReactNode}){
     const {data:{subscription}}=cloudClient.auth.onAuthStateChange((event,session)=>{
       if(!alive) return;
       if(event==="SIGNED_OUT"){
-        setUser(null);setStep("login");setMemberships([]);
+        setUser(null);setStep("login");setMemberships([]);setIsOwner(false);
         void stopCloudSync(true);
       }else if(session?.user){
         setUser(session.user);
@@ -48,11 +49,28 @@ export function CloudGate({children}:{children:ReactNode}){
     let alive=true;
     setStep("loading");setError("");
     (async()=>{
-      const {data,error}=await client.from("nightdesk_memberships")
-        .select("store_id,role").eq("user_id",user.id);
-      if(error) throw error;
+      // The owner is recognized server-side by auth user ID; never by a
+      // user-editable email value or a client-side administrator switch.
+      const own=await client.rpc("nightdesk_is_owner");
+      if(own.error) throw own.error;
+      const isPlatformOwner=own.data===true;
+      if(alive)setIsOwner(isPlatformOwner);
+
+      let memberships:Member[];
+      if(isPlatformOwner){
+        // Owner can manage every store, even without explicit membership.
+        const {data,error}=await client.from("nightdesk_stores")
+          .select("id").order("created_at",{ascending:true});
+        if(error) throw error;
+        memberships=(data??[]).map(store=>({store_id:store.id as string,role:"admin" as const}));
+        setCloudRole("owner");
+      }else{
+        const {data,error}=await client.from("nightdesk_memberships")
+          .select("store_id,role").eq("user_id",user.id);
+        if(error) throw error;
+        memberships=(data??[]) as Member[];
+      }
       if(!alive) return;
-      const memberships=(data??[]) as Member[];
       setMemberships(memberships);
       if(!memberships.length){
         setStep("waiting");return;
@@ -60,7 +78,7 @@ export function CloudGate({children}:{children:ReactNode}){
       const wanted=localStorage.getItem("nightdesk-current-store");
       const member=memberships.find(m=>m.store_id===wanted)??memberships[0];
       localStorage.setItem("nightdesk-current-store",member.store_id);
-      setCloudRole(member.role);
+      if(!isPlatformOwner)setCloudRole(member.role);
       await startCloudSync(member.store_id);
       if(alive)setStep("ready");
     })().catch(err=>{
@@ -109,15 +127,16 @@ export function CloudGate({children}:{children:ReactNode}){
   async function signOut(){
     await stopCloudSync(true);
     await cloudClient?.auth.signOut();
-    setStep("login");setUser(null);
+    setStep("login");setUser(null);setIsOwner(false);
   }
 
   if(!cloudConfigured) return <>{children}</>;
   if(step==="ready" && cloudStoreId()){
     const adminOnly=["/store","/pricing","/permissions","/staff",
       "/settings/team","/settings/backups","/settings/menu","/settings/dispatch","/settings/data"];
-    const restricted=cloudRole()==="staff" &&
-      adminOnly.some(prefix=>path===prefix || path.startsWith(prefix+"/"));
+    const restricted=(cloudRole()==="staff" &&
+      adminOnly.some(prefix=>path===prefix || path.startsWith(prefix+"/")))
+      || ((path==="/owner" || path.startsWith("/owner/")) && cloudRole()!=="owner");
     if(restricted) return <div className="cloudGate">
       <div className="cloudGateCard">
         <h2>管理者専用の設定です</h2>
@@ -152,16 +171,17 @@ export function CloudGate({children}:{children:ReactNode}){
         <h2>店舗へのアクセス設定</h2>
         <p>ログイン中：<strong>{user?.email}</strong></p>
         <div className="cloudGateHelp">
-          既存店舗のスタッフの場合、管理者にこのメールアドレスを伝えて権限を追加してもらってください。
-          権限が追加されたら下の更新ボタンを押します。
+          {isOwner
+            ? "システムオーナーとして認証されました。最初の店舗を作成してください。"
+            : "店舗管理者にこのメールアドレスを伝えてください。管理者がアクセスを許可した後、下のボタンで確認できます。システムオーナーの設定待ちの場合もこちらから更新できます。"}
         </div>
         <button type="button" className="cloudGatePrimary" disabled={busy} onClick={()=>setRetry(n=>n+1)}>アクセスを確認</button>
-        <form className="cloudGateNewStore" onSubmit={e=>void createStore(e)}>
+        {isOwner && <form className="cloudGateNewStore" onSubmit={e=>void createStore(e)}>
           <h3>新しい店舗の管理者として開始する</h3>
           <label>店舗名<input value={storeName} required maxLength={100} onChange={e=>setStoreName(e.target.value)} placeholder="例：NIGHT DESK 本店"/></label>
           <button type="submit" disabled={busy || !storeName.trim()}>専用店舗を作成</button>
-          <small>作成したアカウントに管理者権限が付与されます。</small>
-        </form>
+          <small>新しい店舗はデータが空の状態で作成されます。</small>
+        </form>}
         <button type="button" className="cloudGateTextButton" onClick={()=>void signOut()}>ログアウト</button>
       </>}
       {step==="error" && <>

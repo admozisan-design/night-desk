@@ -49,8 +49,9 @@ const groups:{
   {
     title:"システム",
     description:"画面、メニュー、クラウド、権限、操作履歴",
-    countLabel:"7項目",
+    countLabel:"8項目",
     items:[
+      {title:"全店舗管理（オーナー専用）",description:"契約店舗の作成・店舗切替・スタッフ管理",href:"/owner"},
       {title:"クラウド・ログイン管理",description:"ログインできるスタッフの追加・削除",href:"/settings/team"},
       {title:"自動バックアップ",description:"日次保存履歴とデータ復元",href:"/settings/backups"},
       {title:"CSVデータ管理",description:"キャスト・ドライバー・ホテル・顧客・オーダーをCSV出力・入力",href:"/settings/data"},
@@ -86,10 +87,10 @@ export default function SettingsPage(){
         </summary>
 
         <div className="settingsAccordionBody">
-          {group.items.filter(item=>!cloudConfigured || cloudRole()==="admin" || ![
+          {group.items.filter(item=>(item.href!=="/owner" || (cloudConfigured && cloudRole()==="owner")) && (!cloudConfigured || cloudRole()!=="staff" || ![
             "/store","/pricing","/permissions","/staff","/settings/team",
             "/settings/backups","/settings/menu","/settings/dispatch","/settings/data"
-          ].includes(item.href)).map(item=><Link href={item.href} className="settingsCompactItem" key={item.href}>
+          ].includes(item.href))).map(item=><Link href={item.href} className="settingsCompactItem" key={item.href}>
             <div>
               <strong>{item.title}</strong>
               <p>{item.description}</p>
