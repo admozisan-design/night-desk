@@ -269,7 +269,7 @@ export function planCsvImport(dataset:CsvDataset,incoming:CsvPatch[],current:Csv
     }
     const original=index>=0?result[index]:base[dataset]();
     const row={...original,...patch};
-    if(index>=0 && dataset==="customers") row.id=original.id;
+    if(index>=0 && dataset==="customers" && original && typeof original.id==="string") row.id=original.id;
     validateRecord(dataset,row);
     if(index>=0){result[index]=row;updated++;}
     else{result.push(row);added++;}
