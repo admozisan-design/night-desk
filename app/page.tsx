@@ -741,7 +741,7 @@ export default function DashboardPage(){
     setOrderMode("change");
   }
 
-  function applyChange(){
+  async function applyChange(){
     if(!selectedOrder || !changeCastId) return;
     const nextCast=castList.find(cast=>cast.id===changeCastId);
     if(!nextCast || nextCast.id===selectedOrder.castId) return;
@@ -755,7 +755,7 @@ export default function DashboardPage(){
       : currentCardFee;
     const changedAt=new Date().toISOString();
 
-    setOrders(updateOrder(selectedOrder.id,{
+    const updates={
       castId:nextCast.id,
       castName:nextCast.name,
       changeFee:(selectedOrder.changeFee??0)+fee,
@@ -773,9 +773,14 @@ export default function DashboardPage(){
       ],
       cardFee:nextCardFee,
       total:nextBase+nextCardFee
-    }));
-    setCopyNotice(`${selectedOrder.castName} → ${nextCast.name} にチェンジ / ＋${formatYen(fee)}`);
-    setOrderMode("menu");
+    };
+    try{
+      setOrders(await confirmReservation({...selectedOrder,...updates},selectedOrder.id));
+      setCopyNotice(`${selectedOrder.castName} → ${nextCast.name} にチェンジ / ＋${formatYen(fee)}`);
+      setOrderMode("menu");
+    }catch(err){
+      window.alert("チェンジを確定できませんでした："+(err instanceof Error?err.message:"予約時間を確認してください"));
+    }
   }
 
   function beginCancel(){
@@ -802,23 +807,27 @@ export default function DashboardPage(){
     setOrderMode("extend");
   }
 
-  function applyExtension(){
+  async function applyExtension(){
     if(!selectedOrder) return;
     const add=pricing.extensionMinutes*extensionCount;
     const addPrice=pricing.extensionPrice*extensionCount;
     const baseCourse=resolveOrderCourse(selectedOrder,pricing);
     const currentExtensionMinutes=resolveOrderExtensionMinutes(selectedOrder,pricing);
     const currentExtensionTotal=resolveOrderExtensionTotal(selectedOrder,pricing);
-    setOrders(updateOrder(selectedOrder.id,{
-      courseId:baseCourse?.id ?? selectedOrder.courseId,
-      courseMinutes:baseCourse?.minutes ?? selectedOrder.courseMinutes,
-      extensionMinutes:currentExtensionMinutes+add,
-      extensionTotal:currentExtensionTotal+addPrice,
-      scheduledEnd:addMinutes(selectedOrder.scheduledEnd,add),
-      total:selectedOrder.total+addPrice
-    }));
-    setOrderMode("menu");
-    setCopyNotice(`${add}分延長しました`);
+    try{
+      setOrders(await confirmReservation({...selectedOrder,
+        courseId:baseCourse?.id ?? selectedOrder.courseId,
+        courseMinutes:baseCourse?.minutes ?? selectedOrder.courseMinutes,
+        extensionMinutes:currentExtensionMinutes+add,
+        extensionTotal:currentExtensionTotal+addPrice,
+        scheduledEnd:addMinutes(selectedOrder.scheduledEnd,add),
+        total:selectedOrder.total+addPrice
+      },selectedOrder.id));
+      setOrderMode("menu");
+      setCopyNotice(`${add}分延長しました`);
+    }catch(err){
+      window.alert("延長できませんでした："+(err instanceof Error?err.message:"次の予約時間を確認してください"));
+    }
   }
 
   function removeSelectedOrder(){
