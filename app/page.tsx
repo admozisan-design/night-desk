@@ -7,7 +7,7 @@ import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, driv
 import { defaultDispatchWidgets } from "@/lib/dispatch-widgets";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
 import {checkCastAvailability,suggestDrivers} from "@/lib/operations";
-import { deleteOrder, loadCasts, loadCustomers, loadDispatchWidgets, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, saveOrder, saveSharedMemo, updateOrder } from "@/lib/storage";
+import { deleteOrder, loadCasts, loadCustomers, loadDispatchWidgets, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, confirmReservation, saveSharedMemo, updateOrder } from "@/lib/storage";
 import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, DispatchWidgetId, DispatchWidgetSetting, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 const BOARD_START = 10 * 60;
@@ -907,7 +907,7 @@ export default function DashboardPage(){
     return target ? createPortal(node,target) : null;
   }
 
-  function registerOrder(e:FormEvent<HTMLFormElement>){
+  async function registerOrder(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
     if(!selectedCast || !course) return;
     const availabilityNow=checkCastAvailability({
@@ -958,23 +958,24 @@ export default function DashboardPage(){
       note
     };
 
-    if(editingOrderId){
-      const syncedOrders=updateOrder(editingOrderId,commonChanges);
-      setOrders(syncedOrders);
-    }else{
-      const order:Order = {
-        id:crypto.randomUUID(),
-        createdAt:new Date().toISOString(),
-        ...commonChanges,
-        extensionMinutes:0,
-        extensionTotal:0,
-        adjustment:0,
-        status:"accepted"
-      };
-      saveOrder(order);
-      setOrders(loadOrders());
+    const order:Order=editingOrder
+      ? {...editingOrder,...commonChanges}
+      : {
+          id:crypto.randomUUID(),
+          createdAt:new Date().toISOString(),
+          ...commonChanges,
+          extensionMinutes:0,
+          extensionTotal:0,
+          adjustment:0,
+          status:"accepted"
+        };
+    try{
+      const confirmed=await confirmReservation(order,editingOrderId??undefined);
+      setOrders(confirmed);
+      resetOrderForm();
+    }catch(err){
+      window.alert("予約を確定できませんでした："+(err instanceof Error?err.message:"同期エラー"));
     }
-    resetOrderForm();
   }
 
   return <div className="deskDashboard">
