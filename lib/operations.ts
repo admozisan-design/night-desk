@@ -4,6 +4,13 @@ import type {Cast, Driver, Order, StoreSettings, CastSettlementAdjustment, Expen
 export function localDate(date:Date=new Date()){
   return [date.getFullYear(),String(date.getMonth()+1).padStart(2,"0"),String(date.getDate()).padStart(2,"0")].join("-");
 }
+export function activeBusinessDate(now:Date=new Date(),storeOpen="12:00"){
+  const date=new Date(now);
+  const [hours,mins]=storeOpen.split(":").map(Number);
+  if(date.getHours()*60+date.getMinutes()<hours*60+mins)
+    date.setDate(date.getDate()-1);
+  return localDate(date);
+}
 export function clockMinutes(value:string):number{
   const match=/^(\d{1,2}):(\d{2})$/.exec(value);
   if(!match) return NaN;
@@ -66,7 +73,9 @@ export function checkCastAvailability(args:{
       const takenTime=String(taken.getHours()).padStart(2,"0")+":"+String(taken.getMinutes()).padStart(2,"0");
       const takenBizDate=new Date(taken);
       if(clockMinutes(takenTime)<clockMinutes(settings.openTime))takenBizDate.setDate(takenBizDate.getDate()-1);
-      if(localDate(takenBizDate)===date &&
+      const original=orders.find(order=>order.id===ignoreOrderId);
+      const alreadyBooked=original && original.castId===cast.id && orderDate(original)===date;
+      if(!alreadyBooked && localDate(takenBizDate)===date &&
         businessMinutes(takenTime,settings.openTime)>shiftEnd)
         message="キャストの受付終了後です";
     }
