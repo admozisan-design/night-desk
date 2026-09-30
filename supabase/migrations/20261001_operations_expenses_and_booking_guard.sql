@@ -108,3 +108,58 @@ drop trigger if exists nightdesk_order_overlap_guard on public.nightdesk_records
 create trigger nightdesk_order_overlap_guard
  before insert or update of payload,store_id,bucket on public.nightdesk_records
  for each row execute function public.nightdesk_guard_order_overlaps();
+
+-- Synchronous reservation RPC: client awaits the atomic check before showing
+-- a confirmed reservation; the trigger protects all other database writes.
+create or replace function public.nightdesk_reserve_order(
+ p_store_id uuid,p_order jsonb,p_position int default 0
+)
+returns text language plpgsql security definer set search_path=''
+as $$
+declare v_id text;
+begin
+ if not public.nightdesk_can_write(p_store_id,'orders') then
+   raise exception 'この店舗への予約登録権限がありません';
+ end if;
+ v_id:=nullif(p_order->>'id','');
+ if v_id is null or length(v_id)>256 then
+   raise exception '予約IDが不正です';
+ end if;
+ if exists(select 1 from public.nightdesk_records
+     where store_id=p_store_id and bucket='orders' and item_id=v_id) then
+   raise exception 'この予約は既に登録されています';
+ end if;
+ insert into public.nightdesk_records(store_id,bucket,item_id,payload,updated_at,updated_by)
+ values(p_store_id,'orders',v_id,
+   pg_catalog.jsonb_build_object('value',p_order,'position',p_position),
+   now(),(select auth.uid()));
+ return v_id;
+end;
+$$;
+revoke all on function public.nightdesk_reserve_order(uuid,jsonb,int)
+from public,anon;
+grant execute on function public.nightdesk_reserve_order(uuid,jsonb,int) to authenticated;
+
+create or replace function public.nightdesk_update_reservation(
+ p_store_id uuid,p_order_id text,p_order jsonb
+)
+returns text language plpgsql security definer set search_path=''
+as $$
+begin
+ if not public.nightdesk_can_write(p_store_id,'orders') then
+   raise exception 'この店舗への予約更新権限がありません';
+ end if;
+ if p_order->>'id' is distinct from p_order_id then
+   raise exception '予約IDは変更できません';
+ end if;
+ update public.nightdesk_records r
+ set payload=pg_catalog.jsonb_set(r.payload,'{value}',p_order),
+     updated_at=now(),updated_by=(select auth.uid())
+ where r.store_id=p_store_id and r.bucket='orders' and r.item_id=p_order_id;
+ if not found then raise exception '編集対象の予約が見つかりません'; end if;
+ return p_order_id;
+end;
+$$;
+revoke all on function public.nightdesk_update_reservation(uuid,text,jsonb)
+from public,anon;
+grant execute on function public.nightdesk_update_reservation(uuid,text,jsonb) to authenticated;
