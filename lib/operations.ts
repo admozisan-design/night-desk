@@ -42,7 +42,7 @@ export function orderInterval(order:Order,settings:StoreSettings){
 export type Availability={ok:boolean;message:string;conflicts:Order[];nextSlots:string[]};
 export function checkCastAvailability(args:{
   cast:Cast; date:string; start:string; minutes:number; orders:Order[];
-  settings:StoreSettings; ignoreOrderId?:string; includeSlots?:boolean;
+  settings:StoreSettings; ignoreOrderId?:string; includeSlots?:boolean; bookingTakenAt?:Date;
 }):Availability{
   const {cast,date,start,minutes,orders,settings,ignoreOrderId}=args;
   const from=businessMinutes(start,settings.openTime);
@@ -60,7 +60,16 @@ export function checkCastAvailability(args:{
     const shiftStart=businessMinutes(shift.start,settings.openTime);
     const shiftEnd=businessMinutes(shift.endTime,settings.openTime);
     if(from<shiftStart)message="出勤開始前です";
-    else if(shift.endType==="reception" && from>shiftEnd)message="キャストの受付終了後です";
+    else if(shift.endType==="reception"){
+      // 受付終了は予約の受付締切。確定済み予約の開始・退勤時刻ではない。
+      const taken=args.bookingTakenAt??new Date();
+      const takenTime=String(taken.getHours()).padStart(2,"0")+":"+String(taken.getMinutes()).padStart(2,"0");
+      const takenBizDate=new Date(taken);
+      if(clockMinutes(takenTime)<clockMinutes(settings.openTime))takenBizDate.setDate(takenBizDate.getDate()-1);
+      if(localDate(takenBizDate)===date &&
+        businessMinutes(takenTime,settings.openTime)>shiftEnd)
+        message="キャストの受付終了後です";
+    }
     else if(shift.endType==="leave" && to>shiftEnd)message="キャストの上がり時間を超えます";
   }else{
     // Legacy cast fields; saved weekly shifts take precedence.
