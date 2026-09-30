@@ -4842,3 +4842,25 @@ button{
   .cloudConsoleShop strong{max-width:90px}
   .cloudGateCard{padding:20px}
 }
+
+
+/* ===== Cloud management pages ===== */
+.cloudManagePage{max-width:1140px}
+.cloudManagePanel{padding:20px;margin-top:14px}
+.cloudManagePanel h2{font-size:19px;margin:0 0 11px}
+.cloudManagePanel p{color:#697882;line-height:1.6;font-size:13px}
+.cloudManagePanel>small{color:#73828b;line-height:1.5}
+.cloudManageForm{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin:15px 0}
+.cloudManageForm label{display:grid;gap:5px;min-width:220px;flex:1;font-size:12px;font-weight:900}
+.cloudManageForm input,.cloudManageForm select{min-height:44px;padding:9px;border:1px solid #d3dee4;border-radius:8px}
+.cloudManageForm button{min-height:44px;padding:8px 14px;border:0;border-radius:8px;background:#87cb20;color:#233810;font-weight:900;cursor:pointer}
+.cloudManageForm button:disabled{opacity:.5}
+.cloudMemberList{display:grid;gap:7px}
+.cloudMemberList>div{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,auto) auto;align-items:center;gap:12px;
+  padding:12px;border:1px solid #dbe3e8;border-radius:9px;background:#f9fbfc
+}
+.cloudMemberList strong{overflow-wrap:anywhere}
+.cloudMemberList span{font-size:12px;color:#7c8a93}
+.cloudMemberList button{padding:8px 10px;border:1px solid #dabbbb;border-radius:7px;background:#fff8f8;color:#995353;cursor:pointer;font-weight:800}
+.cloudMemberList button:disabled{opacity:.5}
+@media(max-width:750px){.cloudMemberList>div{grid-template-columns:1fr}.cloudMemberList button{justify-self:start}}

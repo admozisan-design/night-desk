@@ -10,6 +10,8 @@ export const defaultTopNavigation:TopNavItem[]=[
 ];
 
 export const settingsNavigationCatalog:TopNavItem[]=[
+  {id:"nav-team",href:"/settings/team",label:"ログイン管理",visible:true,inMenu:false},
+  {id:"nav-backups",href:"/settings/backups",label:"バックアップ",visible:true,inMenu:false},
   {id:"nav-csv-data",href:"/settings/data",label:"CSVデータ管理",visible:true,inMenu:false},
   {id:"nav-dispatch-layout",href:"/settings/dispatch",label:"配車管理レイアウト",visible:true,inMenu:false},
   {id:"nav-menu-settings",href:"/settings/menu",label:"上部メニュー設定",visible:true,inMenu:false},

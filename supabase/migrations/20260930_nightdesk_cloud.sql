@@ -224,6 +224,32 @@ $$;
 revoke all on function public.nightdesk_restore_backup(uuid,date) from public;
 grant execute on function public.nightdesk_restore_backup(uuid,date) to authenticated;
 
+-- Every safety copy is also reversible, with a new safety copy taken first.
+create or replace function public.nightdesk_restore_safety(p_store_id uuid,p_safety_id uuid)
+returns void language plpgsql security definer set search_path=''
+as $
+declare v_records jsonb;
+begin
+  if not public.nightdesk_is_admin(p_store_id) then raise exception '管理者権限が必要です'; end if;
+  select records into v_records from public.nightdesk_restore_safety
+  where store_id=p_store_id and id=p_safety_id;
+  if v_records is null then raise exception '指定の安全コピーがありません'; end if;
+
+  insert into public.nightdesk_restore_safety(store_id,records,restored_from)
+  select p_store_id,
+    coalesce(jsonb_agg(jsonb_build_object('bucket',bucket,'item_id',item_id,'payload',payload)),'[]'::jsonb),
+    (now() at time zone 'Asia/Tokyo')::date
+  from public.nightdesk_records where store_id=p_store_id;
+
+  delete from public.nightdesk_records where store_id=p_store_id;
+  insert into public.nightdesk_records(store_id,bucket,item_id,payload,updated_by)
+  select p_store_id,row->>'bucket',row->>'item_id',row->'payload',(select auth.uid())
+  from jsonb_array_elements(v_records) row;
+end;
+$;
+revoke all on function public.nightdesk_restore_safety(uuid,uuid) from public;
+grant execute on function public.nightdesk_restore_safety(uuid,uuid) to authenticated;
+
 -- Enable realtime only once.
 do $$
 begin

@@ -45,9 +45,11 @@ const groups:{
   },
   {
     title:"システム",
-    description:"画面、メニュー、CSVデータ、権限、操作履歴",
-    countLabel:"5項目",
+    description:"画面、メニュー、クラウド、権限、操作履歴",
+    countLabel:"7項目",
     items:[
+      {title:"クラウド・ログイン管理",description:"ログインできるスタッフの追加・削除",href:"/settings/team"},
+      {title:"自動バックアップ",description:"日次保存履歴とデータ復元",href:"/settings/backups"},
       {title:"CSVデータ管理",description:"キャスト・ドライバー・ホテル・顧客・オーダーをCSV出力・入力",href:"/settings/data"},
       {title:"配車管理レイアウト",description:"配車管理のウィジェットをドラッグして配置・表示を変更",href:"/settings/dispatch"},
       {title:"上部メニュー設定",description:"ヘッダーの表示・順番・名称をカスタマイズ",href:"/settings/menu"},
