@@ -4,6 +4,7 @@ import {loadExpenses,saveExpenses,loadOrders,loadCasts,loadCastSettlementAdjustm
 import {casts as defaults} from "@/lib/mock-data";
 import {buildPerformance,localDate} from "@/lib/operations";
 import {formatYen} from "@/lib/pricing";
+import {cloudConfigured,cloudRole} from "@/lib/cloud";
 import type {Expense,Order,Cast,CastSettlementAdjustment} from "@/lib/types";
 
 export default function ExpensesPage(){
@@ -13,6 +14,7 @@ export default function ExpensesPage(){
  const [settlements,setSettlements]=useState<Record<string,CastSettlementAdjustment>>({});
  const [dateFrom,setDateFrom]=useState(()=>localDate(new Date(new Date().getFullYear(),new Date().getMonth(),1)));
  const [dateTo,setDateTo]=useState(()=>localDate());
+ const canEdit=!cloudConfigured||cloudRole()==="owner"||cloudRole()==="admin";
  useEffect(()=>{
    const refresh=()=>{
      setExpenses(loadExpenses());setOrders(loadOrders());
@@ -26,6 +28,7 @@ export default function ExpensesPage(){
  const totals=useMemo(()=>buildPerformance({orders,casts,expenses,settlements,dateFrom,dateTo}),[orders,casts,expenses,settlements,dateFrom,dateTo]);
  function add(e:FormEvent<HTMLFormElement>){
    e.preventDefault();
+   if(!canEdit)return;
    const form=new FormData(e.currentTarget);
    const amount=Number(form.get("amount"));
    if(!Number.isFinite(amount)||amount<0)return;
@@ -49,7 +52,7 @@ export default function ExpensesPage(){
      <div><span>概算利益</span><strong>{formatYen(totals.grossProfit)}</strong></div>
    </section>
    <p>ドライバー報酬など未登録の経費は含みません。利益は参考値です。</p>
-   <section className="panel" style={{padding:18}}>
+   {canEdit&&<section className="panel" style={{padding:18}}>
      <h2>経費登録</h2>
      <form onSubmit={add} style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:12}}>
        <input name="date" type="date" required defaultValue={localDate()}/>
@@ -58,12 +61,12 @@ export default function ExpensesPage(){
        <input name="amount" required type="number" min="0" placeholder="金額"/>
        <button className="primaryButton" type="submit">保存</button>
      </form>
-   </section>
+   </section>}
    <section className="panel" style={{padding:18}}>
      <h2>経費履歴</h2>
      {filtered.map(row=><div key={row.id} style={{padding:10,borderBottom:"1px solid #ddd",display:"flex",gap:12,justifyContent:"space-between"}}>
        <span>{row.date} / {row.category} / {row.description}</span><strong>{formatYen(row.amount)}</strong>
-       <button onClick={()=>{if(window.confirm("削除しますか？")){const next=expenses.filter(x=>x.id!==row.id);saveExpenses(next);setExpenses(next);}}}>削除</button>
+       {canEdit&&<button onClick={()=>{if(window.confirm("削除しますか？")){const next=expenses.filter(x=>x.id!==row.id);saveExpenses(next);setExpenses(next);}}}>削除</button>}
      </div>)}
      {!filtered.length&&<p>登録経費はありません。</p>}
    </section>
