@@ -88,7 +88,7 @@ using(public.nightdesk_is_member(store_id));
 -- Admins can change everything. Staff can update operational records only.
 create or replace function public.nightdesk_can_write(p_store_id uuid,p_bucket text)
 returns boolean language sql stable security definer set search_path=''
-as $
+as $$
   select exists(
     select 1 from public.nightdesk_memberships m
     where m.store_id=p_store_id and m.user_id=(select auth.uid())
@@ -99,7 +99,7 @@ as $
         )
       ))
   )
-$;
+$$;
 revoke all on function public.nightdesk_can_write(uuid,text) from public;
 grant execute on function public.nightdesk_can_write(uuid,text) to authenticated;
 create policy "authorized members insert store records" on public.nightdesk_records for insert to authenticated
@@ -244,7 +244,7 @@ grant execute on function public.nightdesk_restore_backup(uuid,date) to authenti
 -- Every safety copy is also reversible, with a new safety copy taken first.
 create or replace function public.nightdesk_restore_safety(p_store_id uuid,p_safety_id uuid)
 returns void language plpgsql security definer set search_path=''
-as $
+as $$
 declare v_records jsonb;
 begin
   if not public.nightdesk_is_admin(p_store_id) then raise exception '管理者権限が必要です'; end if;
@@ -263,7 +263,7 @@ begin
   select p_store_id,row->>'bucket',row->>'item_id',row->'payload',(select auth.uid())
   from jsonb_array_elements(v_records) row;
 end;
-$;
+$$;
 revoke all on function public.nightdesk_restore_safety(uuid,uuid) from public;
 grant execute on function public.nightdesk_restore_safety(uuid,uuid) to authenticated;
 
