@@ -39,8 +39,11 @@ const groups:{
   {
     title:"営業管理",
     description:"顧客情報、売上、終業時の締め処理",
-    countLabel:"3項目",
+    countLabel:"6項目",
     items:[
+      {title:"業務統合パネル",description:"予約可能枠・配車候補・今日の業務を一画面で確認",href:"/operations"},
+      {title:"経営・稼働分析",description:"指名率・稼働・売上・キャスト別集計",href:"/analytics"},
+      {title:"経費台帳",description:"経費を記録して概算利益を確認",href:"/expenses"},
       {title:"顧客管理",description:"電話番号・利用履歴・注意事項・NG情報を確認",href:"/customers"},
       {title:"売上管理",description:"日別・キャスト別の売上と本数を集計",href:"/sales"},
       {title:"締め作業",description:"営業日の集計確認とExcel・PDF保存",href:"/closing"},
