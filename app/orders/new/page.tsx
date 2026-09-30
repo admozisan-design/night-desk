@@ -178,17 +178,17 @@ export default function NewOrderPage(){
           <label>コース<select value={courseId} onChange={e=>setCourseId(e.target.value)}>{pricing.courses.map(c=><option key={c.id} value={c.id}>{c.minutes}分 / {formatYen(c.price)}</option>)}</select></label>
           <label>指名<select value={nominationType} onChange={e=>setNominationType(e.target.value as typeof nominationType)}><option value="free">フリー</option><option value="photo">写真指名</option><option value="repeat">本指名</option></select></label>
           <label>ドライバー<select value={driverId} onChange={e=>setDriverId(e.target.value)}>{driverCandidates.map(row=><option key={row.driver.id} value={row.driver.id}>
-            {row.driver.name} {row.overlap.length?"⚠ 時間重複":"空き"} / 当日{row.load}件
+            {row.driver.name}{row.overlap.length?" ⚠ 時間重複":""}
           </option>)}</select></label>
           <label>交通費<input type="number" value={travelFee} onChange={e=>setTravelFee(Number(e.target.value))} min="0" step="500"/></label>
           <label>割引<input type="number" value={discount} onChange={e=>setDiscount(Number(e.target.value))} min="0" step="500"/></label>
           <label>手動調整<input type="number" value={adjustment} onChange={e=>setAdjustment(Number(e.target.value))} step="500"/></label>
         </div>
 
-        {availability&&<div role="status" style={{padding:14,borderRadius:8,
-          background:availability.ok?"#f0fdf4":"#fff7ed",marginBlock:10}}>
-          <strong>{availability.ok?"予約可能です":"予約できません："+availability.message}</strong>
-          {!availability.ok&&availability.nextSlots.length>0&&<div>
+        {availability&&!availability.ok&&<div role="alert" style={{padding:14,borderRadius:8,
+          background:"#fff7ed",marginBlock:10}}>
+          <strong>{"予約できません："+availability.message}</strong>
+          {availability.nextSlots.length>0&&<div>
             次の空き枠：{availability.nextSlots.map(slot=><button style={{margin:4}} key={slot}
             type="button" onClick={()=>setScheduledStart(slot)}>{slot}</button>)}
           </div>}

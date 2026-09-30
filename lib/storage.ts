@@ -600,6 +600,12 @@ export function saveSharedMemo(memo:string){
 }
 
 
+// Omitted pages may still exist in a store's previously saved cloud navigation.
+function hiddenLegacyMenuItem(item:TopNavItem){
+  return item.href==="/operations" || item.href==="/analytics" ||
+    ["operations","analytics","nav-operations","nav-analytics"].includes(item.id);
+}
+
 export function loadTopNavigation(defaultItems:TopNavItem[]):TopNavItem[]{
   if(typeof window==="undefined") return defaultItems;
   try{
@@ -610,6 +616,7 @@ export function loadTopNavigation(defaultItems:TopNavItem[]):TopNavItem[]{
     const merged:TopNavItem[]=[];
 
     for(const item of saved){
+      if(hiddenLegacyMenuItem(item)) continue;
       const base=defaultsById.get(item.id);
       if(base){
         merged.push({
@@ -647,7 +654,7 @@ export function loadTopNavigation(defaultItems:TopNavItem[]):TopNavItem[]{
 
 export function saveTopNavigation(items:TopNavItem[]){
   if(typeof window==="undefined") return;
-  const normalized=items.map(item=>item.id==="settings"
+  const normalized=items.filter(item=>!hiddenLegacyMenuItem(item)).map(item=>item.id==="settings"
     ? {...item,visible:true,locked:true,inMenu:true}
     : {...item,inMenu:item.inMenu!==false}
   );

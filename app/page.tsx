@@ -1235,10 +1235,10 @@ export default function DashboardPage(){
               </label>
             </div>
 
-            {bookingAvailability&&<div role="status" style={{margin:"10px 0",padding:12,borderRadius:9,
-              background:bookingAvailability.ok?"#f0fdf4":"#fff7ed"}}>
-              <strong>{bookingAvailability.ok?"予約可能":"予約不可：" + bookingAvailability.message}</strong>
-              {!bookingAvailability.ok&&bookingAvailability.nextSlots.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+            {bookingAvailability&&!bookingAvailability.ok&&<div role="alert" style={{margin:"10px 0",padding:12,borderRadius:9,
+              background:"#fff7ed"}}>
+              <strong>{"予約不可：" + bookingAvailability.message}</strong>
+              {bookingAvailability.nextSlots.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
                 <span>空き候補：</span>{bookingAvailability.nextSlots.map(slot=>
                   <button type="button" key={slot} onClick={()=>setScheduledStart(slot)}>{slot}</button>)}
               </div>}
@@ -1255,7 +1255,7 @@ export default function DashboardPage(){
             <div className="driverMailRow">
               <label>ドライバー
                 <select value={driverId} onChange={e=>setDriverId(e.target.value)}>
-                  {driverCandidates.map(row=><option key={row.driver.id} value={row.driver.id}>{row.driver.name}{row.overlap.length?" ⚠時間重複":""}（当日"+row.load+"件）</option>)}
+                  {driverCandidates.map(row=><option key={row.driver.id} value={row.driver.id}>{row.driver.name}{row.overlap.length?" ⚠時間重複":""}</option>)}
                 </select>
               </label>
               <button
