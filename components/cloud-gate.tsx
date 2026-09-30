@@ -63,33 +63,75 @@ export function CloudGate({children}:{children:ReactNode}){
           .select("id").order("created_at",{ascending:true});
         if(error) throw error;
         memberships=(data??[]).map(store=>({store_id:store.id as string,role:"admin" as const}));
-        setCloudRole("owner");
       }else{
         const {data,error}=await client.from("nightdesk_memberships")
           .select("store_id,role").eq("user_id",user.id);
         if(error) throw error;
         memberships=(data??[]) as Member[];
-        // Defense in depth: store managers only enter their assigned store,
-        // even if older memberships were accidentally left in the database.
-        const manager=memberships.find(member=>member.role==="admin");
-        if(manager)memberships=memberships.filter(member=>member.store_id===manager.store_id);
+        // Non-owners must have exactly one home store. Never silently pick
+        // among unexpected extra memberships, even if RLS is misconfigured.
+        if(memberships.length>1) throw new Error("複数店舗のアクセス権が検出されました。管理者にお問い合わせください。");
       }
       if(!alive) return;
       setMemberships(memberships);
       if(!memberships.length){
-        setStep("waiting");return;
+        // A removed employee must never keep seeing a previous store cache.
+        await stopCloudSync(true);
+        if(alive)setStep("waiting");
+        return;
       }
-      const wanted=localStorage.getItem("nightdesk-current-store");
-      const member=memberships.find(m=>m.store_id===wanted)??memberships[0];
+      const wanted=isPlatformOwner?localStorage.getItem("nightdesk-current-store"):null;
+      const member=(isPlatformOwner?memberships.find(m=>m.store_id===wanted):null)??memberships[0];
       localStorage.setItem("nightdesk-current-store",member.store_id);
-      if(!isPlatformOwner)setCloudRole(member.role);
       await startCloudSync(member.store_id);
+      setCloudRole(isPlatformOwner?"owner":member.role);
       if(alive)setStep("ready");
     })().catch(err=>{
       if(alive){setError(err instanceof Error?err.message:"店舗データを読み込めませんでした");setStep("error");}
     });
     return ()=>{alive=false;};
   },[user?.id,retry]);
+
+  // Membership revocation/role changes are checked on tab return and every
+  // minute. RLS immediately denies remote access; this also clears the
+  // previous employee's browser cache if their assignment was removed.
+  useEffect(()=>{
+    if(!cloudConfigured || !cloudClient || !user || step!=="ready" || isOwner) return;
+    const client=cloudClient;
+    let disposed=false;
+    let checking=false;
+    async function verifyMembership(){
+      if(checking || disposed) return;
+      checking=true;
+      try{
+        const {data,error}=await client.from("nightdesk_memberships")
+          .select("store_id,role").eq("user_id",user!.id).limit(2);
+        if(error) throw error;
+        if(disposed) return;
+        const next=(data??[]) as Member[];
+        if(next.length!==1 || next[0].store_id!==cloudStoreId()){
+          await stopCloudSync(true);
+          if(disposed) return;
+          setMemberships(next);
+          setError(next.length?"所属店舗を再確認できません。管理者にお問い合わせください。":"所属店舗のアクセス権が解除されました。");
+          setStep(next.length?"error":"waiting");
+          return;
+        }
+        setMemberships(next);
+        setCloudRole(next[0].role);
+      }catch(err){
+        if(disposed) return;
+        await stopCloudSync(true);
+        if(disposed) return;
+        setError(err instanceof Error?err.message:"アクセス権の確認に失敗しました。");
+        setStep("error");
+      }finally{checking=false;}
+    }
+    const onVisibility=()=>{if(document.visibilityState==="visible")void verifyMembership();};
+    const interval=window.setInterval(()=>void verifyMembership(),60_000);
+    document.addEventListener("visibilitychange",onVisibility);
+    return ()=>{disposed=true;window.clearInterval(interval);document.removeEventListener("visibilitychange",onVisibility);};
+  },[user?.id,step,isOwner]);
 
   async function login(e:FormEvent<HTMLFormElement>){
     e.preventDefault();if(!cloudClient)return;
