@@ -1,4 +1,5 @@
-import { cloudConfigured, writeCloudManaged } from "./cloud";
+import { cloudConfigured, cloudClient, cloudStoreId, cloudStatus, writeCloudManaged } from "./cloud";
+import {checkCastAvailability,orderDate,orderDuration} from "./operations";
 import type { AuditLog, Expense, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, DispatchWidgetSetting, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings, TopNavItem } from "./types";
 import {
   casts as demoCasts,
@@ -132,6 +133,35 @@ export function replaceOrdersFromCsv(orders:Order[]){
   writeManaged(ORDER_KEY,JSON.stringify(orders));
   window.dispatchEvent(new Event("nightdesk:orders"));
   appendAuditLog("CSV","オーダーCSV取り込み",`${orders.length}件`);
+}
+
+/** Await a database transaction before calling any reservation "confirmed". */
+export async function confirmReservation(order:Order,existingId?:string){
+  const current=loadOrders();
+  const cast=loadCasts(demoCasts).find(x=>x.id===order.castId);
+  if(!cast)throw new Error("対象キャストが登録されていません");
+  const availability=checkCastAvailability({
+    cast,date:orderDate(order),start:order.scheduledStart,
+    minutes:orderDuration(order),orders:current,
+    settings:loadStoreSettings(demoStoreSettings),ignoreOrderId:existingId
+  });
+  if(!availability.ok)throw new Error(availability.message);
+  if(cloudConfigured){
+    const store=cloudStoreId();
+    if(!cloudClient||!store||!cloudStatus().connected)
+      throw new Error("クラウド未接続です。再接続してから予約を確定してください");
+    const result=existingId
+      ? await cloudClient.rpc("nightdesk_update_reservation",{
+        p_store_id:store,p_order_id:existingId,p_order:order
+      })
+      : await cloudClient.rpc("nightdesk_reserve_order",{
+        p_store_id:store,p_order:order,p_position:0
+      });
+    if(result.error)throw new Error(result.error.message);
+  }
+  if(existingId)return updateOrder(existingId,order);
+  saveOrder(order);
+  return loadOrders();
 }
 
 export function saveOrder(order:Order){
