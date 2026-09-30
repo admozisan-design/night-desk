@@ -4774,3 +4774,71 @@ button{
   .csvDatasetInfo{gap:12px;flex-wrap:wrap}
   .csvImportCounts{grid-template-columns:1fr 1fr}
 }
+
+
+/* ===== Secure cloud login ===== */
+.cloudGate{
+  display:grid;place-items:center;min-height:100dvh;padding:24px;
+  background:#f2f6f7;color:#24333b
+}
+.cloudGateCard{
+  width:min(480px,100%);border:1px solid #d8e2e7;background:#fff;
+  box-shadow:0 15px 55px rgba(20,35,50,.09);padding:28px;
+  border-radius:17px
+}
+.cloudGateLogo{
+  display:grid;place-items:center;width:48px;height:48px;
+  border-radius:12px;background:#85c81d;color:#1d3307;font-weight:900;font-size:24px
+}
+.cloudGateCard h1{font-size:24px;margin:10px 0 14px}
+.cloudGateCard h2{font-size:19px;margin:8px 0}
+.cloudGateCard p{font-size:13px;color:#64727b;line-height:1.6}
+.cloudGateCard form{display:grid;gap:14px;margin:18px 0}
+.cloudGateCard form label{display:grid;gap:6px;font-size:13px;font-weight:900;color:#50606a}
+.cloudGateCard input{
+  min-height:47px;width:100%;border:1px solid #d1dae1;
+  border-radius:8px;padding:10px 12px;font-size:16px
+}
+.cloudGateCard button{cursor:pointer}
+.cloudGatePrimary{
+  display:block;width:100%;min-height:46px;background:#86c919;
+  border:0;border-radius:8px;color:#22390b;font-size:15px;font-weight:900;margin-top:8px
+}
+.cloudGatePrimary:disabled{opacity:.55;cursor:not-allowed}
+.cloudGateTextButton{
+  display:block;margin:15px auto 0;border:0;background:transparent;
+  color:#516c36;text-decoration:underline;font-weight:800;padding:7px
+}
+.cloudGateHelp{
+  padding:14px;border-radius:9px;background:#f4f8ef;border:1px solid #d7e5c5;
+  font-size:12px;line-height:1.7;margin:15px 0;color:#526043
+}
+.cloudGateNewStore{
+  margin-top:22px!important;border-top:1px solid #dde5e9;padding-top:20px
+}
+.cloudGateNewStore h3{font-size:15px;margin:0}
+.cloudGateNewStore>button{
+  border:1px solid #bbcfab;background:#eef7e5;min-height:42px;border-radius:8px;font-weight:900
+}
+.cloudGateNewStore>small{font-size:11px;color:#7b8791}
+.cloudGateError,.cloudGateSuccess{
+  margin-top:12px;padding:12px;border-radius:8px;font-size:12px;line-height:1.6
+}
+.cloudGateError{background:#fff1f1;border:1px solid #e7b7b7;color:#a23c3c}
+.cloudGateSuccess{background:#f1fae8;border:1px solid #b7d6a5;color:#367023}
+.cloudGateLoader{
+  width:24px;height:24px;border:3px solid #e1eacb;border-top-color:#74b416;
+  border-radius:50%;animation:cloudSpin .8s linear infinite;margin:18px auto
+}
+@keyframes cloudSpin{to{transform:rotate(360deg)}}
+.cloudConsoleShop{gap:8px;max-width:380px}
+.cloudConsoleShop strong{display:block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cloudConsoleShop button{
+  min-height:31px;padding:5px 8px;border:1px solid #d9e2e8;
+  background:#fff;border-radius:7px;font-size:11px;color:#5d6970;white-space:nowrap
+}
+.offlineDot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#d34a4a}
+@media(max-width:760px){
+  .cloudConsoleShop strong{max-width:90px}
+  .cloudGateCard{padding:20px}
+}
