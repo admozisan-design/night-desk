@@ -56,7 +56,7 @@ export default function CloudTeamPage(){
       if(!data) throw new Error("このメールアドレスの確認済みアカウントがありません。先にスタッフにアカウント登録をしてもらってください。");
       setEmail("");setNotice(role==="admin"?"店長を任命しました。":"スタッフのアクセス権を保存しました。");
       await refresh();
-    }catch(e){setError(e instanceof Error?e.message:"追加できませんでした。");}
+    }catch(e){const detail=e as {code?:string;message?:string};setError(detail.code==="23505"?"このアカウントは別店舗に所属しています。店舗変更は元の店舗のアクセスを解除してから行ってください。":detail.message??"追加できませんでした。");}
     finally{setBusy(false);}
   }
   async function remove(member:Member){
@@ -75,7 +75,7 @@ export default function CloudTeamPage(){
   return <div className="cloudManagePage">
     <header className="pageHeader">
       <div><p className="eyebrow">STAFF ACCESS</p><h1>クラウド・ログイン管理</h1>
-      <p>現在の担当店舗に限ってスタッフのアクセスを管理します。店長は他店舗の情報を閲覧できません。</p></div>
+      <p>スタッフ・店長ともに1アカウントにつき1店舗のみ所属できます。他店舗へのアクセスは許可されません。</p></div>
     </header>
     {!cloudConfigured && <section className="panel cloudManagePanel">
       <h2>現在はデモモード</h2><p>Supabaseプロジェクトの接続設定を完了すると利用できます。</p>
@@ -86,7 +86,7 @@ export default function CloudTeamPage(){
     {cloudConfigured && isAdmin && <>
       <section className="panel cloudManagePanel">
         <h2>スタッフのログイン権限を追加</h2>
-        <p>スタッフ本人が先にアカウント登録とメール認証を完了してください。スタッフの追加・削除は店長とオーナーのみ可能です。</p>
+        <p>スタッフ本人が先にアカウント登録とメール認証を完了してください。既に別店舗に所属しているアカウントは追加できません。スタッフの追加・削除は担当店舗の店長とオーナーだけが可能です。</p>
         <form onSubmit={e=>void grant(e)} className="cloudManageForm">
           <label>スタッフの登録メール<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="staff@example.com"/></label>
           <label>権限<select value={role} onChange={e=>setRole(e.target.value as "admin"|"staff")}>
