@@ -59,8 +59,8 @@ export default function NewOrderPage(){
     setExisting(loadOrders());
     const query=new URLSearchParams(window.location.search);
     const reqDate=query.get("date"),reqTime=query.get("start"),reqMinutes=Number(query.get("minutes"));
-    if(reqDate && /^\\d{4}-\\d{2}-\\d{2}$/.test(reqDate))setDate(reqDate);
-    if(reqTime && /^\\d{2}:\\d{2}$/.test(reqTime))setScheduledStart(reqTime);
+    if(reqDate && /^\d{4}-\d{2}-\d{2}$/.test(reqDate))setDate(reqDate);
+    if(reqTime && /^\d{2}:\d{2}$/.test(reqTime))setScheduledStart(reqTime);
     if(reqMinutes){
       const found=loadedPricing.courses.find(x=>x.minutes===reqMinutes);
       if(found)setCourseId(found.id);
@@ -131,10 +131,10 @@ export default function NewOrderPage(){
       orders:loadOrders(),settings
     });
     if(!availabilityNow.ok){setFormError(availabilityNow.message);return;}
-    const phone=String(fd.get("phone")||"").replace(/\\D/g,"");
-    const customer=loadCustomers().find(item=>item.phone.replace(/\\D/g,"")===phone && phone.length>=4);
+    const phone=String(fd.get("phone")||"").replace(/\D/g,"");
+    const customer=loadCustomers().find(item=>item.phone.replace(/\D/g,"")===phone && phone.length>=4);
     if(customer?.active===false){setFormError("利用不可のお客様です。顧客情報を確認してください。");return;}
-    if(customer?.ngInfo && !window.confirm("このお客様にはNG情報があります。内容を確認して受付しますか？\\n"+customer.ngInfo))return;
+    if(customer?.ngInfo && !window.confirm("このお客様にはNG情報があります。内容を確認して受付しますか？\n"+customer.ngInfo))return;
     setFormError("");
     const driver = availableDrivers.find(d=>d.id===driverId);
     const order:Order = {
