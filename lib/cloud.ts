@@ -300,13 +300,21 @@ export async function startCloudSync(storeId:string){
       announce(def);
     }
     if(channel) await cloudClient.removeChannel(channel);
+    // Raw record deletes cannot be filtered safely by Postgres Changes.
+    // Subscribe only to an RLS-protected, per-store change-notice table.
+    // No order/customer payload or other store's deleted row ID is published.
+    const receiveChange=(payload:{new:Record<string,unknown>})=>{
+      const bucket=payload.new?.bucket;
+      if(typeof bucket==="string" && byBucket.has(bucket)) scheduleRefresh(bucket);
+    };
     channel=cloudClient.channel(`nightdesk-${storeId}`)
       .on("postgres_changes",
-        {event:"*",schema:"public",table:"nightdesk_records",filter:`store_id=eq.${storeId}`},
-        payload=>{
-          const row=((payload.new && Object.keys(payload.new).length)?payload.new:payload.old) as {bucket?:string};
-          if(row?.bucket && byBucket.has(row.bucket)) scheduleRefresh(row.bucket);
-        }
+        {event:"INSERT",schema:"public",table:"nightdesk_store_changes",filter:`store_id=eq.${storeId}`},
+        receiveChange
+      )
+      .on("postgres_changes",
+        {event:"UPDATE",schema:"public",table:"nightdesk_store_changes",filter:`store_id=eq.${storeId}`},
+        receiveChange
       ).subscribe();
     emit({connected:true,busy:false,error:null,lastSync:new Date().toISOString(),storeId});
     await flushPending();
