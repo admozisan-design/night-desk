@@ -14,6 +14,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [nav,setNav]=useState<TopNavItem[]>(defaultTopNavigation);
   const [cloud,setCloud]=useState<CloudStatus>(cloudStatus());
   const [email,setEmail]=useState("");
+  const [storeName,setStoreName]=useState("");
 
   useEffect(()=>{
     const refresh=()=>setNav(loadTopNavigation(defaultTopNavigation));
@@ -37,6 +38,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     void client.auth.getUser().then(({data})=>setEmail(data.user?.email??""));
     return ()=>window.removeEventListener("nightdesk:cloud-status",refreshStatus);
   },[]);
+
+  // Fetch only the active store, never a cross-store directory for employees.
+  useEffect(()=>{
+    const client=cloudClient;
+    if(!client || !cloud.storeId){setStoreName("");return;}
+    let alive=true;
+    client.from("nightdesk_stores").select("name").eq("id",cloud.storeId)
+      .maybeSingle().then(({data,error})=>{
+        if(alive)setStoreName(error?"":data?.name??"");
+      });
+    return ()=>{alive=false;};
+  },[cloud.storeId]);
 
   // A controlled number input often starts at 0. Clear that initial 0 on focus
   // so typing a new amount never produces e.g. "0500".
@@ -85,7 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {cloudConfigured
           ? <div className="consoleShop cloudConsoleShop">
               <span className={cloud.error?"offlineDot":"onlineDot"}/>
-              <div><small>{cloudRole()==="owner"?"システムオーナー":cloud.error?"同期エラー":cloud.busy?"同期中…":cloud.connected?"クラウド同期":"接続中"}</small><strong title={email}>{email || "スタッフ"}</strong></div>
+              <div><small title={storeName}>{storeName?storeName+" · ":""}{cloudRole()==="owner"?"システムオーナー":cloud.error?"同期エラー":cloud.busy?"同期中…":cloud.connected?"クラウド同期":"接続中"}</small><strong title={email}>{email || "スタッフ"}</strong></div>
               {cloud.error && <button type="button" onClick={()=>void retryCloudSync()} title={cloud.error}>再試行</button>}
               <button type="button" onClick={()=>void (async()=>{await stopCloudSync(true);await cloudClient?.auth.signOut();})()}>ログアウト</button>
             </div>
