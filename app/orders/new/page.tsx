@@ -126,13 +126,23 @@ export default function NewOrderPage(){
     const fd = new FormData(e.currentTarget);
     const cast = availableCasts.find(c=>c.id===castId);
     if(!cast) return;
+    const availabilityNow=checkCastAvailability({
+      cast,date,start:scheduledStart,minutes:course?.minutes??60,
+      orders:loadOrders(),settings
+    });
+    if(!availabilityNow.ok){setFormError(availabilityNow.message);return;}
+    const phone=String(fd.get("phone")||"").replace(/\\D/g,"");
+    const customer=loadCustomers().find(item=>item.phone.replace(/\\D/g,"")===phone && phone.length>=4);
+    if(customer?.active===false){setFormError("利用不可のお客様です。顧客情報を確認してください。");return;}
+    if(customer?.ngInfo && !window.confirm("このお客様にはNG情報があります。内容を確認して受付しますか？\\n"+customer.ngInfo))return;
+    setFormError("");
     const driver = availableDrivers.find(d=>d.id===driverId);
     const order:Order = {
       id:crypto.randomUUID(), createdAt:new Date().toISOString(),
       customerPhone:String(fd.get("phone")||""), locationType:fd.get("locationType") as "hotel"|"home",
       locationName:String(fd.get("locationName")||""), room:String(fd.get("room")||""),
       castId, castName:cast.name, driverId:driver?.id, driverName:driver?.name,
-      courseMinutes:course?.minutes??60, nominationType,
+      courseId:course?.id,courseMinutes:course?.minutes??60, nominationType,serviceDate:date,
       selectedOptions:selectableOptions.filter(option=>selectedOptionIds.includes(option.id)).map(option=>option.name),
       optionsTotal, travelFee, discount, adjustment, total,
       status:"accepted", scheduledStart, scheduledEnd:addMinutes(scheduledStart,course?.minutes??60),
@@ -147,9 +157,11 @@ export default function NewOrderPage(){
     <form onSubmit={submit} className="orderLayout">
       <section className="panel formPanel">
         <h2>受付情報</h2>
+        {formError&&<div role="alert" className="inlineAlert">{formError}</div>}
         {availableCasts.length===0 && <div className="inlineAlert">本日出勤のキャストがいません。<a href="/casts">キャスト管理で出勤を登録</a>してください。</div>}
         <div className="formGrid">
           <label>電話番号<input name="phone" inputMode="tel" placeholder="090-0000-0000"/></label>
+          <label>営業日<input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label>
           <label>開始予定<input type="time" value={scheduledStart} onChange={e=>setScheduledStart(e.target.value)}/></label>
           <label>利用場所<select name="locationType"><option value="hotel">ホテル</option><option value="home">自宅</option></select></label>
           <label>ホテル / 場所<input name="locationName" required placeholder="ホテル名・住所"/></label>
@@ -161,12 +173,22 @@ export default function NewOrderPage(){
           </label>
           <label>コース<select value={courseId} onChange={e=>setCourseId(e.target.value)}>{pricing.courses.map(c=><option key={c.id} value={c.id}>{c.minutes}分 / {formatYen(c.price)}</option>)}</select></label>
           <label>指名<select value={nominationType} onChange={e=>setNominationType(e.target.value as typeof nominationType)}><option value="free">フリー</option><option value="photo">写真指名</option><option value="repeat">本指名</option></select></label>
-          <label>ドライバー<select value={driverId} onChange={e=>setDriverId(e.target.value)}>{availableDrivers.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
+          <label>ドライバー<select value={driverId} onChange={e=>setDriverId(e.target.value)}>{driverCandidates.map(row=><option key={row.driver.id} value={row.driver.id}>
+            {row.driver.name} {row.overlap.length?"⚠ 時間重複":"空き"} / 当日{row.load}件
+          </option>)}</select></label>
           <label>交通費<input type="number" value={travelFee} onChange={e=>setTravelFee(Number(e.target.value))} min="0" step="500"/></label>
           <label>割引<input type="number" value={discount} onChange={e=>setDiscount(Number(e.target.value))} min="0" step="500"/></label>
           <label>手動調整<input type="number" value={adjustment} onChange={e=>setAdjustment(Number(e.target.value))} step="500"/></label>
         </div>
 
+        {availability&&<div role="status" style={{padding:14,borderRadius:8,
+          background:availability.ok?"#f0fdf4":"#fff7ed",marginBlock:10}}>
+          <strong>{availability.ok?"予約可能です":"予約できません："+availability.message}</strong>
+          {!availability.ok&&availability.nextSlots.length>0&&<div>
+            次の空き枠：{availability.nextSlots.map(slot=><button style={{margin:4}} key={slot}
+            type="button" onClick={()=>setScheduledStart(slot)}>{slot}</button>)}
+          </div>}
+        </div>}
         <div className="orderOptionPicker detailedOptionPicker">
           <div className="orderOptionPickerHead">
             <span>オプション</span>
@@ -197,7 +219,7 @@ export default function NewOrderPage(){
           <div><dt>調整</dt><dd>{formatYen(adjustment)}</dd></div>
         </dl>
         <div className="totalBox"><span>お客様料金</span><strong>{formatYen(total)}</strong></div>
-        <button className="primaryButton wide" type="submit" disabled={availableCasts.length===0}>受付を確定する</button>
+        <button className="primaryButton wide" type="submit" disabled={availableCasts.length===0 || !availability?.ok}>受付を確定する</button>
       </aside>
     </form>
   </div>
