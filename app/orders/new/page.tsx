@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
 import {checkCastAvailability,suggestDrivers,localDate} from "@/lib/operations";
-import { loadCasts, loadDrivers, loadOptions, loadPricing, loadOrders, loadStoreSettings, loadCustomers, saveOrder } from "@/lib/storage";
+import { loadCasts, loadDrivers, loadOptions, loadPricing, loadOrders, loadStoreSettings, loadCustomers, confirmReservation } from "@/lib/storage";
 import type { Cast, Driver, Order, PricingConfig, StoreOption } from "@/lib/types";
 
 function addMinutes(time:string, minutes:number){
@@ -121,7 +121,7 @@ export default function NewOrderPage(){
     );
   }
 
-  function submit(e:FormEvent<HTMLFormElement>){
+  async function submit(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const cast = availableCasts.find(c=>c.id===castId);
@@ -148,8 +148,12 @@ export default function NewOrderPage(){
       status:"accepted", scheduledStart, scheduledEnd:addMinutes(scheduledStart,course?.minutes??60),
       note:String(fd.get("note")||"")
     };
-    saveOrder(order);
-    router.push("/");
+    try{
+      await confirmReservation(order);
+      router.push("/");
+    }catch(err){
+      setFormError(err instanceof Error?err.message:"予約を確定できませんでした");
+    }
   }
 
   return <div>
