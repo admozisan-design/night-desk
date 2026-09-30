@@ -27,13 +27,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   },[]);
 
   useEffect(()=>{
-    if(!cloudConfigured || !cloudClient) return;
+    const client=cloudClient;
+    if(!cloudConfigured || !client) return;
     const refreshStatus=(event:Event)=>{
       setCloud((event as CustomEvent<CloudStatus>).detail);
-      void cloudClient.auth.getUser().then(({data})=>setEmail(data.user?.email??""));
+      void client.auth.getUser().then(({data})=>setEmail(data.user?.email??""));
     };
     window.addEventListener("nightdesk:cloud-status",refreshStatus);
-    void cloudClient.auth.getUser().then(({data})=>setEmail(data.user?.email??""));
+    void client.auth.getUser().then(({data})=>setEmail(data.user?.email??""));
     return ()=>window.removeEventListener("nightdesk:cloud-status",refreshStatus);
   },[]);
 
