@@ -41,6 +41,15 @@ create table if not exists public.nightdesk_backups(
   primary key(store_id,backup_date)
 );
 
+-- Separate immutable safety copies created before an administrative restore.
+create table if not exists public.nightdesk_restore_safety(
+  id uuid primary key default gen_random_uuid(),
+  store_id uuid not null references public.nightdesk_stores(id) on delete cascade,
+  records jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  restored_from date not null
+);
+
 -- SECURITY DEFINER helpers avoid recursive RLS on membership checks.
 create or replace function public.nightdesk_is_member(p_store_id uuid)
 returns boolean language sql stable security definer set search_path=''
@@ -67,6 +76,7 @@ alter table public.nightdesk_stores enable row level security;
 alter table public.nightdesk_memberships enable row level security;
 alter table public.nightdesk_records enable row level security;
 alter table public.nightdesk_backups enable row level security;
+alter table public.nightdesk_restore_safety enable row level security;
 
 create policy "store members read store" on public.nightdesk_stores for select to authenticated
 using(public.nightdesk_is_member(id));
@@ -84,6 +94,8 @@ create policy "members delete store records" on public.nightdesk_records for del
 using(public.nightdesk_is_member(store_id));
 create policy "admins read backups" on public.nightdesk_backups for select to authenticated
 using(public.nightdesk_is_admin(store_id));
+create policy "admins read pre-restore safety copies" on public.nightdesk_restore_safety
+for select to authenticated using(public.nightdesk_is_admin(store_id));
 
 -- The store creator is the initial administrator; anonymous users cannot create stores.
 create or replace function public.nightdesk_create_store(p_name text)
@@ -196,12 +208,12 @@ begin
   where store_id=p_store_id and backup_date=p_date;
   if v_records is null then raise exception '指定日のバックアップがありません'; end if;
 
-  -- Save pre-restore state independently; never overwrite the target backup.
-  insert into public.nightdesk_backups(store_id,backup_date,records)
-  select p_store_id,(now() at time zone 'Asia/Tokyo')::date,
-    coalesce(jsonb_agg(jsonb_build_object('bucket',bucket,'item_id',item_id,'payload',payload)),'[]'::jsonb)
-  from public.nightdesk_records where store_id=p_store_id
-  on conflict(store_id,backup_date) do nothing;
+  -- A separate pre-restore snapshot is always retained, including same-day restores.
+  insert into public.nightdesk_restore_safety(store_id,records,restored_from)
+  select p_store_id,
+    coalesce(jsonb_agg(jsonb_build_object('bucket',bucket,'item_id',item_id,'payload',payload)),'[]'::jsonb),
+    p_date
+  from public.nightdesk_records where store_id=p_store_id;
 
   delete from public.nightdesk_records where store_id=p_store_id;
   insert into public.nightdesk_records(store_id,bucket,item_id,payload,updated_by)
