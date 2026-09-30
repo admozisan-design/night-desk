@@ -159,7 +159,7 @@ export function buildPerformance(args:{
   const expenses=args.expenses.filter(x=>x.date>=args.dateFrom&&x.date<=args.dateTo)
     .reduce((n,x)=>n+Math.max(0,x.amount),0);
   const nominated=completed.filter(x=>x.nominationType!=="free").length;
-  const customerPhones=new Set(completed.map(x=>x.customerPhone.replace(/\D/g,"")).filter(Boolean));
+  const customerPhones=new Set(completed.map(x=>String(x.customerPhone??"").replace(/\D/g,"")).filter(Boolean));
   return {orders,completed,pipeline,cancelled,turnover,expected,payout,expenses,
     grossProfit:turnover-payout-expenses,
     nominated,nominationRate:completed.length?nominated/completed.length:0,
