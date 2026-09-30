@@ -45,9 +45,10 @@ const groups:{
   },
   {
     title:"システム",
-    description:"画面レイアウト、メニュー、権限、操作履歴",
-    countLabel:"4項目",
+    description:"画面、メニュー、CSVデータ、権限、操作履歴",
+    countLabel:"5項目",
     items:[
+      {title:"CSVデータ管理",description:"キャスト・ドライバー・ホテル・顧客・オーダーをCSV出力・入力",href:"/settings/data"},
       {title:"配車管理レイアウト",description:"配車管理のウィジェットをドラッグして配置・表示を変更",href:"/settings/dispatch"},
       {title:"上部メニュー設定",description:"ヘッダーの表示・順番・名称をカスタマイズ",href:"/settings/menu"},
       {title:"スタッフ権限",description:"受付・売上・設定変更などの権限を管理",href:"/permissions"},

@@ -1,7 +1,7 @@
 import { casts as demoCasts, drivers as demoDrivers, hotels as demoHotels } from "./mock-data";
 import {
   loadCasts, loadCustomers, loadDrivers, loadHotels, loadOrders,
-  saveCasts, saveCustomers, saveDrivers, saveHotels
+  replaceOrdersFromCsv, saveCasts, saveCustomers, saveDrivers, saveHotels
 } from "./storage";
 import type { Cast, Customer, Driver, Hotel, Order } from "./types";
 
@@ -82,13 +82,7 @@ export function saveCsvDataset(dataset:CsvDataset,records:CsvRecord[]){
     case "drivers":saveDrivers(records as unknown as Driver[]);break;
     case "hotels":saveHotels(records as unknown as Hotel[]);break;
     case "customers":saveCustomers(records as unknown as Customer[]);break;
-    case "orders":{
-      // Save as one atomic replacement, not saveOrder(), which always appends.
-      const key="night-desk-orders-sample-v02";
-      localStorage.setItem(key,JSON.stringify(records as unknown as Order[]));
-      window.dispatchEvent(new Event("nightdesk:orders"));
-      break;
-    }
+    case "orders":replaceOrdersFromCsv(records as unknown as Order[]);break;
   }
 }
 

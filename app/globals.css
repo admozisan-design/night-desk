@@ -4695,3 +4695,82 @@ button{
 .standaloneBoardFixedRow.isUnavailableCast .dispatchCount{
   background:#f1f3f4!important;
 }
+
+
+/* ===== CSV data manager ===== */
+.csvDataPage{max-width:1240px}
+.csvDataPage .pageHeader{margin-bottom:18px}
+.csvLocalNotice{
+  display:flex;align-items:center;gap:13px;flex-wrap:wrap;
+  padding:13px 16px;border:1px solid #d8e5c7;border-radius:10px;
+  background:#f6faef;color:#445a2d;margin-bottom:14px;font-size:13px
+}
+.csvLocalNotice strong{flex-shrink:0}
+.csvLocalNotice span{line-height:1.6}
+.csvMainPanel{margin-top:13px;padding:20px}
+.csvMainPanel h2{margin:0 0 12px;font-size:20px}
+.csvMainPanel>p{color:#63717d;margin:2px 0 16px;line-height:1.6}
+.csvDatasetTabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.csvDatasetTabs button{
+  min-height:72px;padding:12px;border:2px solid #dce3e8;
+  border-radius:10px;background:#fff;color:#324351;text-align:left;cursor:pointer
+}
+.csvDatasetTabs button.selected{border-color:#8cbd48;background:#f1f8e8}
+.csvDatasetTabs button strong{font-size:15px;display:block}
+.csvDatasetTabs button small{display:block;margin-top:4px;color:#638c29}
+.csvDatasetInfo{display:flex;gap:32px;margin-top:14px;padding:13px;background:#f7f9fa;border-radius:9px}
+.csvDatasetInfo div span,.csvDatasetInfo div strong{display:block}
+.csvDatasetInfo div span{font-size:12px;color:#73808b}
+.csvDatasetInfo div strong{margin-top:3px;font-size:17px}
+.csvExportActions{display:flex;flex-wrap:wrap;gap:10px}
+.csvPrimary,.csvSecondary,.csvDanger{
+  min-height:46px;padding:10px 16px;border:1px solid #a6ca7e;
+  border-radius:9px;background:#86c71d;color:#263b08;font-weight:900;font-size:14px;cursor:pointer
+}
+.csvSecondary{background:#fff;border-color:#cad4dc;color:#455565}
+.csvDanger{background:#fff2f2;border-color:#e1baba;color:#9d3535}
+.csvPrimary:disabled,.csvDanger:disabled{cursor:not-allowed;opacity:.5}
+.csvFileInput{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:15px;
+  border:1px dashed #a7b7c4;border-radius:10px;background:#f8fafb
+}
+.csvFileInput strong{font-size:14px}
+.csvFileInput input{font-size:13px;max-width:100%}
+.csvFileInput span{font-size:12px;color:#72808b}
+.csvImportReview{margin-top:14px;border:1px solid #dbe3e9;border-radius:10px;padding:15px}
+.csvReviewHead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.csvReviewHead strong,.csvReviewHead span{display:block}
+.csvReviewHead strong{font-size:15px}
+.csvReviewHead span{color:#71808b;margin-top:4px;font-size:12px}
+.csvReviewHead button{border:1px solid #cbd5dc;border-radius:8px;padding:8px 11px;background:#fff;cursor:pointer}
+.csvImportModes{display:grid;grid-template-columns:1fr 1fr;gap:10px;border:0;padding:0;margin:16px 0}
+.csvImportModes legend{font-weight:900;font-size:14px;margin-bottom:8px}
+.csvImportModes label{display:flex;gap:10px;align-items:start;padding:13px;border:2px solid #d8e0e6;border-radius:9px;cursor:pointer}
+.csvImportModes label.active{border-color:#8fbd56;background:#f6faef}
+.csvImportModes input{margin-top:4px;width:18px;height:18px;flex-shrink:0}
+.csvImportModes strong,.csvImportModes small{display:block}
+.csvImportModes strong{font-size:14px}
+.csvImportModes small{font-size:11px;margin-top:4px;color:#72808b;line-height:1.5}
+.csvImportCounts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0}
+.csvImportCounts>div{padding:11px 12px;border-radius:8px;background:#f1f4f6}
+.csvImportCounts span,.csvImportCounts strong{display:block}
+.csvImportCounts span{font-size:11px;color:#687782}
+.csvImportCounts strong{font-size:19px;margin-top:2px}
+.csvPreviewScroller{overflow-x:auto;margin-bottom:14px}
+.csvPreviewScroller table{border-collapse:collapse;width:100%;font-size:12px}
+.csvPreviewScroller th,.csvPreviewScroller td{border:1px solid #d9e1e6;padding:10px;text-align:left;overflow-wrap:anywhere}
+.csvPreviewScroller th{background:#eef2f5}
+.csvPreviewScroller small{display:block;color:#75838e;margin-top:7px}
+.csvError,.csvSuccess{padding:12px 14px;border-radius:8px;margin-top:13px;font-weight:800;line-height:1.5}
+.csvError{color:#a72b3d;border:1px solid #efb5be;background:#fff1f4}
+.csvSuccess{color:#376f30;border:1px solid #b2d3a0;background:#eff9ea}
+.csvFootnote{font-size:12px;color:#78848c;line-height:1.7;margin:15px 0 30px}
+@media(max-width:950px){
+  .csvDatasetTabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .csvImportModes{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .csvDatasetTabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .csvMainPanel{padding:13px}
+  .csvDatasetInfo{gap:12px;flex-wrap:wrap}
+  .csvImportCounts{grid-template-columns:1fr 1fr}
+}

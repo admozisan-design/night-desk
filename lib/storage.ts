@@ -107,6 +107,13 @@ export function loadOrders():Order[] {
   try { return JSON.parse(localStorage.getItem(ORDER_KEY) ?? "[]") as Order[]; } catch { return []; }
 }
 
+export function replaceOrdersFromCsv(orders:Order[]){
+  if(typeof window==="undefined") return;
+  localStorage.setItem(ORDER_KEY,JSON.stringify(orders));
+  window.dispatchEvent(new Event("nightdesk:orders"));
+  appendAuditLog("CSV","オーダーCSV取り込み",`${orders.length}件`);
+}
+
 export function saveOrder(order:Order){
   const orders=loadOrders();
   localStorage.setItem(ORDER_KEY, JSON.stringify([order,...orders]));
