@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import {checkCastAvailability,suggestDrivers,localDate} from "@/lib/operations";
+import {checkCastAvailability,suggestDrivers,activeBusinessDate} from "@/lib/operations";
 import { loadCasts, loadDrivers, loadOptions, loadPricing, loadOrders, loadStoreSettings, loadCustomers, confirmReservation } from "@/lib/storage";
 import type { Cast, Driver, Order, PricingConfig, StoreOption } from "@/lib/types";
 
@@ -32,7 +32,7 @@ export default function NewOrderPage(){
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
   const [scheduledStart,setScheduledStart] = useState(defaultTime);
-  const [date,setDate]=useState(()=>localDate());
+  const [date,setDate]=useState(()=>activeBusinessDate(new Date(),defaultStoreSettings.openTime));
   const [existing,setExisting]=useState<Order[]>([]);
   const [settings,setSettings]=useState(defaultStoreSettings);
   const [formError,setFormError]=useState("");
