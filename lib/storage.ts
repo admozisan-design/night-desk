@@ -1,5 +1,5 @@
 import { cloudConfigured, writeCloudManaged } from "./cloud";
-import type { AuditLog, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, DispatchWidgetSetting, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings, TopNavItem } from "./types";
+import type { AuditLog, Expense, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, DispatchWidgetSetting, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings, TopNavItem } from "./types";
 import {
   casts as demoCasts,
   defaultPricingConfig as demoPricing,
@@ -16,6 +16,7 @@ import {
   staff as demoStaff
 } from "./mock-data";
 
+const EXPENSE_KEY = "night-desk-expenses-v01";
 const ORDER_KEY = "night-desk-orders-sample-v02";
 const CAST_KEY = "night-desk-casts-sample-v03";
 const HOTEL_KEY = "night-desk-hotels-sample-v01";
@@ -107,6 +108,19 @@ function writeManaged(key:string,value:string){
   writeCloudManaged(key,value);
 }
 
+export function loadExpenses():Expense[]{
+  if(typeof window==="undefined")return [];
+  try{
+    const result=JSON.parse(localStorage.getItem(EXPENSE_KEY)??"[]") as Expense[];
+    return Array.isArray(result)?result:[];
+  }catch{return [];}
+}
+export function saveExpenses(expenses:Expense[]){
+  if(typeof window==="undefined")return;
+  writeManaged(EXPENSE_KEY,JSON.stringify(expenses));
+  window.dispatchEvent(new Event("nightdesk:expenses"));
+  appendAuditLog("経費","経費台帳を更新",String(expenses.length)+"件");
+}
 export function loadOrders():Order[] {
   ensureDemoDataSeeded();
   if (typeof window === "undefined") return [];
@@ -485,6 +499,8 @@ export function loadStoreSettings(defaultSettings:StoreSettings):StoreSettings {
       miscExpenseValue:parsed.miscExpenseValue ?? defaultSettings.miscExpenseValue ?? 0,
       changeFee:parsed.changeFee ?? defaultSettings.changeFee ?? 0,
       cancelFee:parsed.cancelFee ?? defaultSettings.cancelFee ?? 0,
+      bookingBufferMinutes:parsed.bookingBufferMinutes ?? defaultSettings.bookingBufferMinutes ?? 15,
+      dispatchBufferMinutes:parsed.dispatchBufferMinutes ?? defaultSettings.dispatchBufferMinutes ?? 30,
     };
   } catch {
     return defaultSettings;
