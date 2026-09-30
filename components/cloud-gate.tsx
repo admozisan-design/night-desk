@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import {cloudClient,cloudConfigured,cloudStoreId,downloadPreCloudBackup,hasPreCloudBackup,startCloudSync,stopCloudSync} from "@/lib/cloud";
+import {cloudClient,cloudConfigured,cloudStoreId,downloadPreCloudBackup,hasPreCloudBackup,startCloudSync,stopCloudSync,cloudRole,setCloudRole} from "@/lib/cloud";
 
 type Step="loading"|"login"|"waiting"|"ready"|"error";
 type Member={store_id:string;role:"admin"|"staff"};
 export function CloudGate({children}:{children:ReactNode}){
+  const path=usePathname();
   const [user,setUser]=useState<User|null>(null);
   const [step,setStep]=useState<Step>("loading");
   const [error,setError]=useState("");
@@ -58,6 +60,7 @@ export function CloudGate({children}:{children:ReactNode}){
       const wanted=localStorage.getItem("nightdesk-current-store");
       const member=memberships.find(m=>m.store_id===wanted)??memberships[0];
       localStorage.setItem("nightdesk-current-store",member.store_id);
+      setCloudRole(member.role);
       await startCloudSync(member.store_id);
       if(alive)setStep("ready");
     })().catch(err=>{
@@ -110,7 +113,20 @@ export function CloudGate({children}:{children:ReactNode}){
   }
 
   if(!cloudConfigured) return <>{children}</>;
-  if(step==="ready" && cloudStoreId()) return <>{children}</>;
+  if(step==="ready" && cloudStoreId()){
+    const adminOnly=["/store","/pricing","/permissions","/staff",
+      "/settings/team","/settings/backups","/settings/menu","/settings/dispatch","/settings/data"];
+    const restricted=cloudRole()==="staff" &&
+      adminOnly.some(prefix=>path===prefix || path.startsWith(prefix+"/"));
+    if(restricted) return <div className="cloudGate">
+      <div className="cloudGateCard">
+        <h2>管理者専用の設定です</h2>
+        <p>この操作には店舗管理者のログイン権限が必要です。</p>
+        <a href="/" className="cloudGatePrimary" style={{display:"grid",placeItems:"center",textDecoration:"none"}}>配車管理に戻る</a>
+      </div>
+    </div>;
+    return <>{children}</>;
+  }
 
   return <div className="cloudGate">
     <div className="cloudGateCard">

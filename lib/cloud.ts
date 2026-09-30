@@ -51,6 +51,9 @@ export type CloudStatus={
 };
 let status:CloudStatus={connected:false,busy:false,error:null,lastSync:null,storeId:null};
 let activeStore:string|null=null;
+let role:"admin"|"staff"|null=null;
+export function cloudRole(){return cloudConfigured ? role : "admin";}
+export function setCloudRole(value:"admin"|"staff"){role=value;}
 let pending=new Map<string,string>();
 let snapshots=new Map<string,Map<string,string>>();
 let tail:Promise<void>=Promise.resolve();
@@ -318,7 +321,7 @@ export async function retryCloudSync(){
 }
 export async function stopCloudSync(clearCache=true){
   if(cloudClient && channel){await cloudClient.removeChannel(channel);channel=null;}
-  activeStore=null;snapshots=new Map();pending=new Map();dirtyBuckets.clear();
+  activeStore=null;role=null;snapshots=new Map();pending=new Map();dirtyBuckets.clear();
   if(clearCache) clearManagedCache();
   emit({connected:false,busy:false,error:null,lastSync:null,storeId:null});
 }

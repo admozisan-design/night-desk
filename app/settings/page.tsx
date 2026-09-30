@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import {cloudConfigured,cloudRole} from "@/lib/cloud";
 
 type SettingsItem={
   title:string;
@@ -83,7 +86,10 @@ export default function SettingsPage(){
         </summary>
 
         <div className="settingsAccordionBody">
-          {group.items.map(item=><Link href={item.href} className="settingsCompactItem" key={item.href}>
+          {group.items.filter(item=>!cloudConfigured || cloudRole()==="admin" || ![
+            "/store","/pricing","/permissions","/staff","/settings/team",
+            "/settings/backups","/settings/menu","/settings/dispatch","/settings/data"
+          ].includes(item.href)).map(item=><Link href={item.href} className="settingsCompactItem" key={item.href}>
             <div>
               <strong>{item.title}</strong>
               <p>{item.description}</p>

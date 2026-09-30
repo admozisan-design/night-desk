@@ -85,13 +85,30 @@ for select to authenticated
 using(user_id=(select auth.uid()) or public.nightdesk_is_admin(store_id));
 create policy "members read store records" on public.nightdesk_records for select to authenticated
 using(public.nightdesk_is_member(store_id));
-create policy "members insert store records" on public.nightdesk_records for insert to authenticated
-with check(public.nightdesk_is_member(store_id) and updated_by=(select auth.uid()));
-create policy "members edit store records" on public.nightdesk_records for update to authenticated
-using(public.nightdesk_is_member(store_id))
-with check(public.nightdesk_is_member(store_id) and updated_by=(select auth.uid()));
-create policy "members delete store records" on public.nightdesk_records for delete to authenticated
-using(public.nightdesk_is_member(store_id));
+-- Admins can change everything. Staff can update operational records only.
+create or replace function public.nightdesk_can_write(p_store_id uuid,p_bucket text)
+returns boolean language sql stable security definer set search_path=''
+as $
+  select exists(
+    select 1 from public.nightdesk_memberships m
+    where m.store_id=p_store_id and m.user_id=(select auth.uid())
+      and (m.role='admin' or (
+        m.role='staff' and p_bucket in (
+          'orders','casts','drivers','hotels','options','customers',
+          'settlement','settlement_daily','shared_memo','audit_logs'
+        )
+      ))
+  )
+$;
+revoke all on function public.nightdesk_can_write(uuid,text) from public;
+grant execute on function public.nightdesk_can_write(uuid,text) to authenticated;
+create policy "authorized members insert store records" on public.nightdesk_records for insert to authenticated
+with check(public.nightdesk_can_write(store_id,bucket) and updated_by=(select auth.uid()));
+create policy "authorized members edit store records" on public.nightdesk_records for update to authenticated
+using(public.nightdesk_can_write(store_id,bucket))
+with check(public.nightdesk_can_write(store_id,bucket) and updated_by=(select auth.uid()));
+create policy "authorized members delete store records" on public.nightdesk_records for delete to authenticated
+using(public.nightdesk_can_write(store_id,bucket));
 create policy "admins read backups" on public.nightdesk_backups for select to authenticated
 using(public.nightdesk_is_admin(store_id));
 create policy "admins read pre-restore safety copies" on public.nightdesk_restore_safety

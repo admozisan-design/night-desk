@@ -378,7 +378,7 @@ export function loadCustomers(defaultCustomers:Customer[]=[]):Customer[] {
   } catch {
     saved=[];
   }
-  const base=(saved.length?saved:defaultCustomers).map(normalizeCustomer);
+  const base=(cloudConfigured?saved:(saved.length?saved:defaultCustomers)).map(normalizeCustomer);
   const byPhone=new Map(base.map(customer=>[customer.phone,customer]));
   for(const customer of derivedCustomersFromOrders()){
     if(!byPhone.has(customer.phone)) byPhone.set(customer.phone,customer);
