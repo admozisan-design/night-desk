@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { formatYen } from "@/lib/pricing";
 import { loadOrders } from "@/lib/storage";
 import type { Order } from "@/lib/types";
+import {activeBusinessDate} from "@/lib/operations";
+import {defaultStoreSettings} from "@/lib/mock-data";
 
 function dateValue(date:Date){
   const y=date.getFullYear();
@@ -14,7 +16,7 @@ function dateValue(date:Date){
 
 export default function SalesPage(){
   const [orders,setOrders]=useState<Order[]>([]);
-  const [date,setDate]=useState(dateValue(new Date()));
+  const [date,setDate]=useState(activeBusinessDate(new Date(),defaultStoreSettings.openTime));
   const [allPeriod,setAllPeriod]=useState(false);
 
   useEffect(()=>{
