@@ -4,7 +4,7 @@ import Link from "next/link";
 import {useEffect,useMemo,useState} from "react";
 import {casts as demoCasts,drivers as demoDrivers,defaultStoreSettings} from "@/lib/mock-data";
 import {loadCasts,loadDrivers,loadOrders,loadStoreSettings,updateOrderStatus} from "@/lib/storage";
-import {checkCastAvailability,localDate,orderDate,orderInterval,suggestDrivers,clockMinutes} from "@/lib/operations";
+import {checkCastAvailability,activeBusinessDate,orderDate,orderInterval,suggestDrivers} from "@/lib/operations";
 import type {Cast,Driver,Order,StoreSettings} from "@/lib/types";
 
 const card:React.CSSProperties={padding:18,border:"1px solid #e2e8f0",borderRadius:14,background:"#fff"};
@@ -12,8 +12,8 @@ const grid:React.CSSProperties={display:"grid",gap:14,gridTemplateColumns:"repea
 const line:React.CSSProperties={display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"};
 
 export default function OperationsPage(){
-  const [date,setDate]=useState(()=>localDate());
-  const [time,setTime]=useState(()=>{const n=new Date();return String(n.getHours()).padStart(2,"0")+":"+String(Math.ceil(n.getMinutes()/10)*10%60).padStart(2,"0");});
+  const [date,setDate]=useState(()=>activeBusinessDate(new Date(),defaultStoreSettings.openTime));
+  const [time,setTime]=useState(()=>{const n=new Date();return String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");});
   const [minutes,setMinutes]=useState(60);
   const [castId,setCastId]=useState("");
   const [orders,setOrders]=useState<Order[]>([]);
