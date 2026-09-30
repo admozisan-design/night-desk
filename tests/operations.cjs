@@ -73,3 +73,8 @@ test("profit separates completed sales from pending, expenses and payout",()=>{
  assert.equal(p.expected,22000);
  assert.equal(p.grossProfit,7000);
 });
+
+test("after-midnight bookings stay on the previous business date",()=>{
+ assert.equal(op.activeBusinessDate(new Date("2026-10-02T02:00:00+09:00"),"12:00"),"2026-10-01");
+ assert.equal(op.activeBusinessDate(new Date("2026-10-02T16:00:00+09:00"),"12:00"),"2026-10-02");
+});
