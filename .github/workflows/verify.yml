@@ -2,6 +2,7 @@ name: Check NIGHT DESK
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 jobs:
   build:
@@ -17,5 +18,7 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Typecheck
         run: npx tsc --noEmit
+      - name: Operations logic tests
+        run: node --test tests/operations.cjs
       - name: Production build
         run: npm run build
