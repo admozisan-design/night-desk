@@ -2,9 +2,10 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { casts as defaultCasts, defaultPricingConfig, drivers as defaultDrivers, options as defaultOptions } from "@/lib/mock-data";
+import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, options as defaultOptions } from "@/lib/mock-data";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import { loadCasts, loadDrivers, loadOptions, loadPricing, saveOrder } from "@/lib/storage";
+import {checkCastAvailability,suggestDrivers,localDate} from "@/lib/operations";
+import { loadCasts, loadDrivers, loadOptions, loadPricing, loadOrders, loadStoreSettings, loadCustomers, saveOrder } from "@/lib/storage";
 import type { Cast, Driver, Order, PricingConfig, StoreOption } from "@/lib/types";
 
 function addMinutes(time:string, minutes:number){
@@ -31,6 +32,10 @@ export default function NewOrderPage(){
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
   const [scheduledStart,setScheduledStart] = useState(defaultTime);
+  const [date,setDate]=useState(()=>localDate());
+  const [existing,setExisting]=useState<Order[]>([]);
+  const [settings,setSettings]=useState(defaultStoreSettings);
+  const [formError,setFormError]=useState("");
   const course = pricing.courses.find(c=>c.id===courseId);
 
   const availableCasts = useMemo(
@@ -50,6 +55,22 @@ export default function NewOrderPage(){
     const loadedPricing=loadPricing(defaultPricingConfig);
     setPricing(loadedPricing);
     setTravelFee(loadedPricing.defaultTravelFee);
+    setSettings(loadStoreSettings(defaultStoreSettings));
+    setExisting(loadOrders());
+    const query=new URLSearchParams(window.location.search);
+    const reqDate=query.get("date"),reqTime=query.get("start"),reqMinutes=Number(query.get("minutes"));
+    if(reqDate && /^\\d{4}-\\d{2}-\\d{2}$/.test(reqDate))setDate(reqDate);
+    if(reqTime && /^\\d{2}:\\d{2}$/.test(reqTime))setScheduledStart(reqTime);
+    if(reqMinutes){
+      const found=loadedPricing.courses.find(x=>x.minutes===reqMinutes);
+      if(found)setCourseId(found.id);
+    }
+    if(query.get("cast"))setCastId(String(query.get("cast")));
+    if(query.get("driver"))setDriverId(String(query.get("driver")));
+    const refresh=()=>setExisting(loadOrders());
+    window.addEventListener("nightdesk:orders",refresh);
+    window.addEventListener("storage",refresh);
+    return ()=>{window.removeEventListener("nightdesk:orders",refresh);window.removeEventListener("storage",refresh);};
   },[]);
 
   useEffect(()=>{
@@ -86,6 +107,12 @@ export default function NewOrderPage(){
   },[selectableOptions]);
 
   const total = useMemo(()=>calculateOrderTotal({course,nominationType,photoNominationFee:pricing.photoNominationFee,repeatNominationFee:pricing.repeatNominationFee,optionsTotal,travelFee,discount,adjustment}),[course,nominationType,optionsTotal,travelFee,discount,adjustment,pricing.photoNominationFee,pricing.repeatNominationFee]);
+
+  const availability=selectedCast?checkCastAvailability({
+    cast:selectedCast,date,start:scheduledStart,minutes:course?.minutes??60,
+    orders:existing,settings,includeSlots:true
+  }):null;
+  const driverCandidates=suggestDrivers({drivers:availableDrivers,orders:existing,date,start:scheduledStart,settings});
 
   function toggleOption(id:string){
     setSelectedOptionIds(current=>current.includes(id)
