@@ -1048,9 +1048,22 @@ export default function DashboardPage(){
       cast:selectedCast,date,start:scheduledStart,minutes:course.minutes+formExtensionMinutes,
       orders:loadOrders(),settings:storeSettings,ignoreOrderId:editingOrderId??undefined
     });
+    let allowServingOverlap=false;
     if(!availabilityNow.ok){
-      window.alert("予約できません：" + availabilityNow.message);
-      return;
+      const onlyServingOverlap=
+        availabilityNow.conflicts.length>0 &&
+        availabilityNow.conflicts.every(order=>order.status==="serving") &&
+        availabilityNow.message.includes("重複");
+      if(onlyServingOverlap){
+        const confirmed=window.confirm(
+          "⚠ まだ接客中のオーダーがあります。\nこのまま次の予約を登録しますか？"
+        );
+        if(!confirmed) return;
+        allowServingOverlap=true;
+      }else{
+        window.alert("予約できません：" + availabilityNow.message);
+        return;
+      }
     }
     if(matchedCustomer?.active===false){
       window.alert("利用不可として登録されているお客様です。顧客情報を確認してください。");
@@ -1102,7 +1115,11 @@ export default function DashboardPage(){
           status:"accepted"
         };
     try{
-      const confirmed=await confirmReservation(order,editingOrderId??undefined);
+      const confirmed=await confirmReservation(
+        order,
+        editingOrderId??undefined,
+        allowServingOverlap ? {allowServingOverlap:true} : undefined
+      );
       setOrders(confirmed);
       resetOrderForm();
     }catch(err){
