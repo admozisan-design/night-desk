@@ -5875,3 +5875,32 @@ button{
     backdrop-filter:none!important;
   }
 }
+
+
+/* ===== Dispatch board column geometry sync ===== */
+.wideBoard{
+  --board-cast-col:180px;
+  --board-shift-col:175px;
+  --board-count-col:78px;
+  --board-fixed-width:433px;
+}
+.wideBoard .dispatchNameHead,
+.wideBoard .dispatchName{
+  left:0!important;
+}
+.wideBoard .dispatchShiftHead,
+.wideBoard .dispatchShift{
+  left:var(--board-cast-col)!important;
+}
+.wideBoard .dispatchCountHead,
+.wideBoard .dispatchCount{
+  left:calc(var(--board-cast-col) + var(--board-shift-col))!important;
+}
+@media(max-width:1200px){
+  .wideBoard{
+    --board-cast-col:150px;
+    --board-shift-col:145px;
+    --board-count-col:65px;
+    --board-fixed-width:360px;
+  }
+}
