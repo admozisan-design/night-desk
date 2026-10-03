@@ -639,8 +639,12 @@ export default function DashboardPage(){
       : selectedOrder.nominationType==="repeat" ? "本指名" : "フリー";
     const options=(selectedOrder.selectedOptions??[]).filter(Boolean).join(" / ");
     const payment=selectedOrder.paymentMethod==="card" ? "カード" : "現金";
+    const sendDriver=selectedOrder.driverName ? `${selectedOrder.driverName}さん` : "未設定";
     const text=[
-      "【オーダー】",
+      "【送りオーダー】",
+      `送り　${sendDriver}`,
+      "",
+      "【詳細】",
       `日付：${orderServiceDate(selectedOrder)}`,
       `時間：${selectedOrder.scheduledStart}〜${selectedOrder.scheduledEnd}`,
       `キャスト：${selectedOrder.castName}`,
@@ -649,10 +653,9 @@ export default function DashboardPage(){
       selectedOrder.address ? `住所：${selectedOrder.address}` : "",
       options ? `OP：${options}` : "",
       `料金：${formatYen(selectedOrder.total)}（${payment}）`,
-      `送り：${selectedOrder.driverName??"未設定"}`,
       `お迎え：${selectedOrder.pickupDriverName??"未設定"}`,
       selectedOrder.note ? `備考：${selectedOrder.note}` : ""
-    ].filter(Boolean).join("\n");
+    ].filter(line=>line!==false&&line!==null&&line!==undefined).join("\n");
     try{
       await navigator.clipboard.writeText(text);
       setCopyNotice("LINE用オーダー内容をコピーしました");
