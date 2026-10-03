@@ -5487,3 +5487,391 @@ button{
     backdrop-filter:none;
   }
 }
+
+
+/* ===== Professional work registration UI ===== */
+.workRegister{
+  padding:14px 16px!important;
+  border-radius:12px;
+  background:#f8fafb;
+}
+.workRegisterTitleRow{
+  margin-bottom:9px!important;
+}
+.workRegisterTitleRow h2{
+  font-size:17px!important;
+  line-height:1.2;
+  font-weight:900;
+  color:#1f2b35;
+}
+.workRegister form{
+  gap:9px!important;
+}
+.workRegister label{
+  gap:4px!important;
+  font-size:11px!important;
+  line-height:1.25;
+  font-weight:800;
+  color:#65727e;
+}
+.workRegister input,
+.workRegister select{
+  min-height:40px!important;
+  height:40px!important;
+  padding:8px 10px!important;
+  border:1px solid #d6dee5!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  font-size:13px!important;
+  color:#24313d!important;
+}
+.workRegister textarea{
+  min-height:72px!important;
+  padding:9px 10px!important;
+  border:1px solid #d6dee5!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  font-size:13px!important;
+  line-height:1.45;
+}
+.workRegister input:focus,
+.workRegister select:focus,
+.workRegister textarea:focus{
+  border-color:#9db7c8!important;
+  outline:0;
+  box-shadow:0 0 0 3px rgba(92,130,156,.09);
+}
+
+.customerLookupTop{
+  gap:6px!important;
+}
+.customerPhoneInputWrap input{
+  min-height:40px!important;
+}
+
+/* Cast summary: readable but compact */
+.selectedCastInfo.selectedCastInfoWide{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:0!important;
+  padding:0!important;
+  overflow:hidden;
+  border:1px solid #dbe3e9!important;
+  border-radius:10px!important;
+  background:#fff!important;
+}
+.selectedCastInfo.selectedCastInfoWide>div{
+  min-height:60px!important;
+  padding:9px 11px!important;
+  border-right:1px solid #edf1f4!important;
+  border-bottom:1px solid #edf1f4!important;
+}
+.selectedCastInfo.selectedCastInfoWide>div:nth-child(3n){
+  border-right:0!important;
+}
+.selectedCastInfo span{
+  margin-bottom:3px!important;
+  font-size:10px!important;
+  line-height:1.2;
+  color:#84909a!important;
+}
+.selectedCastInfo strong{
+  font-size:13px!important;
+  line-height:1.35;
+  color:#22313c!important;
+}
+.selectedCastInfo .selectedCastAdCell a{
+  min-height:28px!important;
+  padding:4px 8px!important;
+  border-radius:7px!important;
+  font-size:10px!important;
+}
+.selectedCastInfo .selectedCastNotesCell{
+  grid-column:1/-1!important;
+  min-height:46px!important;
+  display:grid!important;
+  grid-template-columns:52px 1fr auto!important;
+  gap:8px!important;
+  align-items:center!important;
+  border-right:0!important;
+  border-bottom:0!important;
+}
+.selectedCastInfo .selectedCastNotesCell strong{
+  display:block!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.selectedCastNotesCell button{
+  margin:0!important;
+  padding:5px 8px!important;
+  border-radius:7px!important;
+  font-size:10px!important;
+}
+
+/* Course buttons */
+.courseChips{
+  min-height:40px!important;
+  padding:5px!important;
+  gap:5px!important;
+  border-radius:9px!important;
+  background:#fff!important;
+}
+.courseChips button{
+  min-height:30px!important;
+  padding:4px 11px!important;
+  border-radius:7px!important;
+  font-size:11px!important;
+  font-weight:900!important;
+}
+.courseChips button.active{
+  background:#2b3945!important;
+  border-color:#2b3945!important;
+  color:#fff!important;
+}
+
+/* Extension: compact premium card, not full width */
+.formExtensionBox{
+  width:min(420px,100%)!important;
+  justify-self:start!important;
+  display:grid!important;
+  gap:8px!important;
+  padding:10px 11px!important;
+  border:1px solid #d8e1e7!important;
+  border-radius:11px!important;
+  background:linear-gradient(180deg,#fff 0%,#f6f9fb 100%)!important;
+  box-shadow:0 4px 12px rgba(31,45,56,.05);
+}
+.formExtensionHead{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+}
+.formExtensionHead>span{
+  font-size:11px!important;
+  font-weight:900!important;
+  color:#45535f!important;
+}
+.formExtensionHead>small{
+  display:inline-flex!important;
+  align-items:center!important;
+  min-height:24px!important;
+  padding:2px 8px!important;
+  border-radius:999px!important;
+  background:#edf3f7!important;
+  color:#647582!important;
+  font-size:10px!important;
+  font-weight:800!important;
+}
+.formExtensionStepper{
+  grid-template-columns:38px minmax(150px,1fr) 38px!important;
+  gap:8px!important;
+}
+.formExtensionStepper>button{
+  width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  padding:0!important;
+  border:1px solid #ccd7df!important;
+  border-radius:10px!important;
+  background:#fff!important;
+  color:#2d3c48!important;
+  font-size:21px!important;
+  font-weight:900!important;
+  transition:background .15s ease,border-color .15s ease,transform .12s ease;
+}
+.formExtensionStepper>button:hover:not(:disabled){
+  background:#f2f6f8!important;
+  border-color:#aebfcb!important;
+}
+.formExtensionStepper>button:active:not(:disabled){
+  transform:translateY(1px);
+}
+.formExtensionStepper>div{
+  min-height:38px!important;
+  padding:5px 12px!important;
+  border:1px solid #d8e1e7!important;
+  border-radius:10px!important;
+  background:#f2f6f8!important;
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:10px!important;
+}
+.formExtensionStepper strong{
+  font-size:15px!important;
+  line-height:1!important;
+  color:#20303b!important;
+}
+.formExtensionStepper span{
+  font-size:11px!important;
+  line-height:1!important;
+  color:#6d8190!important;
+}
+
+/* Main form sections */
+.workGrid{
+  gap:7px!important;
+}
+.workGrid.two{
+  grid-template-columns:minmax(0,1.4fr) minmax(150px,.6fr)!important;
+}
+.workGrid.three{
+  gap:7px!important;
+}
+.orderOptionPicker{
+  margin:0!important;
+  padding:9px 11px!important;
+  border-radius:10px!important;
+  background:#fff!important;
+}
+.orderOptionPickerHead{
+  margin-bottom:6px!important;
+}
+.orderOptionPickerHead span{
+  font-size:11px!important;
+}
+.orderOptionPickerHead strong{
+  font-size:14px!important;
+}
+.optionOpenButton{
+  min-height:30px!important;
+  padding:4px 9px!important;
+  border-radius:7px!important;
+  font-size:10px!important;
+}
+.selectedOptionLabels{
+  min-height:24px!important;
+}
+.selectedOptionLabels>span{
+  padding:4px 7px!important;
+  border-radius:7px!important;
+  font-size:10px!important;
+}
+.selectedOptionLabels small{
+  font-size:9px!important;
+}
+
+.paymentAndTimeGrid{
+  gap:7px!important;
+}
+.paymentMethodChoices{
+  min-height:40px!important;
+}
+.paymentMethodChoices button{
+  min-height:40px!important;
+  padding:6px 10px!important;
+  border-radius:8px!important;
+  font-size:11px!important;
+  font-weight:900!important;
+}
+.cardFeePreview{
+  margin:0!important;
+  padding:7px 10px!important;
+  border-radius:8px!important;
+}
+
+/* Driver area */
+.driverMailRow{
+  margin-top:0!important;
+  padding:9px 11px!important;
+  gap:5px 8px!important;
+  border-radius:10px!important;
+  background:#fff!important;
+}
+.driverMailRow label{
+  gap:4px!important;
+  font-size:11px!important;
+}
+.driverMailRow select{
+  min-height:40px!important;
+  height:40px!important;
+}
+.driverMailButton{
+  min-width:104px!important;
+  min-height:40px!important;
+  height:40px!important;
+  padding:6px 11px!important;
+  border-radius:8px!important;
+  font-size:11px!important;
+}
+.driverMailAddress{
+  font-size:10px!important;
+}
+
+/* Stronger, cleaner footer */
+.workFooter{
+  position:sticky!important;
+  bottom:0!important;
+  z-index:15!important;
+  margin:4px -16px -14px!important;
+  padding:9px 16px!important;
+  gap:10px!important;
+  border-top:1px solid #dce4e9!important;
+  background:rgba(255,255,255,.97)!important;
+  box-shadow:0 -6px 18px rgba(28,42,53,.06)!important;
+  backdrop-filter:blur(8px);
+}
+.workTotalSummary{
+  display:flex!important;
+  align-items:baseline!important;
+  gap:7px!important;
+}
+.workTotalSummary small{
+  font-size:9px!important;
+}
+.workTotalSummary span{
+  font-size:9px!important;
+  color:#7a8792!important;
+}
+.workTotalSummary strong{
+  font-size:22px!important;
+  font-weight:900!important;
+  color:#52791e!important;
+}
+.workButtons{
+  gap:6px!important;
+}
+.workButtons button,
+.workButtons a{
+  min-height:38px!important;
+  padding:6px 12px!important;
+  border-radius:8px!important;
+  font-size:11px!important;
+  font-weight:900!important;
+}
+.workButtons .registerBtn{
+  min-width:108px!important;
+  background:linear-gradient(180deg,#d5a24a 0%,#bf8730 100%)!important;
+  border-color:#b77d28!important;
+  color:#fff!important;
+  box-shadow:0 4px 10px rgba(188,130,42,.18);
+}
+
+@media(max-width:900px){
+  .selectedCastInfo.selectedCastInfoWide{
+    grid-template-columns:1fr 1fr!important;
+  }
+  .workGrid.two{
+    grid-template-columns:1fr!important;
+  }
+}
+@media(max-width:650px){
+  .selectedCastInfo.selectedCastInfoWide{
+    grid-template-columns:1fr!important;
+  }
+  .selectedCastInfo .selectedCastNotesCell{
+    grid-template-columns:1fr!important;
+  }
+  .formExtensionBox{
+    width:100%!important;
+  }
+  .workFooter{
+    position:static!important;
+    margin:0!important;
+    padding:8px 0 0!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+  }
+}
