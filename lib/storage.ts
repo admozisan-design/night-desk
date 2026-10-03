@@ -335,7 +335,6 @@ function normalizeDriver(driver:Driver):Driver {
     name: driver.name ?? "",
     phone: driver.phone ?? "",
     email: driver.email ?? "",
-    lineUrl: driver.lineUrl ?? "",
     vehicle: driver.vehicle ?? "",
     plate: driver.plate ?? "",
     notes: driver.notes ?? "",
@@ -532,7 +531,6 @@ export function loadStoreSettings(defaultSettings:StoreSettings):StoreSettings {
       cancelFee:parsed.cancelFee ?? defaultSettings.cancelFee ?? 0,
       bookingBufferMinutes:parsed.bookingBufferMinutes ?? defaultSettings.bookingBufferMinutes ?? 15,
       dispatchBufferMinutes:parsed.dispatchBufferMinutes ?? defaultSettings.dispatchBufferMinutes ?? 30,
-      driverContactMethod:(parsed.driverContactMethod ?? defaultSettings.driverContactMethod ?? "email") as StoreSettings["driverContactMethod"],
     };
   } catch {
     return defaultSettings;

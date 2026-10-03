@@ -39,12 +39,12 @@ export type Cast = {
   hipCm?:number;
   cupSize?:string;
 };
-export type Driver = { id:string; name:string; phone?:string; email?:string; lineUrl?:string; vehicle?:string; plate?:string; notes?:string; active:boolean; };
+export type Driver = { id:string; name:string; phone?:string; email?:string; vehicle?:string; plate?:string; notes?:string; active:boolean; };
 export type Course = { id:string; minutes:number; price:number; };
 export type Hotel = { id:string; name:string; travelFee:number; visible?:boolean; kind?:"business"|"love"|"home"; address?:string; };
 export type Staff = { id:string; name:string; displayName:string; loginId:string; notes?:string; active?:boolean; };
 export type StoreOption = { id:string; name:string; price:number; notes?:string; active?:boolean; };
-export type StoreSettings = { openTime:string; closeTime:string; cardFeeRate:number; priceUnit:10|100|500|1000; miscExpenseMode:"fixed"|"percent"; miscExpenseValue:number; changeFee:number; cancelFee:number; bookingBufferMinutes?:number; dispatchBufferMinutes?:number; driverContactMethod?:"email"|"line"; };
+export type StoreSettings = { openTime:string; closeTime:string; cardFeeRate:number; priceUnit:10|100|500|1000; miscExpenseMode:"fixed"|"percent"; miscExpenseValue:number; changeFee:number; cancelFee:number; bookingBufferMinutes?:number; dispatchBufferMinutes?:number; };
 export type CastSettlementAdjustment = {
   orderId:string;
   optionBack:number;
