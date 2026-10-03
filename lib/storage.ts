@@ -139,7 +139,7 @@ export function replaceOrdersFromCsv(orders:Order[]){
 export async function confirmReservation(
   order:Order,
   existingId?:string,
-  options?:{allowCastTimeOverride?:boolean;allowServingOverlap?:boolean}
+  options?:{allowCastTimeOverride?:boolean;allowOverlapOverride?:boolean}
 ){
   const current=loadOrders();
   const cast=loadCasts(demoCasts).find(x=>x.id===order.castId);
@@ -152,28 +152,27 @@ export async function confirmReservation(
   const softCastTimeLimit=
     availability.message==="キャストの上がり時間を超えます" ||
     availability.message==="キャストの受付終了後です";
-  const servingOverlap=
+  const reservationOverlap=
     availability.conflicts.length>0 &&
-    availability.conflicts.every(conflict=>conflict.status==="serving") &&
     availability.message.includes("重複");
   const allowCastTime=
     Boolean(options?.allowCastTimeOverride && softCastTimeLimit && availability.conflicts.length===0);
-  const allowServing=
-    Boolean(options?.allowServingOverlap && servingOverlap);
-  if(!availability.ok && !allowCastTime && !allowServing)
+  const allowOverlap=
+    Boolean(options?.allowOverlapOverride && reservationOverlap);
+  if(!availability.ok && !allowCastTime && !allowOverlap)
     throw new Error(availability.message);
   if(cloudConfigured){
     const store=cloudStoreId();
     if(!cloudClient||!store||!cloudStatus().connected)
       throw new Error("クラウド未接続です。再接続してから予約を確定してください");
     const result=existingId
-      ? await cloudClient.rpc(options?.allowServingOverlap
-          ? "nightdesk_update_reservation_serving_overlap"
+      ? await cloudClient.rpc(options?.allowOverlapOverride
+          ? "nightdesk_update_reservation_overlap_override"
           : "nightdesk_update_reservation",{
         p_store_id:store,p_order_id:existingId,p_order:order
       })
-      : await cloudClient.rpc(options?.allowServingOverlap
-          ? "nightdesk_reserve_order_serving_overlap"
+      : await cloudClient.rpc(options?.allowOverlapOverride
+          ? "nightdesk_reserve_order_overlap_override"
           : "nightdesk_reserve_order",{
         p_store_id:store,p_order:order,p_position:0
       });
