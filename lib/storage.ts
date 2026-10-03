@@ -136,7 +136,11 @@ export function replaceOrdersFromCsv(orders:Order[]){
 }
 
 /** Await a database transaction before calling any reservation "confirmed". */
-export async function confirmReservation(order:Order,existingId?:string){
+export async function confirmReservation(
+  order:Order,
+  existingId?:string,
+  options?:{allowCastTimeOverride?:boolean}
+){
   const current=loadOrders();
   const cast=loadCasts(demoCasts).find(x=>x.id===order.castId);
   if(!cast)throw new Error("対象キャストが登録されていません");
@@ -145,7 +149,11 @@ export async function confirmReservation(order:Order,existingId?:string){
     minutes:orderDuration(order),orders:current,
     settings:loadStoreSettings(demoStoreSettings),ignoreOrderId:existingId
   });
-  if(!availability.ok)throw new Error(availability.message);
+  const softCastTimeLimit=
+    availability.message==="キャストの上がり時間を超えます" ||
+    availability.message==="キャストの受付終了後です";
+  if(!availability.ok && !(options?.allowCastTimeOverride && existingId && softCastTimeLimit && availability.conflicts.length===0))
+    throw new Error(availability.message);
   if(cloudConfigured){
     const store=cloudStoreId();
     if(!cloudClient||!store||!cloudStatus().connected)

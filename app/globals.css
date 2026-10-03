@@ -5065,3 +5065,25 @@ button{
   opacity:.45;
   cursor:not-allowed;
 }
+
+
+/* ===== Soft extension time warning ===== */
+.extensionTimeWarning{
+  display:grid;
+  gap:4px;
+  margin-top:10px;
+  padding:11px 12px;
+  border:1px solid #e7c77a;
+  border-radius:8px;
+  background:#fff8e8;
+  color:#795b18;
+}
+.extensionTimeWarning strong{
+  font-size:12px;
+  font-weight:900;
+}
+.extensionTimeWarning span{
+  font-size:11px;
+  font-weight:700;
+  line-height:1.5;
+}

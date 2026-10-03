@@ -442,7 +442,14 @@ export default function DashboardPage(){
         ignoreOrderId:selectedOrder.id
       })
     : null;
-  const extensionWarning=extensionAvailability&&!extensionAvailability.ok
+  const extensionSoftTimeWarning=Boolean(
+    extensionAvailability &&
+    !extensionAvailability.ok &&
+    extensionAvailability.conflicts.length===0 &&
+    (extensionAvailability.message==="キャストの上がり時間を超えます" ||
+      extensionAvailability.message==="キャストの受付終了後です")
+  );
+  const extensionHardWarning=extensionAvailability&&!extensionAvailability.ok&&!extensionSoftTimeWarning
     ? (extensionAvailability.conflicts.length
         ? "次の予約と重複するため、この延長は確定できません。"
         : extensionAvailability.message)
@@ -862,9 +869,15 @@ export default function DashboardPage(){
 
   async function applyExtension(){
     if(!selectedOrder) return;
-    if(extensionAvailability && !extensionAvailability.ok){
-      window.alert("⚠ 延長できません\n"+(extensionWarning||"予約時間を確認してください"));
+    if(extensionHardWarning){
+      window.alert("⚠ 延長できません\n"+extensionHardWarning);
       return;
+    }
+    if(extensionSoftTimeWarning){
+      const confirmed=window.confirm(
+        "⚠ キャストの受付時間を超えています。\n本人確認のうえ延長しますか？"
+      );
+      if(!confirmed) return;
     }
     const add=pricing.extensionMinutes*extensionCount;
     const addPrice=pricing.extensionPrice*extensionCount;
@@ -886,7 +899,7 @@ export default function DashboardPage(){
         scheduledEnd:addMinutes(selectedOrder.scheduledEnd,add),
         cardFee:nextCardFee,
         total:nextBase+nextCardFee
-      },selectedOrder.id));
+      },selectedOrder.id,{allowCastTimeOverride:extensionSoftTimeWarning}));
       setOrderMode("menu");
       setCopyNotice(`${add}分延長 / ＋${formatYen(addPrice)}`);
     }catch(err){
@@ -1646,13 +1659,17 @@ export default function DashboardPage(){
             <button type="button" onClick={()=>setExtensionCount(value=>value+1)}>＋</button>
           </div>
           <p className="extensionPreview">終了予定 {selectedOrder.scheduledEnd} → <strong>{addMinutes(selectedOrder.scheduledEnd,pricing.extensionMinutes*extensionCount)}</strong></p>
-          {extensionWarning && <div className="extensionConflictWarning" role="alert">
+          {extensionHardWarning && <div className="extensionConflictWarning" role="alert">
             <strong>⚠ 延長できません</strong>
-            <span>{extensionWarning}</span>
+            <span>{extensionHardWarning}</span>
+          </div>}
+          {extensionSoftTimeWarning && <div className="extensionTimeWarning" role="status">
+            <strong>⚠ キャストの受付時間を超えます</strong>
+            <span>本人が延長OKの場合は確定できます。確定時にもう一度確認します。</span>
           </div>}
           <div className="orderActionSubButtons">
             <button type="button" onClick={()=>setOrderMode("menu")}>戻る</button>
-            <button type="button" className="primary danger" onClick={applyExtension} disabled={Boolean(extensionWarning)}>延長確定</button>
+            <button type="button" className="primary danger" onClick={applyExtension} disabled={Boolean(extensionHardWarning)}>延長確定</button>
           </div>
         </div>}
       </div>
