@@ -139,7 +139,7 @@ export function replaceOrdersFromCsv(orders:Order[]){
 export async function confirmReservation(
   order:Order,
   existingId?:string,
-  options?:{allowCastTimeOverride?:boolean}
+  options?:{allowCastTimeOverride?:boolean;allowServingOverlap?:boolean}
 ){
   const current=loadOrders();
   const cast=loadCasts(demoCasts).find(x=>x.id===order.castId);
@@ -152,17 +152,29 @@ export async function confirmReservation(
   const softCastTimeLimit=
     availability.message==="キャストの上がり時間を超えます" ||
     availability.message==="キャストの受付終了後です";
-  if(!availability.ok && !(options?.allowCastTimeOverride && existingId && softCastTimeLimit && availability.conflicts.length===0))
+  const servingOverlap=
+    availability.conflicts.length>0 &&
+    availability.conflicts.every(conflict=>conflict.status==="serving") &&
+    availability.message.includes("重複");
+  const allowCastTime=
+    Boolean(options?.allowCastTimeOverride && existingId && softCastTimeLimit && availability.conflicts.length===0);
+  const allowServing=
+    Boolean(options?.allowServingOverlap && servingOverlap);
+  if(!availability.ok && !allowCastTime && !allowServing)
     throw new Error(availability.message);
   if(cloudConfigured){
     const store=cloudStoreId();
     if(!cloudClient||!store||!cloudStatus().connected)
       throw new Error("クラウド未接続です。再接続してから予約を確定してください");
     const result=existingId
-      ? await cloudClient.rpc("nightdesk_update_reservation",{
+      ? await cloudClient.rpc(options?.allowServingOverlap
+          ? "nightdesk_update_reservation_serving_overlap"
+          : "nightdesk_update_reservation",{
         p_store_id:store,p_order_id:existingId,p_order:order
       })
-      : await cloudClient.rpc("nightdesk_reserve_order",{
+      : await cloudClient.rpc(options?.allowServingOverlap
+          ? "nightdesk_reserve_order_serving_overlap"
+          : "nightdesk_reserve_order",{
         p_store_id:store,p_order:order,p_position:0
       });
     if(result.error)throw new Error(result.error.message);
