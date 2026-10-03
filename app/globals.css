@@ -4981,3 +4981,61 @@ button{
     width:100%;
   }
 }
+
+
+/* ===== Order extension action ===== */
+.orderActionButtonsSimple{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+.orderActionButtonsSimple .orderActionExtend{
+  border-color:#b9cee0;
+  background:#eef5fb;
+  color:#356583;
+}
+.extensionControl{
+  display:grid;
+  grid-template-columns:44px 1fr 44px;
+  gap:10px;
+  align-items:center;
+  margin:12px 0;
+}
+.extensionControl>button{
+  min-height:44px;
+  border:1px solid #cfd8df;
+  border-radius:9px;
+  background:#f7f9fa;
+  color:#34424d;
+  font-size:20px;
+  font-weight:900;
+  cursor:pointer;
+}
+.extensionControl>div{
+  display:grid;
+  gap:3px;
+  text-align:center;
+}
+.extensionControl strong{
+  font-size:20px;
+  color:#26323b;
+}
+.extensionControl span{
+  font-size:12px;
+  font-weight:900;
+  color:#677682;
+}
+.extensionPreview{
+  margin:10px 0 0;
+  padding:10px 12px;
+  border-radius:8px;
+  background:#f5f8fa;
+  color:#66747f;
+  font-size:12px;
+}
+.extensionPreview strong{
+  color:#2e566e;
+}
+@media(max-width:560px){
+  .orderActionButtonsSimple{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}

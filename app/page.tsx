@@ -848,6 +848,12 @@ export default function DashboardPage(){
     const baseCourse=resolveOrderCourse(selectedOrder,pricing);
     const currentExtensionMinutes=resolveOrderExtensionMinutes(selectedOrder,pricing);
     const currentExtensionTotal=resolveOrderExtensionTotal(selectedOrder,pricing);
+    const currentCardFee=selectedOrder.cardFee??0;
+    const currentBase=Math.max(0,selectedOrder.total-currentCardFee);
+    const nextBase=currentBase+addPrice;
+    const nextCardFee=selectedOrder.paymentMethod==="card"
+      ? roundUpToUnit(nextBase*((storeSettings.cardFeeRate??0)/100),storeSettings.priceUnit??100)
+      : currentCardFee;
     try{
       setOrders(await confirmReservation({...selectedOrder,
         courseId:baseCourse?.id ?? selectedOrder.courseId,
@@ -855,10 +861,11 @@ export default function DashboardPage(){
         extensionMinutes:currentExtensionMinutes+add,
         extensionTotal:currentExtensionTotal+addPrice,
         scheduledEnd:addMinutes(selectedOrder.scheduledEnd,add),
-        total:selectedOrder.total+addPrice
+        cardFee:nextCardFee,
+        total:nextBase+nextCardFee
       },selectedOrder.id));
       setOrderMode("menu");
-      setCopyNotice(`${add}分延長しました`);
+      setCopyNotice(`${add}分延長 / ＋${formatYen(addPrice)}`);
     }catch(err){
       window.alert("延長できませんでした："+(err instanceof Error?err.message:"次の予約時間を確認してください"));
     }
@@ -1528,6 +1535,12 @@ export default function DashboardPage(){
             <button type="button" className="orderActionIn" onClick={beginInTimeEntry}>
               {selectedOrder.inTime ? `イン ${selectedOrder.inTime}` : "イン時間"}
             </button>
+            <button
+              type="button"
+              className="orderActionExtend"
+              onClick={beginExtension}
+              disabled={selectedOrder.status==="completed" || selectedOrder.status==="cancelled"}
+            >延長</button>
             <button
               type="button"
               className="orderActionChange"
