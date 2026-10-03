@@ -635,8 +635,8 @@ export default function DashboardPage(){
     if(!selectedOrder) return;
     const roomText=selectedOrder.room ? ` / ${selectedOrder.room}号室` : "";
     const nomination=selectedOrder.nominationType==="photo"
-      ? "写真指名"
-      : selectedOrder.nominationType==="repeat" ? "本指名" : "フリー";
+      ? "写指"
+      : selectedOrder.nominationType==="repeat" ? "本指" : "フリー";
     const options=(selectedOrder.selectedOptions??[]).filter(Boolean).join(" / ");
     const payment=selectedOrder.paymentMethod==="card" ? "カード" : "現金";
     const isSend=kind==="send";
@@ -671,7 +671,7 @@ export default function DashboardPage(){
           `キャスト：${selectedOrder.castName}`,
           `場所：${selectedOrder.locationName||"未入力"}${roomText}`,
           selectedOrder.address ? `住所：${selectedOrder.address}` : null,
-          `コース：${selectedOrder.courseMinutes+(selectedOrder.extensionMinutes??0)}分`,
+          `コース：${selectedOrder.courseMinutes+(selectedOrder.extensionMinutes??0)}分（${nomination}）`,
           selectedOrder.note ? `備考：${selectedOrder.note}` : null
         ];
     const text=lines.filter((line):line is string=>line!==null).join("\n");
