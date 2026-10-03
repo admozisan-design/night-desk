@@ -349,21 +349,6 @@ export default function DashboardPage(){
   const course = pricing.courses.find(c=>c.id===courseId);
   const selectedCast = formCastChoices.find(c=>c.id===castId);
   const selectedDriver = availableDrivers.find(d=>d.id===driverId);
-  const driverContactMethod=storeSettings.driverContactMethod??"email";
-  function lineContactUrl(driver?:Driver){
-    const value=driver?.lineUrl?.trim();
-    if(!value) return "";
-    try{
-      const url=new URL(value);
-      const host=url.hostname.toLowerCase();
-      if(url.protocol==="https:" && (host==="line.me" || host.endsWith(".line.me") || host==="lin.ee" || host.endsWith(".lin.ee")))
-        return url.toString();
-    }catch{}
-    return "";
-  }
-  function hasDriverContact(driver?:Driver){
-    return driverContactMethod==="line" ? Boolean(lineContactUrl(driver)) : Boolean(driver?.email);
-  }
   const selectedHotel = availableHotels.find(h=>h.name===locationName);
   const phoneKey=normalizePhone(phone);
   const matchedCustomer=useMemo(()=>{
@@ -587,10 +572,10 @@ export default function DashboardPage(){
     );
   }
 
-  async function sendOrderDriverContact(kind:"send"|"pickup"){
+  function sendOrderDriverMail(kind:"send"|"pickup"){
     if(!selectedOrder) return;
     const driver=kind==="send" ? selectedOrderSendDriver : selectedOrderPickupDriver;
-    if(!driver) return;
+    if(!driver?.email) return;
 
     const serviceDate=orderServiceDate(selectedOrder);
     const time=kind==="send" ? selectedOrder.scheduledStart : selectedOrder.scheduledEnd;
@@ -609,20 +594,6 @@ export default function DashboardPage(){
       selectedOrder.note ? `備考：${selectedOrder.note}` : ""
     ].filter(Boolean).join("\n");
 
-    if(driverContactMethod==="line"){
-      const lineUrl=lineContactUrl(driver);
-      if(!lineUrl) return;
-      window.open(lineUrl,"_blank","noopener,noreferrer");
-      try{
-        await navigator.clipboard.writeText(body);
-        setCopyNotice(`${driver.name} の${label}内容をコピーしてLINEを開きました。貼り付けて送信してください`);
-      }catch{
-        setCopyNotice(`LINEを開きました。送迎内容はコピーできなかったため、内容を確認して送信してください`);
-      }
-      return;
-    }
-
-    if(!driver.email) return;
     window.location.href=`mailto:${encodeURIComponent(driver.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     setCopyNotice(`${driver.name} のメールアドレスで ${label}メールを作成しました`);
   }
@@ -660,15 +631,31 @@ export default function DashboardPage(){
     setOrderMode("menu");
   }
 
-  async function copyOrderLine(kind:"send"|"pickup"){
+  async function copyOrderForLine(){
     if(!selectedOrder) return;
-    const roomText=selectedOrder.room ? ` ${selectedOrder.room}号室` : "";
-    const text=kind==="send"
-      ? `【送り】\nキャスト：${selectedOrder.castName}\n場所：${selectedOrder.locationName}${roomText}\n時間：${selectedOrder.scheduledStart}〜${selectedOrder.scheduledEnd}\nドライバー：${selectedOrder.driverName ?? "未割当"}`
-      : `【お迎え】\nキャスト：${selectedOrder.castName}\nお迎え：${selectedOrder.scheduledEnd}\n場所：${selectedOrder.locationName}${roomText}\nドライバー：${selectedOrder.driverName ?? "未割当"}`;
+    const roomText=selectedOrder.room ? ` / ${selectedOrder.room}号室` : "";
+    const nomination=selectedOrder.nominationType==="photo"
+      ? "写真指名"
+      : selectedOrder.nominationType==="repeat" ? "本指名" : "フリー";
+    const options=(selectedOrder.selectedOptions??[]).filter(Boolean).join(" / ");
+    const payment=selectedOrder.paymentMethod==="card" ? "カード" : "現金";
+    const text=[
+      "【オーダー】",
+      `日付：${orderServiceDate(selectedOrder)}`,
+      `時間：${selectedOrder.scheduledStart}〜${selectedOrder.scheduledEnd}`,
+      `キャスト：${selectedOrder.castName}`,
+      `コース：${selectedOrder.courseMinutes+(selectedOrder.extensionMinutes??0)}分（${nomination}）`,
+      `場所：${selectedOrder.locationName||"未入力"}${roomText}`,
+      selectedOrder.address ? `住所：${selectedOrder.address}` : "",
+      options ? `OP：${options}` : "",
+      `料金：${formatYen(selectedOrder.total)}（${payment}）`,
+      `送り：${selectedOrder.driverName??"未設定"}`,
+      `お迎え：${selectedOrder.pickupDriverName??"未設定"}`,
+      selectedOrder.note ? `備考：${selectedOrder.note}` : ""
+    ].filter(Boolean).join("\n");
     try{
       await navigator.clipboard.writeText(text);
-      setCopyNotice(kind==="send"?"送り用LINEをコピーしました":"お迎え用LINEをコピーしました");
+      setCopyNotice("LINE用オーダー内容をコピーしました");
     }catch{
       setCopyNotice("コピーできませんでした");
     }
@@ -884,8 +871,8 @@ export default function DashboardPage(){
     window.setTimeout(()=>setSharedMemoSaved(false),1200);
   }
 
-  async function openDriverContact(){
-    if(!selectedDriver) return;
+  function openDriverMail(){
+    if(!selectedDriver?.email) return;
 
     const selectedNames=selectableOptions
       .filter(option=>selectedOptionIds.includes(option.id))
@@ -905,15 +892,6 @@ export default function DashboardPage(){
       note ? `備考：${note}` : ""
     ].filter(Boolean).join("\n");
 
-    if(driverContactMethod==="line"){
-      const lineUrl=lineContactUrl(selectedDriver);
-      if(!lineUrl) return;
-      window.open(lineUrl,"_blank","noopener,noreferrer");
-      try{ await navigator.clipboard.writeText(body); }catch{}
-      return;
-    }
-
-    if(!selectedDriver.email) return;
     window.location.href=`mailto:${encodeURIComponent(selectedDriver.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
@@ -1288,18 +1266,14 @@ export default function DashboardPage(){
               <button
                 type="button"
                 className="driverMailButton"
-                onClick={openDriverContact}
-                disabled={!hasDriverContact(selectedDriver)}
-                title={driverContactMethod==="line"
-                  ? (lineContactUrl(selectedDriver) ? "送迎内容をコピーして登録済みLINEリンクを開く" : "ドライバー登録でLINEリンクを設定してください")
-                  : (selectedDriver?.email ? `${selectedDriver.email} 宛てにメールを作成` : "ドライバー登録でメールアドレスを設定してください")}
+                onClick={openDriverMail}
+                disabled={!selectedDriver?.email}
+                title={selectedDriver?.email ? `${selectedDriver.email} 宛てにメールを作成` : "ドライバー登録でメールアドレスを設定してください"}
               >
-                {driverContactMethod==="line" ? "LINEを開く" : "メール送信"}
+                メール送信
               </button>
-              <span className={hasDriverContact(selectedDriver) ? "driverMailAddress" : "driverMailAddress missing"}>
-                {driverContactMethod==="line"
-                  ? (lineContactUrl(selectedDriver) ? "LINE登録済み（内容をコピーして開きます）" : "LINEリンク未登録")
-                  : (selectedDriver?.email || "メールアドレス未登録")}
+              <span className={selectedDriver?.email ? "driverMailAddress" : "driverMailAddress missing"}>
+                {selectedDriver?.email || "メールアドレス未登録"}
               </span>
             </div>
 
@@ -1484,14 +1458,12 @@ export default function DashboardPage(){
               <button
                 type="button"
                 className="orderDriverMailButton"
-                disabled={!hasDriverContact(selectedOrderSendDriver)}
-                onClick={()=>void sendOrderDriverContact("send")}
+                disabled={!selectedOrderSendDriver?.email}
+                onClick={()=>sendOrderDriverMail("send")}
               >
-                {driverContactMethod==="line" ? "送りLINEを開く" : "送りメールを送信"}
+                送りメールを送信
               </button>
-              <small>{driverContactMethod==="line"
-                ? (lineContactUrl(selectedOrderSendDriver) ? "LINE登録済み" : "LINEリンク未登録")
-                : (selectedOrderSendDriver?.email || "メールアドレス未登録")}</small>
+              <small>{selectedOrderSendDriver?.email || "メールアドレス未登録"}</small>
             </div>
 
             <div className="orderDriverDispatchRow">
@@ -1507,16 +1479,18 @@ export default function DashboardPage(){
               <button
                 type="button"
                 className="orderDriverMailButton pickup"
-                disabled={!hasDriverContact(selectedOrderPickupDriver)}
-                onClick={()=>void sendOrderDriverContact("pickup")}
+                disabled={!selectedOrderPickupDriver?.email}
+                onClick={()=>sendOrderDriverMail("pickup")}
               >
-                {driverContactMethod==="line" ? "お迎えLINEを開く" : "お迎えメールを送信"}
+                お迎えメールを送信
               </button>
-              <small>{driverContactMethod==="line"
-                ? (lineContactUrl(selectedOrderPickupDriver) ? "LINE登録済み" : "LINEリンク未登録")
-                : (selectedOrderPickupDriver?.email || "メールアドレス未登録")}</small>
+              <small>{selectedOrderPickupDriver?.email || "メールアドレス未登録"}</small>
             </div>
           </div>
+
+          <button type="button" className="secondaryButton" onClick={()=>void copyOrderForLine()}>
+            LINE用オーダーをコピー
+          </button>
 
           <div className="orderActionButtons orderActionButtonsSimple">
             <button type="button" className="orderActionIn" onClick={beginInTimeEntry}>
