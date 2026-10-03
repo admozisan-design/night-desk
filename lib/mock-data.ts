@@ -49,7 +49,8 @@ export const defaultStoreSettings: StoreSettings = {
   changeFee:0,
   cancelFee:0,
   bookingBufferMinutes:15,
-  dispatchBufferMinutes:30
+  dispatchBufferMinutes:30,
+  driverContactMethod:"email"
 };
 
 export const options: StoreOption[] = [

@@ -55,6 +55,7 @@ export default function DriversPage(){
       name,
       phone:String(fd.get("phone")||"").trim(),
       email:String(fd.get("email")||"").trim(),
+      lineUrl:String(fd.get("lineUrl")||"").trim(),
       vehicle:String(fd.get("vehicle")||"").trim(),
       plate:String(fd.get("plate")||"").trim(),
       notes:String(fd.get("notes")||"").trim(),
@@ -71,7 +72,7 @@ export default function DriversPage(){
       <div>
         <p className="eyebrow">DRIVER MANAGEMENT</p>
         <h1>ドライバー登録</h1>
-        <p>送迎ドライバーの基本情報と、配車メールの送信先を管理します。</p>
+        <p>送迎ドライバーの基本情報と、メール・LINEの連絡先を管理します。</p>
       </div>
       <div className="driverHeaderActions masterPageActions">
         {saved && <span className="saveToast">保存しました</span>}
@@ -122,6 +123,12 @@ export default function DriversPage(){
                 placeholder="driver@example.com"/>
             </label>
 
+            <label>LINEリンク
+              <input type="url" value={current.lineUrl??""} disabled={!isEditing}
+                onChange={e=>updateDraft(driver.id,{lineUrl:e.target.value})}
+                placeholder="https://line.me/..."/>
+            </label>
+
             <label>車両名
               <input value={current.vehicle??""} disabled={!isEditing}
                 onChange={e=>updateDraft(driver.id,{vehicle:e.target.value})}
@@ -166,6 +173,10 @@ export default function DriversPage(){
 
           <label>メールアドレス
             <input name="email" type="email" placeholder="driver@example.com"/>
+          </label>
+
+          <label>LINEリンク
+            <input name="lineUrl" type="url" placeholder="https://line.me/..."/>
           </label>
 
           <label>車両名
