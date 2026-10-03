@@ -1049,12 +1049,24 @@ export default function DashboardPage(){
       orders:loadOrders(),settings:storeSettings,ignoreOrderId:editingOrderId??undefined
     });
     let allowServingOverlap=false;
+    let allowCastTimeOverride=false;
     if(!availabilityNow.ok){
+      const castTimeOver=
+        availabilityNow.conflicts.length===0 &&
+        (availabilityNow.message==="キャストの上がり時間を超えます" ||
+          availabilityNow.message==="キャストの受付終了後です");
       const onlyServingOverlap=
         availabilityNow.conflicts.length>0 &&
         availabilityNow.conflicts.every(order=>order.status==="serving") &&
         availabilityNow.message.includes("重複");
-      if(onlyServingOverlap){
+
+      if(castTimeOver){
+        const warning=availabilityNow.message==="キャストの受付終了後です"
+          ? "⚠ キャストの受付終了時間を過ぎています。\nキャスト本人に確認できていますか？\nこのまま予約を登録しますか？"
+          : "⚠ キャストの上がり時間を超えています。\nキャスト本人に確認できていますか？\nこのまま予約を登録しますか？";
+        if(!window.confirm(warning)) return;
+        allowCastTimeOverride=true;
+      }else if(onlyServingOverlap){
         const confirmed=window.confirm(
           "⚠ まだ接客中のオーダーがあります。\nこのまま次の予約を登録しますか？"
         );
@@ -1118,7 +1130,9 @@ export default function DashboardPage(){
       const confirmed=await confirmReservation(
         order,
         editingOrderId??undefined,
-        allowServingOverlap ? {allowServingOverlap:true} : undefined
+        (allowServingOverlap || allowCastTimeOverride)
+          ? {allowServingOverlap,allowCastTimeOverride}
+          : undefined
       );
       setOrders(confirmed);
       resetOrderForm();
