@@ -1956,7 +1956,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
   position:absolute;
   top:0;
   bottom:0;
-  z-index:4;
+  z-index:1;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -1973,8 +1973,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
     #eef1f3;
   border-color:#d3d9de;
   color:#8c969f;
-  cursor:not-allowed;
-  pointer-events:auto;
+  cursor:default;
+  pointer-events:none;
 }
 .offShiftBlock.before{
   left:0;
