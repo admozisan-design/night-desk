@@ -631,7 +631,7 @@ export default function DashboardPage(){
     setOrderMode("menu");
   }
 
-  async function copyOrderForLine(){
+  async function copyOrderForLine(kind:"send"|"pickup"){
     if(!selectedOrder) return;
     const roomText=selectedOrder.room ? ` / ${selectedOrder.room}号室` : "";
     const nomination=selectedOrder.nominationType==="photo"
@@ -639,27 +639,45 @@ export default function DashboardPage(){
       : selectedOrder.nominationType==="repeat" ? "本指名" : "フリー";
     const options=(selectedOrder.selectedOptions??[]).filter(Boolean).join(" / ");
     const payment=selectedOrder.paymentMethod==="card" ? "カード" : "現金";
-    const sendDriver=selectedOrder.driverName ? `${selectedOrder.driverName}さん` : "未設定";
-    const lines:Array<string|null>=[
-      "【送りオーダー】",
-      `送り　${sendDriver}`,
-      "",
-      "【詳細】",
-      `日付：${orderServiceDate(selectedOrder)}`,
-      `時間：${selectedOrder.scheduledStart}〜${selectedOrder.scheduledEnd}`,
-      `キャスト：${selectedOrder.castName}`,
-      `コース：${selectedOrder.courseMinutes+(selectedOrder.extensionMinutes??0)}分（${nomination}）`,
-      `場所：${selectedOrder.locationName||"未入力"}${roomText}`,
-      selectedOrder.address ? `住所：${selectedOrder.address}` : null,
-      options ? `OP：${options}` : null,
-      `料金：${formatYen(selectedOrder.total)}（${payment}）`,
-      `お迎え：${selectedOrder.pickupDriverName??"未設定"}`,
-      selectedOrder.note ? `備考：${selectedOrder.note}` : null
-    ];
+    const isSend=kind==="send";
+    const driverName=isSend
+      ? (selectedOrder.driverName ? `${selectedOrder.driverName}さん` : "未設定")
+      : (selectedOrder.pickupDriverName ? `${selectedOrder.pickupDriverName}さん` : "未設定");
+
+    const lines:Array<string|null>=isSend
+      ? [
+          "【送りオーダー】",
+          `送り　${driverName}`,
+          "",
+          "【詳細】",
+          `日付：${orderServiceDate(selectedOrder)}`,
+          `時間：${selectedOrder.scheduledStart}〜${selectedOrder.scheduledEnd}`,
+          `キャスト：${selectedOrder.castName}`,
+          `コース：${selectedOrder.courseMinutes+(selectedOrder.extensionMinutes??0)}分（${nomination}）`,
+          `場所：${selectedOrder.locationName||"未入力"}${roomText}`,
+          selectedOrder.address ? `住所：${selectedOrder.address}` : null,
+          options ? `OP：${options}` : null,
+          `料金：${formatYen(selectedOrder.total)}（${payment}）`,
+          selectedOrder.note ? `備考：${selectedOrder.note}` : null
+        ]
+      : [
+          "【お迎えオーダー】",
+          `お迎え　${driverName}`,
+          "",
+          "【詳細】",
+          `日付：${orderServiceDate(selectedOrder)}`,
+          `イン時間：${selectedOrder.inTime??"未入力"}`,
+          `アウト時間：${selectedOrder.scheduledEnd}`,
+          `キャスト：${selectedOrder.castName}`,
+          `場所：${selectedOrder.locationName||"未入力"}${roomText}`,
+          selectedOrder.address ? `住所：${selectedOrder.address}` : null,
+          `コース：${selectedOrder.courseMinutes+(selectedOrder.extensionMinutes??0)}分`,
+          selectedOrder.note ? `備考：${selectedOrder.note}` : null
+        ];
     const text=lines.filter((line):line is string=>line!==null).join("\n");
     try{
       await navigator.clipboard.writeText(text);
-      setCopyNotice("LINE用オーダー内容をコピーしました");
+      setCopyNotice(isSend ? "送りオーダーをコピーしました" : "お迎えオーダーをコピーしました");
     }catch{
       setCopyNotice("コピーできませんでした");
     }
@@ -1493,11 +1511,16 @@ export default function DashboardPage(){
             <div className="orderLineCopyRow">
               <div className="orderLineCopyText">
                 <strong>LINE共有</strong>
-                <small>グループチャット用のオーダー内容</small>
+                <small>グループチャット用</small>
               </div>
-              <button type="button" className="orderLineCopyButton" onClick={()=>void copyOrderForLine()}>
-                オーダーをコピー
-              </button>
+              <div className="orderLineCopyActions">
+                <button type="button" className="orderLineCopyButton" onClick={()=>void copyOrderForLine("send")}>
+                  送りをコピー
+                </button>
+                <button type="button" className="orderLineCopyButton pickup" onClick={()=>void copyOrderForLine("pickup")}>
+                  お迎えをコピー
+                </button>
+              </div>
             </div>
           </div>
 
