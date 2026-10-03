@@ -210,7 +210,7 @@ export default function DashboardPage(){
   const [dispatchWidgets,setDispatchWidgets] = useState<DispatchWidgetSetting[]>(defaultDispatchWidgets);
 
   const [castId,setCastId] = useState("");
-  const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
+  const [driverId,setDriverId] = useState("");
   const [courseId,setCourseId] = useState(defaultPricingConfig.courses[0]?.id ?? "");
   const [nominationType,setNominationType] = useState<"free"|"photo"|"repeat">("free");
   const [scheduledStart,setScheduledStart] = useState(()=>clockTimeValue());
@@ -321,7 +321,7 @@ export default function DashboardPage(){
   },[castId]);
 
   useEffect(()=>{
-    if(!availableDrivers.some(d=>d.id===driverId)) setDriverId(availableDrivers[0]?.id ?? "");
+    if(driverId && !availableDrivers.some(d=>d.id===driverId)) setDriverId("");
   },[availableDrivers,driverId]);
 
   useEffect(()=>{
@@ -690,7 +690,7 @@ export default function DashboardPage(){
   function resetOrderForm(){
     setEditingOrderId(null);
     setCastId(selectableCasts[0]?.id ?? "");
-    setDriverId(availableDrivers[0]?.id ?? "");
+    setDriverId("");
     setCourseId(pricing.courses[0]?.id ?? "");
     setNominationType("free");
     setScheduledStart(clockTimeValue());
@@ -1255,6 +1255,7 @@ export default function DashboardPage(){
             <div className="driverMailRow">
               <label>ドライバー
                 <select value={driverId} onChange={e=>setDriverId(e.target.value)}>
+                  <option value="">未設定</option>
                   {driverCandidates.map(row=><option key={row.driver.id} value={row.driver.id}>{row.driver.name}{row.overlap.length?" ⚠時間重複":""}</option>)}
                 </select>
               </label>
