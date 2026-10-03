@@ -10,12 +10,15 @@ import {checkCastAvailability,suggestDrivers,activeBusinessDate,businessMinutes}
 import { deleteOrder, loadCasts, loadCustomers, loadDispatchWidgets, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, confirmReservation, saveSharedMemo, updateOrder } from "@/lib/storage";
 import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, DispatchWidgetId, DispatchWidgetSetting, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
-const BOARD_START = 10 * 60;
-const BOARD_MINUTES = 19 * 60;
-const hourLabels = [
-  "10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00",
-  "19:00","20:00","21:00","22:00","23:00","0:00","1:00","2:00","3:00","4:00"
-];
+function clockMinutes(time:string){
+  const [hour,minute]=time.split(":").map(Number);
+  return hour*60+minute;
+}
+function boardRelativeMinutes(time:string,boardStart:number){
+  let value=clockMinutes(time);
+  while(value<boardStart) value+=24*60;
+  return value-boardStart;
+}
 const statusLabels: Record<CastStatus,string> = {
   waiting:"待機", moving:"移動中", serving:"接客中", off:"退勤"
 };
@@ -26,26 +29,21 @@ const attendanceLabels: Record<CastAttendanceStatus,string> = {
   present:"出勤", late:"遅刻", absent:"当欠", leftEarly:"早退"
 };
 
-function normalizedMinutes(time:string){
-  const [rawHour,minute] = time.split(":").map(Number);
-  const hour = rawHour < 10 ? rawHour + 24 : rawHour;
-  return hour * 60 + minute;
+function eventPosition(order:Order,boardStart:number,boardMinutes:number){
+  const rawStart=boardRelativeMinutes(order.scheduledStart,boardStart);
+  let rawEnd=boardRelativeMinutes(order.scheduledEnd,boardStart);
+  if(rawEnd<=rawStart) rawEnd+=24*60;
+  const start=Math.max(0,rawStart);
+  const end=Math.min(boardMinutes,rawEnd);
+  if(end<=0 || start>=boardMinutes || end<=start) return null;
+  return {left:`${(start/boardMinutes)*100}%`,width:`${((end-start)/boardMinutes)*100}%`};
 }
-function eventPosition(order:Order){
-  const rawStart = normalizedMinutes(order.scheduledStart) - BOARD_START;
-  let rawEnd = normalizedMinutes(order.scheduledEnd) - BOARD_START;
-  if(rawEnd <= rawStart) rawEnd += 24*60;
-  const start = Math.max(0,rawStart);
-  const end = Math.min(BOARD_MINUTES,rawEnd);
-  if(end <= 0 || start >= BOARD_MINUTES || end <= start) return null;
-  return { left:`${(start/BOARD_MINUTES)*100}%`, width:`${((end-start)/BOARD_MINUTES)*100}%` };
-}
-function currentTimePosition(now:Date){
-  let minutes = now.getHours()*60 + now.getMinutes();
-  if(now.getHours() < 10) minutes += 24*60;
-  const value = minutes - BOARD_START;
-  if(value < 0 || value > BOARD_MINUTES) return null;
-  return `${(value/BOARD_MINUTES)*100}%`;
+function currentTimePosition(now:Date,boardStart:number,boardMinutes:number){
+  let minutes=now.getHours()*60+now.getMinutes();
+  while(minutes<boardStart) minutes+=24*60;
+  const value=minutes-boardStart;
+  if(value<0 || value>boardMinutes) return null;
+  return `${(value/boardMinutes)*100}%`;
 }
 function orderEndDateTime(order:Order,serviceDate:string){
   const [year,month,day]=serviceDate.split("-").map(Number);
@@ -122,29 +120,29 @@ function hotelKindLabel(kind:Hotel["kind"]){
 function castShiftForDate(cast:Cast,date:string){
   return cast.schedule?.find(shift=>shift.date===date);
 }
-function shiftAvailabilityPosition(startTime:string,endTime:string){
-  let start=normalizedMinutes(startTime)-BOARD_START;
-  let end=normalizedMinutes(endTime)-BOARD_START;
+function shiftAvailabilityPosition(startTime:string,endTime:string,boardStart:number,boardMinutes:number){
+  let start=boardRelativeMinutes(startTime,boardStart);
+  let end=boardRelativeMinutes(endTime,boardStart);
   if(end<=start) end+=24*60;
 
-  const visibleStart=Math.max(0,Math.min(BOARD_MINUTES,start));
-  const visibleEnd=Math.max(0,Math.min(BOARD_MINUTES,end));
+  const visibleStart=Math.max(0,Math.min(boardMinutes,start));
+  const visibleEnd=Math.max(0,Math.min(boardMinutes,end));
 
   return {
-    beforeWidth:`${(visibleStart/BOARD_MINUTES)*100}%`,
-    afterLeft:`${(visibleEnd/BOARD_MINUTES)*100}%`,
-    afterWidth:`${((BOARD_MINUTES-visibleEnd)/BOARD_MINUTES)*100}%`
+    beforeWidth:`${(visibleStart/boardMinutes)*100}%`,
+    afterLeft:`${(visibleEnd/boardMinutes)*100}%`,
+    afterWidth:`${((boardMinutes-visibleEnd)/boardMinutes)*100}%`
   };
 }
-function receptionClosedPosition(receptionEnd:string,endTime:string){
-  let start=normalizedMinutes(receptionEnd)-BOARD_START;
-  let end=normalizedMinutes(endTime)-BOARD_START;
+function receptionClosedPosition(receptionEnd:string,endTime:string,boardStart:number,boardMinutes:number){
+  let start=boardRelativeMinutes(receptionEnd,boardStart);
+  let end=boardRelativeMinutes(endTime,boardStart);
   if(end<start) end+=24*60;
-  const visibleStart=Math.max(0,Math.min(BOARD_MINUTES,start));
-  const visibleEnd=Math.max(0,Math.min(BOARD_MINUTES,end));
+  const visibleStart=Math.max(0,Math.min(boardMinutes,start));
+  const visibleEnd=Math.max(0,Math.min(boardMinutes,end));
   return {
-    left:`${(visibleStart/BOARD_MINUTES)*100}%`,
-    width:`${(Math.max(0,visibleEnd-visibleStart)/BOARD_MINUTES)*100}%`
+    left:`${(visibleStart/boardMinutes)*100}%`,
+    width:`${(Math.max(0,visibleEnd-visibleStart)/boardMinutes)*100}%`
   };
 }
 function resolveOrderCourse(order:Order,pricing:PricingConfig){
@@ -459,7 +457,20 @@ export default function DashboardPage(){
     [boardCasts,selectedDateOrders]
   );
   const todayValue=activeBusinessDate(new Date(),storeSettings.openTime);
-  const nowPosition = now && date===todayValue ? currentTimePosition(now) : null;
+  const boardStartMinute=clockMinutes(storeSettings.openTime);
+  const rawBoardCloseMinute=clockMinutes(storeSettings.closeTime);
+  const boardEndMinute=rawBoardCloseMinute<=boardStartMinute ? rawBoardCloseMinute+24*60 : rawBoardCloseMinute;
+  const boardMinutes=Math.max(60,boardEndMinute-boardStartMinute);
+  const boardHourCount=Math.max(1,Math.ceil(boardMinutes/60));
+  const hourLabels=Array.from({length:boardHourCount},(_,index)=>{
+    const total=(boardStartMinute+index*60)%(24*60);
+    return `${Math.floor(total/60)}:${String(total%60).padStart(2,"0")}`;
+  });
+  const timelineMajorPercent=100/boardHourCount;
+  const timelineMinorPercent=timelineMajorPercent/4;
+  const timelineMinWidth=Math.max(1100,Math.round(boardHourCount*108));
+  const timelineGridStyle={backgroundSize:`${timelineMajorPercent}% 100%,${timelineMinorPercent}% 100%`};
+  const nowPosition = now && date===todayValue ? currentTimePosition(now,boardStartMinute,boardMinutes) : null;
   const detailCast = detailCastId ? castList.find(c=>c.id===detailCastId) : undefined;
   const detailShift = detailCast ? castShiftForDate(detailCast,date) : undefined;
   const shiftEditCast = shiftEditCastId ? castList.find(c=>c.id===shiftEditCastId) : undefined;
@@ -510,10 +521,10 @@ export default function DashboardPage(){
       if(!scroll || !timeline) return;
 
       let minutes=now.getHours()*60+now.getMinutes();
-      if(now.getHours()<10) minutes+=24*60;
-      const elapsed=Math.max(0,Math.min(BOARD_MINUTES,minutes-BOARD_START));
-      const ratio=elapsed/BOARD_MINUTES;
-      const contextRatio=30/BOARD_MINUTES;
+      while(minutes<boardStartMinute) minutes+=24*60;
+      const elapsed=Math.max(0,Math.min(boardMinutes,minutes-boardStartMinute));
+      const ratio=elapsed/boardMinutes;
+      const contextRatio=30/boardMinutes;
       const target=Math.max(0,timeline.offsetWidth*Math.max(0,ratio-contextRatio));
 
       scroll.scrollTo({left:target,behavior:"auto"});
@@ -521,7 +532,7 @@ export default function DashboardPage(){
     });
 
     return ()=>window.cancelAnimationFrame(frame);
-  },[date,now,todayValue]);
+  },[date,now,todayValue,boardStartMinute,boardMinutes]);
 
   useEffect(()=>{
     if(!now || date!==todayValue){
@@ -535,9 +546,9 @@ export default function DashboardPage(){
       if(!board || !timeline) return;
 
       let minutes=now.getHours()*60+now.getMinutes();
-      if(now.getHours()<10) minutes+=24*60;
-      const elapsed=Math.max(0,Math.min(BOARD_MINUTES,minutes-BOARD_START));
-      const ratio=elapsed/BOARD_MINUTES;
+      while(minutes<boardStartMinute) minutes+=24*60;
+      const elapsed=Math.max(0,Math.min(boardMinutes,minutes-boardStartMinute));
+      const ratio=elapsed/boardMinutes;
       setGlobalNowLineLeft(timeline.offsetLeft+(timeline.offsetWidth*ratio));
     };
 
@@ -547,7 +558,7 @@ export default function DashboardPage(){
       window.cancelAnimationFrame(frame);
       window.removeEventListener("resize",update);
     };
-  },[date,now,todayValue,workingCasts.length]);
+  },[date,now,todayValue,workingCasts.length,boardStartMinute,boardMinutes]);
 
   useEffect(()=>{
     if(!pendingEditOrderId || !orders.length) return;
@@ -1497,16 +1508,16 @@ export default function DashboardPage(){
         </div>
       </div>
       <div className="dispatchScroll boardZoomWrap" ref={boardScrollRef}>
-        <div className="dispatchBoard wideBoard" ref={boardGridRef}>
+        <div className="dispatchBoard wideBoard" ref={boardGridRef} style={{gridTemplateColumns:`150px 145px 65px minmax(${timelineMinWidth}px,1fr)`,minWidth:`${360+timelineMinWidth}px`}}>
           <div className="dispatchHeader dispatchNameHead">キャスト</div>
           <div className="dispatchHeader dispatchShiftHead">出勤 / 終了条件</div>
           <div className="dispatchHeader dispatchCountHead">本数</div>
-          <div className="timelineHeader longTimeline">{hourLabels.map(hour=><div key={hour}>{hour}</div>)}</div>
+          <div className="timelineHeader longTimeline" style={{gridTemplateColumns:`repeat(${boardHourCount},1fr)`}}>{hourLabels.map(hour=><div key={hour}>{hour}</div>)}</div>
           {globalNowLineLeft!==null && <span className="globalNowLine" style={{left:globalNowLineLeft}}><b>現在</b></span>}
 
           {boardCasts.map(cast=>{
             const castOrders = selectedDateOrders.filter(o=>o.castId===cast.id && o.status!=="cancelled");
-            const visibleOrders = castOrders.filter(o=>eventPosition(o));
+            const visibleOrders = castOrders.filter(o=>eventPosition(o,boardStartMinute,boardMinutes));
             const shift=castShiftForDate(cast,date);
             const attendance=shift?.attendance;
             const autoOff=castIsAutoOff(cast,date,storeSettings.closeTime,now);
@@ -1515,9 +1526,9 @@ export default function DashboardPage(){
             const endType=shift?.endType ?? "leave";
             const endTime=shift?.endTime ?? cast.shiftEnd ?? storeSettings.closeTime;
             const timelineEnd=endType==="leave" ? endTime : storeSettings.closeTime;
-            const availability=shiftAvailabilityPosition(shiftStart,timelineEnd);
+            const availability=shiftAvailabilityPosition(shiftStart,timelineEnd,boardStartMinute,boardMinutes);
             const receptionClosed=endType==="reception"
-              ? receptionClosedPosition(endTime,storeSettings.closeTime)
+              ? receptionClosedPosition(endTime,storeSettings.closeTime,boardStartMinute,boardMinutes)
               : null;
             const operationalStatus=castOperationalStatus(cast,selectedDateOrders,date,now,storeSettings.closeTime);
             return <div className={`dispatchRowContents ${unavailable?"isUnavailableCast":""}`} key={cast.id}>
@@ -1542,9 +1553,9 @@ export default function DashboardPage(){
                 </button>
               </div>
               <div className="dispatchCount"><strong>{castOrders.length}</strong><span>本</span></div>
-              <div className="timelineCell longCell">
+              <div className="timelineCell longCell" style={timelineGridStyle}>
                 {visibleOrders.map(order=>{
-                  const pos = eventPosition(order)!;
+                  const pos = eventPosition(order,boardStartMinute,boardMinutes)!;
                   const visualState=orderVisualState(order,date,now);
                   return <button
                     type="button"
@@ -1580,7 +1591,7 @@ export default function DashboardPage(){
           <div className="dispatchName totalCell"><strong>合計</strong></div>
           <div className="dispatchShift totalCell"><strong>{workingCasts.length}人</strong></div>
           <div className="dispatchCount totalCell"><strong>{displayedBoardOrderCount}</strong><span>本</span></div>
-          <div className="timelineCell totalTimeline"/>
+          <div className="timelineCell totalTimeline" style={timelineGridStyle}/>
         </div>
       </div>
     </section>)}
