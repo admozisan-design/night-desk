@@ -1486,11 +1486,16 @@ export default function DashboardPage(){
               </button>
               <small>{selectedOrderPickupDriver?.email || "メールアドレス未登録"}</small>
             </div>
+            <div className="orderLineCopyRow">
+              <div className="orderLineCopyText">
+                <strong>LINE共有</strong>
+                <small>グループチャット用のオーダー内容</small>
+              </div>
+              <button type="button" className="orderLineCopyButton" onClick={()=>void copyOrderForLine()}>
+                オーダーをコピー
+              </button>
+            </div>
           </div>
-
-          <button type="button" className="secondaryButton" onClick={()=>void copyOrderForLine()}>
-            LINE用オーダーをコピー
-          </button>
 
           <div className="orderActionButtons orderActionButtonsSimple">
             <button type="button" className="orderActionIn" onClick={beginInTimeEntry}>
