@@ -1508,7 +1508,14 @@ export default function DashboardPage(){
         </div>
       </div>
       <div className="dispatchScroll boardZoomWrap" ref={boardScrollRef}>
-        <div className="dispatchBoard wideBoard" ref={boardGridRef} style={{gridTemplateColumns:`150px 145px 65px minmax(${timelineMinWidth}px,1fr)`,minWidth:`${360+timelineMinWidth}px`}}>
+        <div
+          className="dispatchBoard wideBoard"
+          ref={boardGridRef}
+          style={{
+            gridTemplateColumns:`var(--board-cast-col) var(--board-shift-col) var(--board-count-col) minmax(${timelineMinWidth}px,1fr)`,
+            minWidth:`calc(var(--board-fixed-width) + ${timelineMinWidth}px)`
+          }}
+        >
           <div className="dispatchHeader dispatchNameHead">キャスト</div>
           <div className="dispatchHeader dispatchShiftHead">出勤 / 終了条件</div>
           <div className="dispatchHeader dispatchCountHead">本数</div>
