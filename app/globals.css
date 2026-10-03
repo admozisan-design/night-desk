@@ -4957,3 +4957,27 @@ button{
     width:100%;
   }
 }
+
+.orderLineCopyActions{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+.orderLineCopyButton.pickup{
+  border-color:#c7d2dc;
+  background:#f3f6f8;
+  color:#50606d;
+}
+.orderLineCopyButton.pickup:hover{
+  border-color:#aebdca;
+  background:#eaf0f4;
+}
+@media(max-width:560px){
+  .orderLineCopyActions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    width:100%;
+  }
+}
