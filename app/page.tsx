@@ -429,6 +429,25 @@ export default function DashboardPage(){
     ? driverList.find(driver=>driver.id===selectedOrder.pickupDriverId) ?? driverList.find(driver=>driver.name===selectedOrder.pickupDriverName)
     : undefined;
 
+  const selectedOrderCast=selectedOrder ? castList.find(cast=>cast.id===selectedOrder.castId) : undefined;
+  const extensionAddMinutes=pricing.extensionMinutes*extensionCount;
+  const extensionAvailability=selectedOrder&&selectedOrderCast
+    ? checkCastAvailability({
+        cast:selectedOrderCast,
+        date:orderServiceDate(selectedOrder),
+        start:selectedOrder.scheduledStart,
+        minutes:selectedOrder.courseMinutes+(selectedOrder.extensionMinutes??0)+extensionAddMinutes,
+        orders,
+        settings:storeSettings,
+        ignoreOrderId:selectedOrder.id
+      })
+    : null;
+  const extensionWarning=extensionAvailability&&!extensionAvailability.ok
+    ? (extensionAvailability.conflicts.length
+        ? "次の予約と重複するため、この延長は確定できません。"
+        : extensionAvailability.message)
+    : "";
+
   useEffect(()=>{
     const today=dateInputValue(new Date());
     if(date!==today){
@@ -843,6 +862,10 @@ export default function DashboardPage(){
 
   async function applyExtension(){
     if(!selectedOrder) return;
+    if(extensionAvailability && !extensionAvailability.ok){
+      window.alert("⚠ 延長できません\n"+(extensionWarning||"予約時間を確認してください"));
+      return;
+    }
     const add=pricing.extensionMinutes*extensionCount;
     const addPrice=pricing.extensionPrice*extensionCount;
     const baseCourse=resolveOrderCourse(selectedOrder,pricing);
@@ -1623,9 +1646,13 @@ export default function DashboardPage(){
             <button type="button" onClick={()=>setExtensionCount(value=>value+1)}>＋</button>
           </div>
           <p className="extensionPreview">終了予定 {selectedOrder.scheduledEnd} → <strong>{addMinutes(selectedOrder.scheduledEnd,pricing.extensionMinutes*extensionCount)}</strong></p>
+          {extensionWarning && <div className="extensionConflictWarning" role="alert">
+            <strong>⚠ 延長できません</strong>
+            <span>{extensionWarning}</span>
+          </div>}
           <div className="orderActionSubButtons">
             <button type="button" onClick={()=>setOrderMode("menu")}>戻る</button>
-            <button type="button" className="primary danger" onClick={applyExtension}>延長確定</button>
+            <button type="button" className="primary danger" onClick={applyExtension} disabled={Boolean(extensionWarning)}>延長確定</button>
           </div>
         </div>}
       </div>
