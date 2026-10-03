@@ -456,8 +456,7 @@ export default function DashboardPage(){
     : "";
 
   useEffect(()=>{
-    const today=dateInputValue(new Date());
-    if(date!==today){
+    if(date!==todayValue){
       lastBoardAutoScrollDateRef.current=null;
       return;
     }
@@ -480,7 +479,7 @@ export default function DashboardPage(){
     });
 
     return ()=>window.cancelAnimationFrame(frame);
-  },[date,now]);
+  },[date,now,todayValue]);
 
   useEffect(()=>{
     if(!now || date!==todayValue){
