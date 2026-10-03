@@ -5220,3 +5220,18 @@ button{
   font-weight:900;
   color:#557086;
 }
+
+
+/* ===== Sticky dispatch board header ===== */
+.wideBoard .dispatchNameHead,
+.wideBoard .dispatchShiftHead,
+.wideBoard .dispatchCountHead{
+  top:0!important;
+  z-index:80!important;
+}
+.wideBoard .timelineHeader{
+  position:sticky;
+  top:0;
+  z-index:70;
+  background:#27323d;
+}
