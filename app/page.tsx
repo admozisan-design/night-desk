@@ -1048,16 +1048,15 @@ export default function DashboardPage(){
       cast:selectedCast,date,start:scheduledStart,minutes:course.minutes+formExtensionMinutes,
       orders:loadOrders(),settings:storeSettings,ignoreOrderId:editingOrderId??undefined
     });
-    let allowServingOverlap=false;
+    let allowOverlapOverride=false;
     let allowCastTimeOverride=false;
     if(!availabilityNow.ok){
       const castTimeOver=
         availabilityNow.conflicts.length===0 &&
         (availabilityNow.message==="キャストの上がり時間を超えます" ||
           availabilityNow.message==="キャストの受付終了後です");
-      const onlyServingOverlap=
+      const hasOverlap=
         availabilityNow.conflicts.length>0 &&
-        availabilityNow.conflicts.every(order=>order.status==="serving") &&
         availabilityNow.message.includes("重複");
 
       if(castTimeOver){
@@ -1066,12 +1065,13 @@ export default function DashboardPage(){
           : "⚠ キャストの上がり時間を超えています。\nキャスト本人に確認できていますか？\nこのまま予約を登録しますか？";
         if(!window.confirm(warning)) return;
         allowCastTimeOverride=true;
-      }else if(onlyServingOverlap){
-        const confirmed=window.confirm(
-          "⚠ まだ接客中のオーダーがあります。\nこのまま次の予約を登録しますか？"
-        );
-        if(!confirmed) return;
-        allowServingOverlap=true;
+      }else if(hasOverlap){
+        const onlyServing=availabilityNow.conflicts.every(order=>order.status==="serving");
+        const warning=onlyServing
+          ? "⚠ まだ接客中のオーダーがあります。\nこのまま次の予約を登録しますか？"
+          : "⚠ 同じキャストの別予約と時間が重複しています。\n既存予約を確認しましたか？\n本当にこのまま登録しますか？";
+        if(!window.confirm(warning)) return;
+        allowOverlapOverride=true;
       }else{
         window.alert("予約できません：" + availabilityNow.message);
         return;
@@ -1130,8 +1130,8 @@ export default function DashboardPage(){
       const confirmed=await confirmReservation(
         order,
         editingOrderId??undefined,
-        (allowServingOverlap || allowCastTimeOverride)
-          ? {allowServingOverlap,allowCastTimeOverride}
+        (allowOverlapOverride || allowCastTimeOverride)
+          ? {allowOverlapOverride,allowCastTimeOverride}
           : undefined
       );
       setOrders(confirmed);
