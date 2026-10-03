@@ -5151,3 +5151,72 @@ button{
     flex-wrap:wrap;
   }
 }
+
+
+/* ===== Work registration extension ===== */
+.formExtensionBox{
+  display:grid;
+  gap:6px;
+  padding:8px 9px;
+  border:1px solid #dbe2e7;
+  border-radius:7px;
+  background:#fafcfd;
+}
+.formExtensionHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.formExtensionHead>span{
+  font-size:9px;
+  font-weight:900;
+  color:#687582;
+}
+.formExtensionHead>small{
+  font-size:9px;
+  font-weight:800;
+  color:#75828d;
+}
+.formExtensionStepper{
+  display:grid;
+  grid-template-columns:36px minmax(0,1fr) 36px;
+  align-items:center;
+  gap:7px;
+}
+.formExtensionStepper>button{
+  width:36px;
+  min-height:34px;
+  padding:0;
+  border:1px solid #cfd8df;
+  border-radius:6px;
+  background:#fff;
+  color:#354451;
+  font-size:18px;
+  font-weight:900;
+  cursor:pointer;
+}
+.formExtensionStepper>button:disabled{
+  opacity:.35;
+  cursor:not-allowed;
+}
+.formExtensionStepper>div{
+  min-height:34px;
+  padding:5px 9px;
+  border:1px solid #d8e1e7;
+  border-radius:6px;
+  background:#f2f6f8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+}
+.formExtensionStepper strong{
+  font-size:12px;
+  color:#263641;
+}
+.formExtensionStepper span{
+  font-size:10px;
+  font-weight:900;
+  color:#557086;
+}

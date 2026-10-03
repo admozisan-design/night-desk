@@ -198,6 +198,7 @@ export default function DashboardPage(){
   const [pendingEditOrderId,setPendingEditOrderId] = useState<string|null>(null);
   const [pendingActionOrderId,setPendingActionOrderId] = useState<string|null>(null);
   const [extensionCount,setExtensionCount] = useState(1);
+  const [formExtensionCount,setFormExtensionCount] = useState(0);
   const [inTimeDraft,setInTimeDraft] = useState("");
   const [changeCastId,setChangeCastId] = useState("");
   const [copyNotice,setCopyNotice] = useState("");
@@ -383,9 +384,10 @@ export default function DashboardPage(){
     setSelectedOptionIds(current=>current.filter(id=>allowed.has(id)));
   },[selectableOptions]);
 
-  const editingExtensionMinutes = editingOrder ? resolveOrderExtensionMinutes(editingOrder,pricing) : 0;
-  const editingExtensionTotal = editingOrder ? resolveOrderExtensionTotal(editingOrder,pricing) : 0;
   const editingAdjustment = editingOrder?.adjustment ?? 0;
+  const formExtensionMinutes=Math.max(0,pricing.extensionMinutes*formExtensionCount);
+  const formExtensionTotal=Math.max(0,pricing.extensionPrice*formExtensionCount);
+  const formScheduledEnd=course ? addMinutes(scheduledStart,course.minutes+formExtensionMinutes) : scheduledStart;
   const subtotalBeforeCard = useMemo(()=>calculateOrderTotal({
     course,
     nominationType,
@@ -394,8 +396,8 @@ export default function DashboardPage(){
     optionsTotal,
     travelFee,
     discount,
-    adjustment:editingAdjustment+editingExtensionTotal+surcharge
-  }),[course,nominationType,optionsTotal,travelFee,discount,surcharge,pricing.photoNominationFee,pricing.repeatNominationFee,editingAdjustment,editingExtensionTotal]);
+    adjustment:editingAdjustment+formExtensionTotal+surcharge
+  }),[course,nominationType,optionsTotal,travelFee,discount,surcharge,pricing.photoNominationFee,pricing.repeatNominationFee,editingAdjustment,formExtensionTotal]);
   const cardFee = paymentMethod==="card"
     ? roundUpToUnit(subtotalBeforeCard*((storeSettings.cardFeeRate??0)/100),storeSettings.priceUnit??100)
     : 0;
@@ -773,6 +775,12 @@ export default function DashboardPage(){
     setSurcharge(order.surcharge??0);
     setPaymentMethod(order.paymentMethod??"cash");
     setSelectedOptionIds(optionIds);
+    const savedExtensionMinutes=resolveOrderExtensionMinutes(order,pricing);
+    setFormExtensionCount(
+      pricing.extensionMinutes>0
+        ? Math.max(0,Math.round(savedExtensionMinutes/pricing.extensionMinutes))
+        : 0
+    );
     setCustomerNotice("");
 
     window.setTimeout(()=>{
@@ -806,6 +814,7 @@ export default function DashboardPage(){
     setDiscount(0);
     setSurcharge(0);
     setPaymentMethod("cash");
+    setFormExtensionCount(0);
     setCustomerNotice("");
   }
 
@@ -990,7 +999,7 @@ export default function DashboardPage(){
       `キャスト：${selectedCast?.name??"未選択"}`,
       `場所：${locationName||"未入力"}${room ? ` / ${room}号室` : ""}`,
       address ? `住所：${address}` : "",
-      course ? `コース：${course.minutes}分` : "",
+      course ? `コース：${course.minutes+formExtensionMinutes}分` : "",
       `指名：${nominationType==="photo"?"写真指名":nominationType==="repeat"?"本指名":"フリー"}`,
       selectedNames ? `オプション：${selectedNames}` : "",
       note ? `備考：${note}` : ""
@@ -1036,7 +1045,7 @@ export default function DashboardPage(){
     e.preventDefault();
     if(!selectedCast || !course) return;
     const availabilityNow=checkCastAvailability({
-      cast:selectedCast,date,start:scheduledStart,minutes:course.minutes+editingExtensionMinutes,
+      cast:selectedCast,date,start:scheduledStart,minutes:course.minutes+formExtensionMinutes,
       orders:loadOrders(),settings:storeSettings,ignoreOrderId:editingOrderId??undefined
     });
     if(!availabilityNow.ok){
@@ -1052,8 +1061,8 @@ export default function DashboardPage(){
     const selectedOptionNames=selectableOptions
       .filter(option=>selectedOptionIds.includes(option.id))
       .map(option=>option.name);
-    const effectiveExtensionMinutes=editingOrder ? editingExtensionMinutes : 0;
-    const effectiveExtensionTotal=editingOrder ? editingExtensionTotal : 0;
+    const effectiveExtensionMinutes=formExtensionMinutes;
+    const effectiveExtensionTotal=formExtensionTotal;
     const commonChanges = {
       customerPhone:phone,
       locationType:(selectedHotel?.kind==="home" ? "home" : "hotel") as "hotel"|"home",
@@ -1089,8 +1098,6 @@ export default function DashboardPage(){
           id:crypto.randomUUID(),
           createdAt:new Date().toISOString(),
           ...commonChanges,
-          extensionMinutes:0,
-          extensionTotal:0,
           adjustment:0,
           status:"accepted"
         };
@@ -1298,6 +1305,30 @@ export default function DashboardPage(){
                 {pricing.courses.map(c=><button key={c.id} type="button" className={courseId===c.id?"active":""} onClick={()=>setCourseId(c.id)}>{c.minutes}分</button>)}
               </div>
             </label>
+
+            <div className="formExtensionBox">
+              <div className="formExtensionHead">
+                <span>延長</span>
+                <small>終了予定 {formScheduledEnd}</small>
+              </div>
+              <div className="formExtensionStepper">
+                <button
+                  type="button"
+                  onClick={()=>setFormExtensionCount(value=>Math.max(0,value-1))}
+                  disabled={formExtensionCount===0}
+                  aria-label="延長を減らす"
+                >−</button>
+                <div>
+                  <strong>{formExtensionMinutes}分</strong>
+                  <span>{formExtensionTotal>0 ? `＋${formatYen(formExtensionTotal)}` : "＋0円"}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={()=>setFormExtensionCount(value=>value+1)}
+                  aria-label="延長を増やす"
+                >＋</button>
+              </div>
+            </div>
 
             <div className="workGrid two">
               <label>利用場所
