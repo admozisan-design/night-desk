@@ -5010,18 +5010,32 @@ button{
   cursor:pointer;
 }
 .extensionControl>div{
-  display:grid;
-  gap:3px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:70px;
+  padding:10px 14px;
+  border:1px solid #dbe3e8;
+  border-radius:10px;
+  background:#f5f8fa;
   text-align:center;
 }
 .extensionControl strong{
-  font-size:20px;
-  color:#26323b;
+  display:block;
+  font-size:26px;
+  line-height:1;
+  font-weight:900;
+  color:#1f2d38;
 }
 .extensionControl span{
-  font-size:12px;
+  display:block;
+  margin:0;
+  font-size:13px;
+  line-height:1.2;
   font-weight:900;
-  color:#677682;
+  color:#557086;
 }
 .extensionPreview{
   margin:10px 0 0;
