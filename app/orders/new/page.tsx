@@ -30,7 +30,7 @@ export default function NewOrderPage(){
   const [discount,setDiscount] = useState(0);
   const [adjustment,setAdjustment] = useState(0);
   const [castId,setCastId] = useState("");
-  const [driverId,setDriverId] = useState(defaultDrivers[0]?.id ?? "");
+  const [driverId,setDriverId] = useState("");
   const [scheduledStart,setScheduledStart] = useState(defaultTime);
   const [date,setDate]=useState(()=>activeBusinessDate(new Date(),defaultStoreSettings.openTime));
   const [existing,setExisting]=useState<Order[]>([]);
@@ -80,8 +80,8 @@ export default function NewOrderPage(){
   },[availableCasts,castId]);
 
   useEffect(()=>{
-    if(!availableDrivers.some(d=>d.id===driverId)){
-      setDriverId(availableDrivers[0]?.id ?? "");
+    if(driverId && !availableDrivers.some(d=>d.id===driverId)){
+      setDriverId("");
     }
   },[availableDrivers,driverId]);
 
@@ -177,7 +177,7 @@ export default function NewOrderPage(){
           </label>
           <label>コース<select value={courseId} onChange={e=>setCourseId(e.target.value)}>{pricing.courses.map(c=><option key={c.id} value={c.id}>{c.minutes}分 / {formatYen(c.price)}</option>)}</select></label>
           <label>指名<select value={nominationType} onChange={e=>setNominationType(e.target.value as typeof nominationType)}><option value="free">フリー</option><option value="photo">写真指名</option><option value="repeat">本指名</option></select></label>
-          <label>ドライバー<select value={driverId} onChange={e=>setDriverId(e.target.value)}>{driverCandidates.map(row=><option key={row.driver.id} value={row.driver.id}>
+          <label>ドライバー<select value={driverId} onChange={e=>setDriverId(e.target.value)}><option value="">未設定</option>{driverCandidates.map(row=><option key={row.driver.id} value={row.driver.id}>
             {row.driver.name}{row.overlap.length?" ⚠ 時間重複":""}
           </option>)}</select></label>
           <label>交通費<input type="number" value={travelFee} onChange={e=>setTravelFee(Number(e.target.value))} min="0" step="500"/></label>
