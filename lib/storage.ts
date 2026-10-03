@@ -157,7 +157,7 @@ export async function confirmReservation(
     availability.conflicts.every(conflict=>conflict.status==="serving") &&
     availability.message.includes("重複");
   const allowCastTime=
-    Boolean(options?.allowCastTimeOverride && existingId && softCastTimeLimit && availability.conflicts.length===0);
+    Boolean(options?.allowCastTimeOverride && softCastTimeLimit && availability.conflicts.length===0);
   const allowServing=
     Boolean(options?.allowServingOverlap && servingOverlap);
   if(!availability.ok && !allowCastTime && !allowServing)
