@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, drivers as defaultDrivers, hotels as defaultHotels, options as defaultOptions } from "@/lib/mock-data";
 import { defaultDispatchWidgets } from "@/lib/dispatch-widgets";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
-import {checkCastAvailability,suggestDrivers,activeBusinessDate} from "@/lib/operations";
+import {checkCastAvailability,suggestDrivers,activeBusinessDate,businessMinutes} from "@/lib/operations";
 import { deleteOrder, loadCasts, loadCustomers, loadDispatchWidgets, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, confirmReservation, saveSharedMemo, updateOrder } from "@/lib/storage";
 import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, DispatchWidgetId, DispatchWidgetSetting, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
@@ -208,6 +208,7 @@ export default function DashboardPage(){
   const [sharedMemo,setSharedMemo] = useState("");
   const [sharedMemoSaved,setSharedMemoSaved] = useState(false);
   const [dispatchWidgets,setDispatchWidgets] = useState<DispatchWidgetSetting[]>(defaultDispatchWidgets);
+  const [castSortMode,setCastSortMode] = useState<"default"|"countDesc"|"countAsc"|"shiftStart"|"name">("default");
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState("");
@@ -409,12 +410,51 @@ export default function DashboardPage(){
     ()=>orders.filter(order=>orderServiceDate(order)===date),
     [orders,date]
   );
+
+  const boardCasts = useMemo(()=>{
+    const baseOrder=new Map(workingCasts.map((cast,index)=>[cast.id,index]));
+    const orderCount=(cast:Cast)=>selectedDateOrders.filter(
+      order=>order.castId===cast.id && order.status!=="cancelled"
+    ).length;
+    const isFinished=(cast:Cast)=>{
+      const shift=castShiftForDate(cast,date);
+      return cast.status==="off" ||
+        shift?.attendance==="absent" ||
+        shift?.attendance==="leftEarly" ||
+        castIsAutoOff(cast,date,storeSettings.closeTime,now);
+    };
+    const shiftStart=(cast:Cast)=>{
+      const shift=castShiftForDate(cast,date);
+      return businessMinutes(shift?.start ?? cast.shiftStart ?? storeSettings.openTime,storeSettings.openTime);
+    };
+
+    return workingCasts.slice().sort((a,b)=>{
+      const finishedRank=Number(isFinished(a))-Number(isFinished(b));
+      if(finishedRank!==0) return finishedRank;
+
+      if(castSortMode==="countDesc"){
+        const diff=orderCount(b)-orderCount(a);
+        if(diff!==0) return diff;
+      }else if(castSortMode==="countAsc"){
+        const diff=orderCount(a)-orderCount(b);
+        if(diff!==0) return diff;
+      }else if(castSortMode==="shiftStart"){
+        const diff=shiftStart(a)-shiftStart(b);
+        if(diff!==0) return diff;
+      }else if(castSortMode==="name"){
+        const diff=a.name.localeCompare(b.name,"ja");
+        if(diff!==0) return diff;
+      }
+
+      return (baseOrder.get(a.id)??0)-(baseOrder.get(b.id)??0);
+    });
+  },[workingCasts,selectedDateOrders,date,storeSettings.openTime,storeSettings.closeTime,now,castSortMode]);
   const displayedBoardOrderCount = useMemo(
-    ()=>workingCasts.reduce(
+    ()=>boardCasts.reduce(
       (sum,cast)=>sum+selectedDateOrders.filter(order=>order.castId===cast.id && order.status!=="cancelled").length,
       0
     ),
-    [workingCasts,selectedDateOrders]
+    [boardCasts,selectedDateOrders]
   );
   const todayValue=activeBusinessDate(new Date(),storeSettings.openTime);
   const nowPosition = now && date===todayValue ? currentTimePosition(now) : null;
@@ -1375,11 +1415,23 @@ export default function DashboardPage(){
     {widgetPortal("board", <section className={`boardSection dispatchWidget ${widgetAreaClass("board")}`} style={{order:widgetOrder("board")}}>
       <div className="boardSectionHead">
         <div><h2>配車ボード</h2><span>{date}</span><span>営業時間 {storeSettings.openTime}〜{storeSettings.closeTime}</span></div>
-        <div className="boardLegend">
-          <span><i className="legend beforeDispatch"/>配車前</span>
-          <span><i className="legend afterDispatch"/>配車後</span>
-          <span><i className="legend inService"/>イン中</span>
-          <span><i className="legend out"/>アウト</span>
+        <div className="boardHeadRight">
+          <label className="boardSortControl">
+            <span>並び替え</span>
+            <select value={castSortMode} onChange={e=>setCastSortMode(e.target.value as typeof castSortMode)}>
+              <option value="default">基本順</option>
+              <option value="countDesc">本数 多い順</option>
+              <option value="countAsc">本数 少ない順</option>
+              <option value="shiftStart">出勤時間順</option>
+              <option value="name">名前順</option>
+            </select>
+          </label>
+          <div className="boardLegend">
+            <span><i className="legend beforeDispatch"/>配車前</span>
+            <span><i className="legend afterDispatch"/>配車後</span>
+            <span><i className="legend inService"/>イン中</span>
+            <span><i className="legend out"/>アウト</span>
+          </div>
         </div>
       </div>
       <div className="dispatchScroll boardZoomWrap" ref={boardScrollRef}>
@@ -1390,7 +1442,7 @@ export default function DashboardPage(){
           <div className="timelineHeader longTimeline">{hourLabels.map(hour=><div key={hour}>{hour}</div>)}</div>
           {globalNowLineLeft!==null && <span className="globalNowLine" style={{left:globalNowLineLeft}}><b>現在</b></span>}
 
-          {workingCasts.map(cast=>{
+          {boardCasts.map(cast=>{
             const castOrders = selectedDateOrders.filter(o=>o.castId===cast.id && o.status!=="cancelled");
             const visibleOrders = castOrders.filter(o=>eventPosition(o));
             const shift=castShiftForDate(cast,date);
