@@ -639,20 +639,24 @@ export default function DashboardPage(){
       : selectedOrder.nominationType==="repeat" ? "本指名" : "フリー";
     const options=(selectedOrder.selectedOptions??[]).filter(Boolean).join(" / ");
     const payment=selectedOrder.paymentMethod==="card" ? "カード" : "現金";
-    const text=[
-      "【オーダー】",
+    const sendDriver=selectedOrder.driverName ? `${selectedOrder.driverName}さん` : "未設定";
+    const lines:Array<string|null>=[
+      "【送りオーダー】",
+      `送り　${sendDriver}`,
+      "",
+      "【詳細】",
       `日付：${orderServiceDate(selectedOrder)}`,
       `時間：${selectedOrder.scheduledStart}〜${selectedOrder.scheduledEnd}`,
       `キャスト：${selectedOrder.castName}`,
       `コース：${selectedOrder.courseMinutes+(selectedOrder.extensionMinutes??0)}分（${nomination}）`,
       `場所：${selectedOrder.locationName||"未入力"}${roomText}`,
-      selectedOrder.address ? `住所：${selectedOrder.address}` : "",
-      options ? `OP：${options}` : "",
+      selectedOrder.address ? `住所：${selectedOrder.address}` : null,
+      options ? `OP：${options}` : null,
       `料金：${formatYen(selectedOrder.total)}（${payment}）`,
-      `送り：${selectedOrder.driverName??"未設定"}`,
       `お迎え：${selectedOrder.pickupDriverName??"未設定"}`,
-      selectedOrder.note ? `備考：${selectedOrder.note}` : ""
-    ].filter(Boolean).join("\n");
+      selectedOrder.note ? `備考：${selectedOrder.note}` : null
+    ];
+    const text=lines.filter((line):line is string=>line!==null).join("\n");
     try{
       await navigator.clipboard.writeText(text);
       setCopyNotice("LINE用オーダー内容をコピーしました");
