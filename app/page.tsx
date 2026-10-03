@@ -400,10 +400,6 @@ export default function DashboardPage(){
     : 0;
   const total = subtotalBeforeCard+cardFee;
 
-  const bookingAvailability=selectedCast&&course?checkCastAvailability({
-    cast:selectedCast,date,start:scheduledStart,minutes:course.minutes+editingExtensionMinutes,
-    orders,settings:storeSettings,ignoreOrderId:editingOrderId??undefined,includeSlots:true
-  }):null;
   const driverCandidates=suggestDrivers({
     drivers:availableDrivers,orders,date,start:scheduledStart,
     settings:storeSettings,ignoreOrderId:editingOrderId??undefined
@@ -1235,14 +1231,6 @@ export default function DashboardPage(){
               </label>
             </div>
 
-            {bookingAvailability&&!bookingAvailability.ok&&<div role="alert" style={{margin:"10px 0",padding:12,borderRadius:9,
-              background:"#fff7ed"}}>
-              <strong>{"予約不可：" + bookingAvailability.message}</strong>
-              {bookingAvailability.nextSlots.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-                <span>空き候補：</span>{bookingAvailability.nextSlots.map(slot=>
-                  <button type="button" key={slot} onClick={()=>setScheduledStart(slot)}>{slot}</button>)}
-              </div>}
-            </div>}
             {paymentMethod==="card" && <div className="cardFeePreview">
               <span>カード手数料 {storeSettings.cardFeeRate??0}% / {new Intl.NumberFormat("ja-JP").format(storeSettings.priceUnit??100)}円単位</span>
               <strong>＋{formatYen(cardFee)}</strong>

@@ -108,10 +108,6 @@ export default function NewOrderPage(){
 
   const total = useMemo(()=>calculateOrderTotal({course,nominationType,photoNominationFee:pricing.photoNominationFee,repeatNominationFee:pricing.repeatNominationFee,optionsTotal,travelFee,discount,adjustment}),[course,nominationType,optionsTotal,travelFee,discount,adjustment,pricing.photoNominationFee,pricing.repeatNominationFee]);
 
-  const availability=selectedCast?checkCastAvailability({
-    cast:selectedCast,date,start:scheduledStart,minutes:course?.minutes??60,
-    orders:existing,settings,includeSlots:true
-  }):null;
   const driverCandidates=suggestDrivers({drivers:availableDrivers,orders:existing,date,start:scheduledStart,settings});
 
   function toggleOption(id:string){
@@ -185,14 +181,6 @@ export default function NewOrderPage(){
           <label>手動調整<input type="number" value={adjustment} onChange={e=>setAdjustment(Number(e.target.value))} step="500"/></label>
         </div>
 
-        {availability&&!availability.ok&&<div role="alert" style={{padding:14,borderRadius:8,
-          background:"#fff7ed",marginBlock:10}}>
-          <strong>{"予約できません："+availability.message}</strong>
-          {availability.nextSlots.length>0&&<div>
-            次の空き枠：{availability.nextSlots.map(slot=><button style={{margin:4}} key={slot}
-            type="button" onClick={()=>setScheduledStart(slot)}>{slot}</button>)}
-          </div>}
-        </div>}
         <div className="orderOptionPicker detailedOptionPicker">
           <div className="orderOptionPickerHead">
             <span>オプション</span>
@@ -223,7 +211,7 @@ export default function NewOrderPage(){
           <div><dt>調整</dt><dd>{formatYen(adjustment)}</dd></div>
         </dl>
         <div className="totalBox"><span>お客様料金</span><strong>{formatYen(total)}</strong></div>
-        <button className="primaryButton wide" type="submit" disabled={availableCasts.length===0 || !availability?.ok}>受付を確定する</button>
+        <button className="primaryButton wide" type="submit" disabled={availableCasts.length===0}>受付を確定する</button>
       </aside>
     </form>
   </div>
