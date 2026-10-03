@@ -15,6 +15,7 @@ export default function StoreSettingsPage(){
   const [cancelFee,setCancelFee]=useState(defaultStoreSettings.cancelFee);
   const [bookingBufferMinutes,setBookingBufferMinutes]=useState(defaultStoreSettings.bookingBufferMinutes??15);
   const [dispatchBufferMinutes,setDispatchBufferMinutes]=useState(defaultStoreSettings.dispatchBufferMinutes??30);
+  const [driverContactMethod,setDriverContactMethod]=useState<"email"|"line">(defaultStoreSettings.driverContactMethod??"email");
   const [saved,setSaved]=useState(false);
 
   useEffect(()=>{
@@ -29,10 +30,11 @@ export default function StoreSettingsPage(){
     setCancelFee(settings.cancelFee ?? 0);
     setBookingBufferMinutes(settings.bookingBufferMinutes??15);
     setDispatchBufferMinutes(settings.dispatchBufferMinutes??30);
+    setDriverContactMethod(settings.driverContactMethod??"email");
   },[]);
 
   function save(){
-    saveStoreSettings({openTime,closeTime,cardFeeRate,priceUnit,miscExpenseMode,miscExpenseValue,changeFee,cancelFee,bookingBufferMinutes,dispatchBufferMinutes});
+    saveStoreSettings({openTime,closeTime,cardFeeRate,priceUnit,miscExpenseMode,miscExpenseValue,changeFee,cancelFee,bookingBufferMinutes,dispatchBufferMinutes,driverContactMethod});
     setSaved(true);
     window.setTimeout(()=>setSaved(false),1400);
   }
@@ -78,6 +80,18 @@ export default function StoreSettingsPage(){
           </label>
         </div>
         <p>予約の重複防止と配車候補の判定に使用します。移動時間は目安なので、道路状況や実際の送迎距離も確認してください。</p>
+      </div>
+      <div className="storePaymentSettings">
+        <h3>ドライバー連絡方法</h3>
+        <label>店舗で使う連絡方法
+          <select value={driverContactMethod} onChange={e=>setDriverContactMethod(e.target.value as "email"|"line")}>
+            <option value="email">メール</option>
+            <option value="line">LINE</option>
+          </select>
+        </label>
+        <p>{driverContactMethod==="email"
+          ? "配車画面では、ドライバー登録のメールアドレスを使って送迎メールを作成します。"
+          : "配車画面では、ドライバー登録のLINEリンクを開きます。送迎内容は自動でコピーされるので、LINEに貼り付けて送信してください。"}</p>
       </div>
       <div className="storePaymentSettings">
         <h3>カード決済</h3>
