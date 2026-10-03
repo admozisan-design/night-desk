@@ -4902,3 +4902,58 @@ button{
 }
 .ownerStoreList a{font-size:13px;font-weight:900;color:#476529}
 @media(max-width:750px){.ownerStoreList article>button{width:100%}}
+
+
+/* ===== LINE group order copy ===== */
+.orderLineCopyRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:12px 2px 1px;
+  border-top:1px solid #e7ebee;
+}
+.orderLineCopyText{
+  display:grid;
+  gap:2px;
+  min-width:0;
+}
+.orderLineCopyText strong{
+  color:#34424d;
+  font-size:12px;
+  font-weight:900;
+}
+.orderLineCopyText small{
+  color:#8a959d;
+  font-size:10px;
+  font-weight:700;
+}
+.orderLineCopyButton{
+  flex:0 0 auto;
+  min-height:36px;
+  padding:7px 13px;
+  border:1px solid #b7cfad;
+  border-radius:8px;
+  background:#f1f7ed;
+  color:#45623b;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+  transition:background .15s ease,border-color .15s ease,transform .15s ease;
+}
+.orderLineCopyButton:hover{
+  border-color:#9fbe93;
+  background:#e8f3e2;
+}
+.orderLineCopyButton:active{
+  transform:translateY(1px);
+}
+@media(max-width:560px){
+  .orderLineCopyRow{
+    align-items:stretch;
+    flex-direction:column;
+  }
+  .orderLineCopyButton{
+    width:100%;
+  }
+}
