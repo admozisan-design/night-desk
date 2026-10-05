@@ -917,7 +917,6 @@ export default function DashboardPage(){
   }
 
   function removeFreeHold(id:string){
-    if(!window.confirm("このフリー予約の保管を削除しますか？")) return;
     setFreeReservationHolds(deleteFreeReservationHold(id));
     if(activeFreeHoldId===id) setActiveFreeHoldId(null);
   }
