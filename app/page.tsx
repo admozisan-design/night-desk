@@ -1727,7 +1727,8 @@ export default function DashboardPage(){
           </div>
 
           {boardCasts.map(cast=>{
-            const castOrders = selectedDateOrders.filter(o=>o.castId===cast.id && o.status!=="cancelled");
+            const castOrders = selectedDateOrders.filter(o=>o.castId===cast.id);
+            const activeCastOrderCount = castOrders.filter(o=>o.status!=="cancelled").length;
             const visibleOrders = castOrders.filter(o=>eventPosition(o,boardStartMinute,boardMinutes));
             const shift=castShiftForDate(cast,date);
             const attendance=shift?.attendance;
@@ -1763,7 +1764,7 @@ export default function DashboardPage(){
                   <span>{(shift?.endType ?? "leave")==="reception" ? "受付終了" : "上がり"} <b>{shift?.endTime ?? cast.shiftEnd ?? "--:--"}</b></span>
                 </button>
               </div>
-              <div className="dispatchCount"><strong>{castOrders.length}</strong><span>本</span></div>
+              <div className="dispatchCount"><strong>{activeCastOrderCount}</strong><span>本</span></div>
               <div className="timelineCell longCell" style={timelineGridStyle}>
                 {visibleOrders.map(order=>{
                   const pos = eventPosition(order,boardStartMinute,boardMinutes)!;
@@ -1777,6 +1778,7 @@ export default function DashboardPage(){
                     title={visualState==="beforeDispatch"?"配車前":visualState==="afterDispatch"?"配車後":visualState==="in"?"イン中":visualState==="out"?"アウト":"キャンセル"}
                   >
                     <strong>{order.scheduledStart}〜{order.scheduledEnd}</strong>
+                    {order.status==="cancelled" && <em className="timelineCancelledBadge">キャンセル</em>}
                     <span>{order.locationName || "場所未入力"}{order.room ? ` / ${order.room}号室` : ""}</span>
                     <small>送り：{order.driverName ?? "未設定"}</small>
                     {order.pickupDriverName && <small>迎え：{order.pickupDriverName}</small>}
