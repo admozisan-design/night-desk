@@ -1,3 +1,4 @@
+// NIGHT DESK production build marker
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
