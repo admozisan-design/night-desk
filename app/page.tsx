@@ -28,6 +28,14 @@ const orderStatusLabels: Record<OrderStatus,string> = {
 const attendanceLabels: Record<CastAttendanceStatus,string> = {
   present:"出勤", late:"遅刻", absent:"当欠", leftEarly:"早退"
 };
+type OperationAlert = {
+  key:string;
+  level:"danger"|"warning";
+  label:string;
+  detail:string;
+  order:Order;
+  time:string;
+};
 
 function eventPosition(order:Order,boardStart:number,boardMinutes:number){
   const rawStart=boardRelativeMinutes(order.scheduledStart,boardStart);
@@ -508,6 +516,65 @@ export default function DashboardPage(){
     [boardCasts,selectedDateOrders]
   );
   const todayValue=activeBusinessDate(new Date(),storeSettings.openTime);
+  const operationAlerts = useMemo<OperationAlert[]>(()=>{
+    if(!now) return [];
+    const activeDate=activeBusinessDate(now,storeSettings.openTime);
+    const currentMinute=businessMinutes(clockTimeValue(now),storeSettings.openTime);
+    if(!Number.isFinite(currentMinute)) return [];
+
+    const alerts:OperationAlert[]=[];
+    for(const order of orders){
+      if(orderServiceDate(order)!==activeDate || order.status==="cancelled" || order.status==="completed") continue;
+
+      const start=businessMinutes(order.scheduledStart,storeSettings.openTime);
+      if(!Number.isFinite(start)) continue;
+      const duration=Math.max(1,(order.courseMinutes||0)+(order.extensionMinutes??0));
+      const end=start+duration;
+      const startDiff=start-currentMinute;
+      const endDiff=end-currentMinute;
+      const sendDriverAssigned=Boolean(order.driverId || order.driverName);
+      const pickupDriverAssigned=Boolean(order.pickupDriverId || order.pickupDriverName);
+
+      if(order.status==="accepted" && startDiff<0){
+        alerts.push({
+          key:`overdue-${order.id}`,
+          level:"danger",
+          label:"予約時間を過ぎています",
+          detail:`${Math.abs(Math.floor(startDiff))}分超過 / まだ配車前です`,
+          order,
+          time:order.scheduledStart
+        });
+        continue;
+      }
+
+      if(!sendDriverAssigned && (order.status==="accepted" || order.status==="dispatching") && startDiff>=0 && startDiff<=10){
+        alerts.push({
+          key:`send-${order.id}`,
+          level:"warning",
+          label:"送りドライバー未設定",
+          detail:startDiff===0 ? "予約開始時刻です" : `予約まであと${Math.ceil(startDiff)}分`,
+          order,
+          time:order.scheduledStart
+        });
+      }
+
+      if(!pickupDriverAssigned && (order.status==="dispatching" || order.status==="serving") && endDiff<=10){
+        alerts.push({
+          key:`pickup-${order.id}`,
+          level:endDiff<0 ? "danger" : "warning",
+          label:endDiff<0 ? "アウト時刻超過・お迎え未設定" : "お迎えドライバー未設定",
+          detail:endDiff<0 ? `${Math.abs(Math.floor(endDiff))}分超過` : (endDiff===0 ? "アウト予定時刻です" : `アウトまであと${Math.ceil(endDiff)}分`),
+          order,
+          time:order.scheduledEnd
+        });
+      }
+    }
+
+    return alerts.sort((a,b)=>{
+      if(a.level!==b.level) return a.level==="danger" ? -1 : 1;
+      return businessMinutes(a.time,storeSettings.openTime)-businessMinutes(b.time,storeSettings.openTime);
+    });
+  },[orders,now,storeSettings.openTime]);
   const boardStartMinute=clockMinutes(storeSettings.openTime);
   const rawBoardCloseMinute=clockMinutes(storeSettings.closeTime);
   const boardEndMinute=rawBoardCloseMinute<=boardStartMinute ? rawBoardCloseMinute+24*60 : rawBoardCloseMinute;
@@ -1315,6 +1382,33 @@ export default function DashboardPage(){
   }
 
   return <div className="deskDashboard">
+    {operationAlerts.length>0 && <section className="operationAlerts" aria-live="polite">
+      <div className="operationAlertsHeader">
+        <div>
+          <span className="operationAlertsEyebrow">AUTO ALERT</span>
+          <strong>要対応 {operationAlerts.length}件</strong>
+        </div>
+        <span className="operationAlertsHint">対応すると自動で消えます</span>
+      </div>
+      <div className="operationAlertsList">
+        {operationAlerts.map(alert=><button
+          type="button"
+          key={alert.key}
+          className={`operationAlertItem ${alert.level==="danger"?"isDanger":"isWarning"}`}
+          onClick={()=>{
+            setDate(orderServiceDate(alert.order));
+            openOrderMenu(alert.order);
+          }}
+        >
+          <span className="operationAlertIcon" aria-hidden="true">{alert.level==="danger"?"!":"⚠"}</span>
+          <span className="operationAlertBody">
+            <strong>{alert.label}</strong>
+            <small>{alert.order.castName} / {alert.time} / {alert.detail}</small>
+          </span>
+          <span className="operationAlertOpen">確認 ›</span>
+        </button>)}
+      </div>
+    </section>}
 
     <div className="dispatchWidgetCanvas">
       <div className="dispatchWidgetTopSlots">
