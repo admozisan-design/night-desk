@@ -38,6 +38,18 @@ function eventPosition(order:Order,boardStart:number,boardMinutes:number){
   if(end<=0 || start>=boardMinutes || end<=start) return null;
   return {left:`${(start/boardMinutes)*100}%`,width:`${((end-start)/boardMinutes)*100}%`};
 }
+function freeHoldPosition(item:FreeReservationHold,boardStart:number,boardMinutes:number){
+  const start=boardRelativeMinutes(item.scheduledStart,boardStart);
+  const duration=Math.max(1,item.courseMinutes+(item.extensionMinutes??0));
+  const end=start+duration;
+  const visibleStart=Math.max(0,start);
+  const visibleEnd=Math.min(boardMinutes,end);
+  if(visibleEnd<=0 || visibleStart>=boardMinutes || visibleEnd<=visibleStart) return null;
+  return {
+    left:`${(visibleStart/boardMinutes)*100}%`,
+    width:`${((visibleEnd-visibleStart)/boardMinutes)*100}%`
+  };
+}
 function currentTimePosition(now:Date,boardStart:number,boardMinutes:number){
   let minutes=now.getHours()*60+now.getMinutes();
   while(minutes<boardStart) minutes+=24*60;
@@ -414,6 +426,12 @@ export default function DashboardPage(){
   const selectedDateOrders = useMemo(
     ()=>orders.filter(order=>orderServiceDate(order)===date),
     [orders,date]
+  );
+  const selectedDateFreeHolds = useMemo(
+    ()=>freeReservationHolds
+      .filter(item=>item.serviceDate===date)
+      .sort((a,b)=>a.scheduledStart.localeCompare(b.scheduledStart)),
+    [freeReservationHolds,date]
   );
 
   const boardCasts = useMemo(()=>{
@@ -1628,6 +1646,42 @@ export default function DashboardPage(){
           <div className="dispatchHeader dispatchCountHead">本数</div>
           <div className="timelineHeader longTimeline" style={{gridTemplateColumns:`repeat(${boardHourCount},1fr)`}}>{hourLabels.map(hour=><div key={hour}>{hour}</div>)}</div>
           {globalNowLineLeft!==null && <span className="globalNowLine" style={{left:globalNowLineLeft}}><b>現在</b></span>}
+
+          <div className="dispatchRowContents freeHoldBoardRow">
+            <div className="dispatchName freeHoldBoardName">
+              <span className="freeHoldBoardDot"/>
+              <div>
+                <strong>フリー予約</strong>
+                <small>キャスト未定</small>
+              </div>
+            </div>
+            <div className="dispatchShift freeHoldBoardShift">
+              <strong>一時保管</strong>
+              <span>決まり次第オーダー化</span>
+            </div>
+            <div className="dispatchCount freeHoldBoardCount">
+              <strong>{selectedDateFreeHolds.length}</strong><span>件</span>
+            </div>
+            <div className="timelineCell longCell freeHoldBoardTimeline" style={timelineGridStyle}>
+              {selectedDateFreeHolds.map(item=>{
+                const pos=freeHoldPosition(item,boardStartMinute,boardMinutes);
+                if(!pos) return null;
+                return <button
+                  type="button"
+                  key={item.id}
+                  className="timelineFreeHold"
+                  style={pos}
+                  onClick={()=>loadFreeHoldIntoOrderForm(item)}
+                  title="クリックしてキャストを決めてオーダー化"
+                >
+                  <strong>{item.scheduledStart}〜{addMinutes(item.scheduledStart,item.courseMinutes+(item.extensionMinutes??0))}</strong>
+                  <span>{item.courseMinutes+(item.extensionMinutes??0)}分 / フリー</span>
+                  <small>{item.locationName || "場所未入力"}{item.room ? ` / ${item.room}号室` : ""}</small>
+                </button>;
+              })}
+              {!selectedDateFreeHolds.length && <span className="freeHoldBoardEmpty">保管中のフリー予約なし</span>}
+            </div>
+          </div>
 
           {boardCasts.map(cast=>{
             const castOrders = selectedDateOrders.filter(o=>o.castId===cast.id && o.status!=="cancelled");

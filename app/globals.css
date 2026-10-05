@@ -5929,3 +5929,107 @@ button{
   .freeHoldItem{grid-template-columns:1fr}
   .freeHoldActions{grid-template-columns:1fr auto}
 }
+
+
+/* ===== Free reservation row on dispatch board ===== */
+.freeHoldBoardRow .dispatchName,
+.freeHoldBoardRow .dispatchShift,
+.freeHoldBoardRow .dispatchCount,
+.freeHoldBoardRow .timelineCell{
+  background:#fffaf0;
+  border-bottom-color:#eadbb6;
+}
+.freeHoldBoardName{
+  gap:9px!important;
+}
+.freeHoldBoardDot{
+  width:9px;
+  height:9px;
+  flex:0 0 auto;
+  border-radius:50%;
+  background:#d9a62e;
+  box-shadow:0 0 0 3px #fff3cb;
+}
+.freeHoldBoardName>div{
+  min-width:0;
+}
+.freeHoldBoardName strong{
+  display:block;
+  font-size:13px;
+  color:#614c17;
+}
+.freeHoldBoardName small{
+  display:block;
+  margin-top:2px;
+  font-size:9px;
+  color:#998356;
+}
+.freeHoldBoardShift{
+  gap:2px!important;
+}
+.freeHoldBoardShift strong{
+  font-size:11px;
+  color:#755b18;
+}
+.freeHoldBoardShift span{
+  font-size:9px!important;
+  color:#9a8555!important;
+}
+.freeHoldBoardCount strong{
+  color:#805f12;
+}
+.freeHoldBoardTimeline{
+  background-color:#fffdf7!important;
+}
+.timelineFreeHold{
+  position:absolute;
+  top:7px;
+  bottom:7px;
+  z-index:6;
+  min-width:54px;
+  overflow:hidden;
+  padding:7px 9px;
+  border:1px solid #d8a72d;
+  border-radius:8px;
+  background:linear-gradient(180deg,#e8bd52 0%,#d6a233 100%);
+  box-shadow:0 2px 6px rgba(131,94,17,.18);
+  color:#fff;
+  text-align:left;
+  cursor:pointer;
+}
+.timelineFreeHold:hover{
+  filter:brightness(1.03);
+  box-shadow:0 3px 9px rgba(131,94,17,.24);
+}
+.timelineFreeHold strong,
+.timelineFreeHold span,
+.timelineFreeHold small{
+  display:block;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.timelineFreeHold strong{
+  font-size:10px;
+  line-height:1.25;
+}
+.timelineFreeHold span{
+  margin-top:2px;
+  font-size:10px;
+  line-height:1.25;
+  font-weight:900;
+}
+.timelineFreeHold small{
+  margin-top:2px;
+  font-size:8px;
+  line-height:1.25;
+  opacity:.92;
+}
+.freeHoldBoardEmpty{
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:10px;
+  color:#b5a57e;
+}
