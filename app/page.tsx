@@ -1382,39 +1382,40 @@ export default function DashboardPage(){
   }
 
   return <div className="deskDashboard">
-    {operationAlerts.length>0 && <section className="operationAlerts" aria-live="polite">
-      <div className="operationAlertsHeader">
-        <div>
-          <span className="operationAlertsEyebrow">AUTO ALERT</span>
-          <strong>要対応 {operationAlerts.length}件</strong>
-        </div>
-        <span className="operationAlertsHint">対応すると自動で消えます</span>
-      </div>
-      <div className="operationAlertsList">
-        {operationAlerts.map(alert=><button
-          type="button"
-          key={alert.key}
-          className={`operationAlertItem ${alert.level==="danger"?"isDanger":"isWarning"}`}
-          onClick={()=>{
-            setDate(orderServiceDate(alert.order));
-            openOrderMenu(alert.order);
-          }}
-        >
-          <span className="operationAlertIcon" aria-hidden="true">{alert.level==="danger"?"!":"⚠"}</span>
-          <span className="operationAlertBody">
-            <strong>{alert.label}</strong>
-            <small>{alert.order.castName} / {alert.time} / {alert.detail}</small>
-          </span>
-          <span className="operationAlertOpen">確認 ›</span>
-        </button>)}
-      </div>
-    </section>}
-
     <div className="dispatchWidgetCanvas">
       <div className="dispatchWidgetTopSlots">
         <div className="dispatchWidgetSlot dispatchWidgetSlotLeft" ref={widgetLeftRef}/>
         <div className="dispatchWidgetSlot dispatchWidgetSlotCenter" ref={widgetCenterRef}/>
-        <div className="dispatchWidgetSlot dispatchWidgetSlotRight" ref={widgetRightRef}/>
+        <div className="dispatchWidgetSlot dispatchWidgetSlotRight">
+          <div className="dispatchWidgetRightWidgets" ref={widgetRightRef}/>
+          {operationAlerts.length>0 && <section className="operationAlerts" aria-live="polite">
+            <div className="operationAlertsHeader">
+              <div>
+                <span className="operationAlertsEyebrow">AUTO ALERT</span>
+                <strong>要対応 {operationAlerts.length}件</strong>
+              </div>
+              <span className="operationAlertsHint">対応すると自動で消えます</span>
+            </div>
+            <div className="operationAlertsList">
+              {operationAlerts.map(alert=><button
+                type="button"
+                key={alert.key}
+                className={`operationAlertItem ${alert.level==="danger"?"isDanger":"isWarning"}`}
+                onClick={()=>{
+                  setDate(orderServiceDate(alert.order));
+                  openOrderMenu(alert.order);
+                }}
+              >
+                <span className="operationAlertIcon" aria-hidden="true">{alert.level==="danger"?"!":"⚠"}</span>
+                <span className="operationAlertBody">
+                  <strong>{alert.label}</strong>
+                  <small>{alert.order.castName} / {alert.time} / {alert.detail}</small>
+                </span>
+                <span className="operationAlertOpen">確認 ›</span>
+              </button>)}
+            </div>
+          </section>}
+        </div>
       </div>
       <div className="dispatchWidgetSlot dispatchWidgetSlotBottom" ref={widgetBottomRef}/>
     </div>
