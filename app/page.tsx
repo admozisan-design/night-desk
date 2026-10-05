@@ -7,8 +7,8 @@ import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, driv
 import { defaultDispatchWidgets } from "@/lib/dispatch-widgets";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
 import {checkCastAvailability,suggestDrivers,activeBusinessDate,businessMinutes} from "@/lib/operations";
-import { deleteOrder, loadCasts, loadCustomers, loadDispatchWidgets, loadDrivers, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, confirmReservation, saveSharedMemo, updateOrder } from "@/lib/storage";
-import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, DispatchWidgetId, DispatchWidgetSetting, Driver, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
+import { addFreeReservationHold, deleteFreeReservationHold, deleteOrder, loadCasts, loadCustomers, loadDispatchWidgets, loadDrivers, loadFreeReservationHolds, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, confirmReservation, saveSharedMemo, updateOrder } from "@/lib/storage";
+import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, DispatchWidgetId, DispatchWidgetSetting, Driver, FreeReservationHold, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 function clockMinutes(time:string){
   const [hour,minute]=time.split(":").map(Number);
@@ -178,6 +178,8 @@ function resolveOrderExtensionTotal(order:Order,pricing:PricingConfig){
 
 export default function DashboardPage(){
   const [orders,setOrders] = useState<Order[]>([]);
+  const [freeReservationHolds,setFreeReservationHolds] = useState<FreeReservationHold[]>([]);
+  const [activeFreeHoldId,setActiveFreeHoldId] = useState<string|null>(null);
   const [castList,setCastList] = useState<Cast[]>(defaultCasts);
   const [hotelList,setHotelList] = useState<Hotel[]>(defaultHotels);
   const [driverList,setDriverList] = useState<Driver[]>(defaultDrivers);
@@ -241,6 +243,7 @@ export default function DashboardPage(){
   useEffect(()=>{
     const refresh=()=>{
       setOrders(loadOrders());
+      setFreeReservationHolds(loadFreeReservationHolds());
       setCastList(loadCasts(defaultCasts));
       setHotelList(loadHotels(defaultHotels));
       setDriverList(loadDrivers(defaultDrivers));
@@ -259,6 +262,7 @@ export default function DashboardPage(){
     const timer = window.setInterval(()=>setNow(new Date()),60000);
     window.addEventListener("storage",refresh);
     window.addEventListener("nightdesk:orders",refresh);
+    window.addEventListener("nightdesk:free-reservation-holds",refresh);
     window.addEventListener("nightdesk:casts",refresh);
     window.addEventListener("nightdesk:hotels",refresh);
     window.addEventListener("nightdesk:drivers",refresh);
@@ -271,6 +275,7 @@ export default function DashboardPage(){
       window.clearInterval(timer);
       window.removeEventListener("storage",refresh);
       window.removeEventListener("nightdesk:orders",refresh);
+      window.removeEventListener("nightdesk:free-reservation-holds",refresh);
       window.removeEventListener("nightdesk:casts",refresh);
       window.removeEventListener("nightdesk:hotels",refresh);
       window.removeEventListener("nightdesk:drivers",refresh);
@@ -807,6 +812,7 @@ export default function DashboardPage(){
 
   function resetOrderForm(){
     setEditingOrderId(null);
+    setActiveFreeHoldId(null);
     setCastId(selectableCasts[0]?.id ?? "");
     setDriverId("");
     setCourseId(pricing.courses[0]?.id ?? "");
@@ -827,6 +833,75 @@ export default function DashboardPage(){
     setPaymentMethod("cash");
     setFormExtensionCount(0);
     setCustomerNotice("");
+  }
+
+  function saveCurrentAsFreeHold(){
+    if(!course){
+      window.alert("料金コースを選択してください");
+      return;
+    }
+    const item:FreeReservationHold={
+      id:crypto.randomUUID(),
+      createdAt:new Date().toISOString(),
+      serviceDate:date,
+      scheduledStart,
+      courseId:course.id,
+      courseMinutes:course.minutes,
+      extensionMinutes:formExtensionMinutes,
+      customerPhone:phone.trim(),
+      locationType:selectedHotel?.kind==="home" ? "home" : "hotel",
+      locationName,
+      room,
+      address,
+      selectedOptionIds:[...selectedOptionIds],
+      travelFee,
+      discount,
+      surcharge,
+      paymentMethod,
+      note
+    };
+    const next=addFreeReservationHold(item);
+    setFreeReservationHolds(next);
+    resetOrderForm();
+    setCopyNotice(`${item.scheduledStart} のフリー予約を保管しました`);
+  }
+
+  function loadFreeHoldIntoOrderForm(item:FreeReservationHold){
+    setEditingOrderId(null);
+    setActiveFreeHoldId(item.id);
+    setDate(item.serviceDate);
+    setDriverId("");
+    const savedCourse=pricing.courses.find(course=>course.id===item.courseId)
+      ?? pricing.courses.find(course=>course.minutes===item.courseMinutes);
+    if(savedCourse) setCourseId(savedCourse.id);
+    setNominationType("free");
+    setScheduledStart(item.scheduledStart);
+    setLocationName(item.locationName);
+    setRoom(item.room??"");
+    setAddress(item.address??"");
+    setPhone(item.customerPhone??"");
+    setCustomerPanelOpen(Boolean(item.customerPhone));
+    setNote(item.note??"");
+    setTravelFee(item.travelFee??pricing.defaultTravelFee);
+    setDiscount(item.discount??0);
+    setSurcharge(item.surcharge??0);
+    setPaymentMethod(item.paymentMethod??"cash");
+    setSelectedOptionIds((item.selectedOptionIds??[]).filter(id=>optionList.some(option=>option.id===id)));
+    setFormExtensionCount(
+      pricing.extensionMinutes>0
+        ? Math.max(0,Math.round((item.extensionMinutes??0)/pricing.extensionMinutes))
+        : 0
+    );
+    setCustomerNotice("");
+    window.setTimeout(()=>{
+      document.getElementById("work-register")?.scrollIntoView({behavior:"smooth",block:"start"});
+    },60);
+  }
+
+  function removeFreeHold(id:string){
+    if(!window.confirm("このフリー予約の保管を削除しますか？")) return;
+    setFreeReservationHolds(deleteFreeReservationHold(id));
+    if(activeFreeHoldId===id) setActiveFreeHoldId(null);
   }
 
   function registerSelectedCastAsCustomerNg(){
@@ -1146,6 +1221,9 @@ export default function DashboardPage(){
           : undefined
       );
       setOrders(confirmed);
+      if(activeFreeHoldId){
+        setFreeReservationHolds(deleteFreeReservationHold(activeFreeHoldId));
+      }
       resetOrderForm();
     }catch(err){
       window.alert("予約を確定できませんでした："+(err instanceof Error?err.message:"同期エラー"));
@@ -1196,6 +1274,7 @@ export default function DashboardPage(){
           <div className="workRegisterTitleRow">
             <h2>{editingOrderId?"仕事編集":"仕事登録"}</h2>
             {editingOrderId && <span className="workEditBadge">既存オーダー編集中</span>}
+            {!editingOrderId && activeFreeHoldId && <span className="workEditBadge freeHoldBadge">フリー予約から作成中</span>}
           </div>
           <form onSubmit={registerOrder}>
             <div className="customerLookupTop">
@@ -1457,8 +1536,9 @@ export default function DashboardPage(){
             <div className="workFooter">
               <div className="workTotalSummary"><small>自動計算</small>{paymentMethod==="card" && <span>カード手数料込み</span>}<strong>{formatYen(total)}</strong></div>
               <div className="workButtons">
+                {!editingOrderId && !activeFreeHoldId && <button className="freeHoldSaveButton" type="button" onClick={saveCurrentAsFreeHold}>フリー予約を保管</button>}
                 <button className="registerBtn" type="submit" disabled={!selectedCast}>{editingOrderId?"変更を保存":"オーダー登録"}</button>
-                {editingOrderId && <button type="button" onClick={resetOrderForm}>編集キャンセル</button>}
+                {(editingOrderId || activeFreeHoldId) && <button type="button" onClick={resetOrderForm}>{editingOrderId?"編集キャンセル":"作成をやめる"}</button>}
               </div>
             </div>
           </form>
@@ -1466,6 +1546,33 @@ export default function DashboardPage(){
       </main>
 
       <aside className="deskRight">
+        {widgetPortal("freeHolds", <section className={`deskPanel freeHoldPanel dispatchWidget ${widgetAreaClass("freeHolds")}`} style={{order:widgetOrder("freeHolds")}}>
+          <div className="panelTitleRow">
+            <h2>フリー予約保管</h2>
+            <span>{freeReservationHolds.length}件</span>
+          </div>
+          <div className="freeHoldList">
+            {freeReservationHolds
+              .slice()
+              .sort((a,b)=>(a.serviceDate+a.scheduledStart).localeCompare(b.serviceDate+b.scheduledStart))
+              .map(item=><div className={`freeHoldItem ${activeFreeHoldId===item.id?"active":""}`} key={item.id}>
+                <div className="freeHoldMain">
+                  <div>
+                    <strong>{item.serviceDate===date ? item.scheduledStart : `${item.serviceDate} ${item.scheduledStart}`}</strong>
+                    <span>{item.courseMinutes+(item.extensionMinutes??0)}分 / フリー</span>
+                  </div>
+                  <small>{item.locationName || "場所未入力"}{item.room ? ` / ${item.room}号室` : ""}</small>
+                  {item.customerPhone && <small>{item.customerPhone}</small>}
+                </div>
+                <div className="freeHoldActions">
+                  <button type="button" className="freeHoldConvert" onClick={()=>loadFreeHoldIntoOrderForm(item)}>オーダー化</button>
+                  <button type="button" className="freeHoldDelete" onClick={()=>removeFreeHold(item.id)}>削除</button>
+                </div>
+              </div>)}
+            {!freeReservationHolds.length && <p className="freeHoldEmpty">保管中のフリー予約はありません</p>}
+          </div>
+        </section>)}
+
         {widgetPortal("reservations", <section className={`deskPanel dispatchWidget ${widgetAreaClass("reservations")}`} style={{order:widgetOrder("reservations")}}>
           <div className="panelTitleRow">
             <h2>選択日の予約一覧</h2>

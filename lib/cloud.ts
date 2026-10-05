@@ -26,6 +26,7 @@ type Bucket={
 };
 export const cloudBuckets:Bucket[]=[
   {bucket:"orders",key:"night-desk-orders-sample-v02",kind:"list",event:"nightdesk:orders"},
+  {bucket:"free_reservation_holds",key:"night-desk-free-reservation-holds-v01",kind:"list",event:"nightdesk:free-reservation-holds"},
   {bucket:"expenses",key:"night-desk-expenses-v01",kind:"list",event:"nightdesk:expenses"},
   {bucket:"casts",key:"night-desk-casts-sample-v03",kind:"list",event:"nightdesk:casts"},
   {bucket:"drivers",key:"night-desk-drivers-sample-v01",kind:"list",event:"nightdesk:drivers"},
