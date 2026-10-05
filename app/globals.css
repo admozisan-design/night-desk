@@ -6109,3 +6109,46 @@ button{
 .timelineFreeHold.hasOverlap .timelineFreeHoldMain{
   padding-right:34px;
 }
+
+
+/* ===== Cancelled orders remain visible on dispatch board ===== */
+.timelineOrder.orderVisual-cancelled{
+  background:#8c939a!important;
+  border:1px dashed #697179!important;
+  box-shadow:none!important;
+  opacity:.58!important;
+  filter:grayscale(.35);
+}
+.timelineOrder.orderVisual-cancelled::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:repeating-linear-gradient(
+    -45deg,
+    rgba(255,255,255,.05) 0,
+    rgba(255,255,255,.05) 6px,
+    rgba(255,255,255,.13) 6px,
+    rgba(255,255,255,.13) 12px
+  );
+  pointer-events:none;
+}
+.timelineCancelledBadge{
+  position:absolute;
+  top:5px;
+  right:5px;
+  z-index:2;
+  padding:2px 5px;
+  border-radius:999px;
+  background:rgba(255,255,255,.88);
+  color:#626a72;
+  font-size:8px;
+  font-style:normal;
+  font-weight:900;
+  line-height:1.2;
+}
+.timelineOrder.orderVisual-cancelled strong,
+.timelineOrder.orderVisual-cancelled span,
+.timelineOrder.orderVisual-cancelled small{
+  position:relative;
+  z-index:1;
+}
