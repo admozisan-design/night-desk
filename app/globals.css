@@ -6349,3 +6349,32 @@ button{
   .storePresetGrid{grid-template-columns:1fr}
   .moneyPresetControl{grid-template-columns:1fr}
 }
+
+
+/* ===== Automatic operation alerts ===== */
+.operationAlerts{margin:0 0 14px;padding:12px;border:1px solid #e5e7eb;border-radius:14px;background:#fff;box-shadow:0 8px 24px rgba(15,23,42,.08)}
+.operationAlertsHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.operationAlertsHeader>div{display:flex;align-items:center;gap:10px}
+.operationAlertsEyebrow{display:inline-flex;align-items:center;min-height:24px;padding:3px 8px;border-radius:999px;background:#111827;color:#fff;font-size:9px;font-weight:900;letter-spacing:.08em}
+.operationAlertsHeader strong{font-size:15px;color:#1f2937}
+.operationAlertsHint{color:#8a949e;font-size:10px;font-weight:700}
+.operationAlertsList{display:grid;gap:8px}
+.operationAlertItem{width:100%;display:grid;grid-template-columns:36px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border:1px solid transparent;border-radius:11px;text-align:left;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.operationAlertItem:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(15,23,42,.08)}
+.operationAlertItem.isWarning{background:#fff8e8;border-color:#f1d18a}
+.operationAlertItem.isDanger{background:#fff0f0;border-color:#efb0b0}
+.operationAlertIcon{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;font-size:14px;font-weight:1000}
+.operationAlertItem.isWarning .operationAlertIcon{background:#ffd86a;color:#704900}
+.operationAlertItem.isDanger .operationAlertIcon{background:#e84b4b;color:#fff}
+.operationAlertBody{min-width:0}
+.operationAlertBody strong,.operationAlertBody small{display:block}
+.operationAlertBody strong{color:#26323d;font-size:12px;font-weight:1000}
+.operationAlertBody small{margin-top:3px;color:#6f7b86;font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.operationAlertOpen{color:#64717c;font-size:10px;font-weight:900}
+@media(max-width:700px){
+  .operationAlertsHeader{align-items:flex-start}
+  .operationAlertsHint{display:none}
+  .operationAlertItem{grid-template-columns:32px minmax(0,1fr)}
+  .operationAlertOpen{grid-column:2}
+  .operationAlertBody small{white-space:normal}
+}
