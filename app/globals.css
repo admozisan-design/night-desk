@@ -1821,6 +1821,10 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .castScheduleCastListHead{display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid #e6ebef;background:#fafbfc}
 .castScheduleCastListHead strong{font-size:15px}
 .castScheduleCastListHead span{font-size:11px;color:#7d8893;font-weight:800}
+.castScheduleCastSearch{padding:10px 10px 2px}
+.castScheduleCastSearch input{width:100%;min-height:40px;padding:8px 11px;border:1px solid #d6dde3;border-radius:9px;background:#fff;color:#3f4b56;font-size:13px;font-weight:800;outline:none}
+.castScheduleCastSearch input::placeholder{color:#9aa3ab;font-weight:700}
+.castScheduleCastSearch input:focus{border-color:#9bc75a;box-shadow:0 0 0 3px rgba(132,204,22,.12)}
 .castScheduleCastButtons{display:grid;padding:8px}
 .castScheduleCastButtons button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;padding:10px 12px;border:1px solid transparent;border-radius:9px;background:transparent;color:#47535f;text-align:left;cursor:pointer}
 .castScheduleCastButtons button:hover{background:#f7f9fa}
