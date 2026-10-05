@@ -50,13 +50,12 @@ const groups:{
   {
     title:"システム",
     description:"画面、メニュー、クラウド、権限、操作履歴",
-    countLabel:"8項目",
+    countLabel:"7項目",
     items:[
       {title:"全店舗管理（オーナー専用）",description:"契約店舗の作成・店舗切替・スタッフ管理",href:"/owner"},
       {title:"クラウド・ログイン管理",description:"ログインできるスタッフの追加・削除",href:"/settings/team"},
       {title:"自動バックアップ",description:"日次保存履歴とデータ復元",href:"/settings/backups"},
       {title:"CSVデータ管理",description:"キャスト・ドライバー・ホテル・顧客・オーダーをCSV出力・入力",href:"/settings/data"},
-      {title:"配車管理レイアウト",description:"配車管理のウィジェットをドラッグして配置・表示を変更",href:"/settings/dispatch"},
       {title:"上部メニュー設定",description:"ヘッダーの表示・順番・名称をカスタマイズ",href:"/settings/menu"},
       {title:"スタッフ権限",description:"受付・売上・設定変更などの権限を管理",href:"/permissions"},
       {title:"操作履歴",description:"誰がいつ何を変更したかを確認",href:"/logs"},
@@ -90,7 +89,7 @@ export default function SettingsPage(){
         <div className="settingsAccordionBody">
           {group.items.filter(item=>(item.href!=="/owner" || (cloudConfigured && cloudRole()==="owner")) && (!cloudConfigured || cloudRole()!=="staff" || ![
             "/store","/pricing","/permissions","/staff","/settings/team",
-            "/settings/backups","/settings/menu","/settings/dispatch","/settings/data"
+            "/settings/backups","/settings/menu","/settings/data"
           ].includes(item.href))).map(item=><Link href={item.href} className="settingsCompactItem" key={item.href}>
             <div>
               <strong>{item.title}</strong>

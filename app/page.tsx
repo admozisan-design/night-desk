@@ -7,8 +7,8 @@ import { casts as defaultCasts, defaultPricingConfig, defaultStoreSettings, driv
 import { defaultDispatchWidgets } from "@/lib/dispatch-widgets";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
 import {checkCastAvailability,suggestDrivers,activeBusinessDate,businessMinutes} from "@/lib/operations";
-import { addFreeReservationHold, deleteFreeReservationHold, deleteOrder, loadCasts, loadCustomers, loadDispatchWidgets, loadDrivers, loadFreeReservationHolds, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, confirmReservation, saveSharedMemo, updateOrder } from "@/lib/storage";
-import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, DispatchWidgetId, DispatchWidgetSetting, Driver, FreeReservationHold, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
+import { addFreeReservationHold, deleteFreeReservationHold, deleteOrder, loadCasts, loadCustomers, loadDrivers, loadFreeReservationHolds, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, confirmReservation, saveSharedMemo, updateOrder } from "@/lib/storage";
+import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, DispatchWidgetId, Driver, FreeReservationHold, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
 
 function clockMinutes(time:string){
   const [hour,minute]=time.split(":").map(Number);
@@ -220,7 +220,7 @@ export default function DashboardPage(){
   const [castNotesExpanded,setCastNotesExpanded] = useState(false);
   const [sharedMemo,setSharedMemo] = useState("");
   const [sharedMemoSaved,setSharedMemoSaved] = useState(false);
-  const [dispatchWidgets,setDispatchWidgets] = useState<DispatchWidgetSetting[]>(defaultDispatchWidgets);
+  const dispatchWidgets=defaultDispatchWidgets;
   const [castSortMode,setCastSortMode] = useState<"default"|"activity"|"countDesc"|"countAsc"|"shiftStart"|"name">("default");
 
   const [castId,setCastId] = useState("");
@@ -265,7 +265,6 @@ export default function DashboardPage(){
       setCustomerList(loadCustomers());
       setPricing(loadPricing(defaultPricingConfig));
       setStoreSettings(loadStoreSettings(defaultStoreSettings));
-      setDispatchWidgets(loadDispatchWidgets(defaultDispatchWidgets));
     };
     refresh();
     setSharedMemo(loadSharedMemo());
@@ -284,7 +283,6 @@ export default function DashboardPage(){
     window.addEventListener("nightdesk:pricing",refresh);
     window.addEventListener("nightdesk:customers",refresh);
     window.addEventListener("nightdesk:store-settings",refresh);
-    window.addEventListener("nightdesk:dispatch-widgets",refresh);
     return ()=>{
       window.clearInterval(timer);
       window.removeEventListener("storage",refresh);
@@ -297,7 +295,6 @@ export default function DashboardPage(){
       window.removeEventListener("nightdesk:pricing",refresh);
       window.removeEventListener("nightdesk:customers",refresh);
       window.removeEventListener("nightdesk:store-settings",refresh);
-      window.removeEventListener("nightdesk:dispatch-widgets",refresh);
     };
   },[]);
 
