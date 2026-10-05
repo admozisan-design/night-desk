@@ -15,6 +15,10 @@ export default function StoreSettingsPage(){
   const [cancelFee,setCancelFee]=useState(defaultStoreSettings.cancelFee);
   const [bookingBufferMinutes,setBookingBufferMinutes]=useState(defaultStoreSettings.bookingBufferMinutes??15);
   const [dispatchBufferMinutes,setDispatchBufferMinutes]=useState(defaultStoreSettings.dispatchBufferMinutes??30);
+  const [discountPresets,setDiscountPresets]=useState<number[]>(defaultStoreSettings.discountPresets??[0]);
+  const [surchargePresets,setSurchargePresets]=useState<number[]>(defaultStoreSettings.surchargePresets??[0]);
+  const [discountPresetDraft,setDiscountPresetDraft]=useState("");
+  const [surchargePresetDraft,setSurchargePresetDraft]=useState("");
   const [saved,setSaved]=useState(false);
 
   useEffect(()=>{
@@ -29,10 +33,42 @@ export default function StoreSettingsPage(){
     setCancelFee(settings.cancelFee ?? 0);
     setBookingBufferMinutes(settings.bookingBufferMinutes??15);
     setDispatchBufferMinutes(settings.dispatchBufferMinutes??30);
+    setDiscountPresets(settings.discountPresets??[0]);
+    setSurchargePresets(settings.surchargePresets??[0]);
   },[]);
 
+  function normalizePresetList(values:number[]){
+    return Array.from(new Set([0,...values.map(value=>Math.max(0,Math.round(value)))]))
+      .sort((a,b)=>a-b);
+  }
+
+  function addPreset(kind:"discount"|"surcharge"){
+    const raw=kind==="discount" ? discountPresetDraft : surchargePresetDraft;
+    if(raw.trim()==="") return;
+    const value=Math.max(0,Number(raw));
+    if(!Number.isFinite(value)) return;
+    if(kind==="discount"){
+      setDiscountPresets(current=>normalizePresetList([...current,value]));
+      setDiscountPresetDraft("");
+    }else{
+      setSurchargePresets(current=>normalizePresetList([...current,value]));
+      setSurchargePresetDraft("");
+    }
+  }
+
+  function removePreset(kind:"discount"|"surcharge",value:number){
+    if(value===0) return;
+    if(kind==="discount") setDiscountPresets(current=>current.filter(item=>item!==value));
+    else setSurchargePresets(current=>current.filter(item=>item!==value));
+  }
+
   function save(){
-    saveStoreSettings({openTime,closeTime,cardFeeRate,priceUnit,miscExpenseMode,miscExpenseValue,changeFee,cancelFee,bookingBufferMinutes,dispatchBufferMinutes});
+    saveStoreSettings({
+      openTime,closeTime,cardFeeRate,priceUnit,miscExpenseMode,miscExpenseValue,changeFee,cancelFee,
+      bookingBufferMinutes,dispatchBufferMinutes,
+      discountPresets:normalizePresetList(discountPresets),
+      surchargePresets:normalizePresetList(surchargePresets)
+    });
     setSaved(true);
     window.setTimeout(()=>setSaved(false),1400);
   }
@@ -101,6 +137,45 @@ export default function StoreSettingsPage(){
           </select>
         </label>
         <p>割引・割増などの入力刻みと、カード手数料の端数処理に使用します。</p>
+      </div>
+
+      <div className="storePaymentSettings storePresetSettings">
+        <h3>割引・割増プリセット</h3>
+        <p>仕事登録でよく使う金額を登録しておくと、プルダウンからすぐ選べます。0円は常に表示されます。</p>
+        <div className="storePresetGrid">
+          <div className="storePresetBox">
+            <strong>割引</strong>
+            <div className="storePresetAdd">
+              <input type="number" min="0" step={priceUnit} value={discountPresetDraft}
+                onChange={e=>setDiscountPresetDraft(e.target.value)}
+                onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();addPreset("discount");}}}
+                placeholder="例：3000"/>
+              <button type="button" onClick={()=>addPreset("discount")}>追加</button>
+            </div>
+            <div className="storePresetChips">
+              {discountPresets.map(value=><span key={value}>
+                {new Intl.NumberFormat("ja-JP").format(value)}円
+                {value!==0 && <button type="button" onClick={()=>removePreset("discount",value)} aria-label={value+"円の割引プリセットを削除"}>×</button>}
+              </span>)}
+            </div>
+          </div>
+          <div className="storePresetBox">
+            <strong>割増</strong>
+            <div className="storePresetAdd">
+              <input type="number" min="0" step={priceUnit} value={surchargePresetDraft}
+                onChange={e=>setSurchargePresetDraft(e.target.value)}
+                onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();addPreset("surcharge");}}}
+                placeholder="例：2000"/>
+              <button type="button" onClick={()=>addPreset("surcharge")}>追加</button>
+            </div>
+            <div className="storePresetChips">
+              {surchargePresets.map(value=><span key={value}>
+                {new Intl.NumberFormat("ja-JP").format(value)}円
+                {value!==0 && <button type="button" onClick={()=>removePreset("surcharge",value)} aria-label={value+"円の割増プリセットを削除"}>×</button>}
+              </span>)}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="storePaymentSettings storeMiscExpenseSettings">
