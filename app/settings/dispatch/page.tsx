@@ -16,6 +16,7 @@ const descriptions:Record<DispatchWidgetId,string>={
   date:"表示する営業日を切り替える",
   sharedMemo:"スタッフ間の共有・引継ぎメモ",
   orderRegister:"電話受付からオーダーを登録",
+  freeHolds:"キャスト未定のフリー予約を一時保管",
   reservations:"選択日の予約を一覧確認",
   board:"キャストとオーダーを時間軸で確認"
 };
