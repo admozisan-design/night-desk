@@ -6222,3 +6222,16 @@ button{
     width:100%;
   }
 }
+
+
+/* ===== Cast name search ===== */
+.castSearchBar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+.castSearchField{position:relative;display:flex;align-items:center;width:min(460px,100%)}
+.castSearchField input{width:100%;min-height:44px;padding:9px 76px 9px 38px;border:1px solid #d4dde4;border-radius:10px;background:#fff;color:#26343f;font-size:13px;font-weight:700;outline:0}
+.castSearchField input:focus{border-color:#9bc75a;box-shadow:0 0 0 3px rgba(126,182,56,.10)}
+.castSearchIcon{position:absolute;left:13px;z-index:1;color:#7b8791;font-size:18px;line-height:1;pointer-events:none}
+.castSearchField button{position:absolute;right:7px;min-height:30px;padding:4px 9px;border:0;border-radius:7px;background:#eef2f4;color:#687680;font-size:10px;font-weight:900;cursor:pointer}
+.castSearchField button:hover{background:#e4e9ec}
+.castSearchResult{flex:0 0 auto;color:#7c8791;font-size:11px;font-weight:800}
+.castSearchEmpty{grid-column:1/-1;padding:36px 20px;border:1px dashed #d6dee4;border-radius:12px;background:#fafbfc;color:#8a949d;font-size:13px;font-weight:800;text-align:center}
+@media(max-width:650px){.castSearchBar{align-items:stretch;flex-direction:column}.castSearchField{width:100%}.castSearchResult{align-self:flex-end}}
