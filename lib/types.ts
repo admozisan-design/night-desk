@@ -62,6 +62,26 @@ export type CastSettlementDailyConfig = {
 };
 export type Expense = {id:string;date:string;category:string;description:string;amount:number;notes?:string};
 export type Customer = { id:string; phone:string; name?:string; notes?:string; ngInfo?:string; active?:boolean; };
+export type FreeReservationHold = {
+  id:string;
+  createdAt:string;
+  serviceDate:string;
+  scheduledStart:string;
+  courseId?:string;
+  courseMinutes:number;
+  extensionMinutes?:number;
+  customerPhone:string;
+  locationType:"hotel"|"home";
+  locationName:string;
+  room?:string;
+  address?:string;
+  selectedOptionIds?:string[];
+  travelFee:number;
+  discount:number;
+  surcharge?:number;
+  paymentMethod?:"cash"|"card";
+  note?:string;
+};
 export type PricingConfig = {
   courses:Course[];
   photoNominationFee:number;
@@ -103,7 +123,7 @@ export type TopNavItem = {
 
 
 export type DispatchWidgetArea = "left" | "center" | "right" | "bottom";
-export type DispatchWidgetId = "date" | "sharedMemo" | "orderRegister" | "reservations" | "board";
+export type DispatchWidgetId = "date" | "sharedMemo" | "orderRegister" | "freeHolds" | "reservations" | "board";
 export type DispatchWidgetSetting = {
   id:DispatchWidgetId;
   label:string;

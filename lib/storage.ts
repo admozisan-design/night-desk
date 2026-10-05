@@ -1,6 +1,6 @@
 import { cloudConfigured, cloudClient, cloudStoreId, cloudStatus, writeCloudManaged } from "./cloud";
 import {checkCastAvailability,orderDate,orderDuration} from "./operations";
-import type { AuditLog, Expense, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, DispatchWidgetSetting, Driver, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings, TopNavItem } from "./types";
+import type { AuditLog, Expense, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, DispatchWidgetSetting, Driver, FreeReservationHold, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings, TopNavItem } from "./types";
 import {
   casts as demoCasts,
   defaultPricingConfig as demoPricing,
@@ -19,6 +19,7 @@ import {
 
 const EXPENSE_KEY = "night-desk-expenses-v01";
 const ORDER_KEY = "night-desk-orders-sample-v02";
+const FREE_RESERVATION_HOLD_KEY = "night-desk-free-reservation-holds-v01";
 const CAST_KEY = "night-desk-casts-sample-v03";
 const HOTEL_KEY = "night-desk-hotels-sample-v01";
 const STAFF_KEY = "night-desk-staff-sample-v01";
@@ -126,6 +127,35 @@ export function loadOrders():Order[] {
   ensureDemoDataSeeded();
   if (typeof window === "undefined") return [];
   try { return JSON.parse(localStorage.getItem(ORDER_KEY) ?? "[]") as Order[]; } catch { return []; }
+}
+
+export function loadFreeReservationHolds():FreeReservationHold[]{
+  if(typeof window==="undefined") return [];
+  try{
+    const parsed=JSON.parse(localStorage.getItem(FREE_RESERVATION_HOLD_KEY)??"[]") as FreeReservationHold[];
+    return Array.isArray(parsed)?parsed:[];
+  }catch{
+    return [];
+  }
+}
+export function saveFreeReservationHolds(items:FreeReservationHold[]){
+  if(typeof window==="undefined") return;
+  writeManaged(FREE_RESERVATION_HOLD_KEY,JSON.stringify(items));
+  window.dispatchEvent(new Event("nightdesk:free-reservation-holds"));
+}
+export function addFreeReservationHold(item:FreeReservationHold){
+  const next=[item,...loadFreeReservationHolds()];
+  saveFreeReservationHolds(next);
+  appendAuditLog("受付","フリー予約を保管",`${item.serviceDate} ${item.scheduledStart} / ${item.courseMinutes+(item.extensionMinutes??0)}分`);
+  return next;
+}
+export function deleteFreeReservationHold(id:string){
+  const current=loadFreeReservationHolds();
+  const target=current.find(item=>item.id===id);
+  const next=current.filter(item=>item.id!==id);
+  saveFreeReservationHolds(next);
+  if(target) appendAuditLog("受付","フリー予約保管を削除",`${target.serviceDate} ${target.scheduledStart}`);
+  return next;
 }
 
 export function replaceOrdersFromCsv(orders:Order[]){
