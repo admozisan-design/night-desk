@@ -2,7 +2,6 @@ import type { TopNavItem } from "./types";
 
 export const defaultTopNavigation:TopNavItem[]=[
   {id:"dispatch",href:"/",label:"配車管理",visible:true,inMenu:true},
-  {id:"board",href:"/board",label:"配車ボード",visible:true,inMenu:true},
   {id:"casts",href:"/casts",label:"キャスト出勤管理",visible:true,inMenu:true},
   {id:"settlement",href:"/settlement",label:"キャスト精算",visible:true,inMenu:true},
   {id:"orders",href:"/orders",label:"予約一覧",visible:true,inMenu:true},
