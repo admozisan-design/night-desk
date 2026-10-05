@@ -221,7 +221,7 @@ export default function DashboardPage(){
   const [sharedMemo,setSharedMemo] = useState("");
   const [sharedMemoSaved,setSharedMemoSaved] = useState(false);
   const [dispatchWidgets,setDispatchWidgets] = useState<DispatchWidgetSetting[]>(defaultDispatchWidgets);
-  const [castSortMode,setCastSortMode] = useState<"default"|"countDesc"|"countAsc"|"shiftStart"|"name">("default");
+  const [castSortMode,setCastSortMode] = useState<"default"|"activity"|"countDesc"|"countAsc"|"shiftStart"|"name">("default");
 
   const [castId,setCastId] = useState("");
   const [driverId,setDriverId] = useState("");
@@ -450,12 +450,41 @@ export default function DashboardPage(){
       const shift=castShiftForDate(cast,date);
       return businessMinutes(shift?.start ?? cast.shiftStart ?? storeSettings.openTime,storeSettings.openTime);
     };
+    const activityMeta=(cast:Cast)=>{
+      const castOrders=selectedDateOrders.filter(order=>order.castId===cast.id && order.status!=="cancelled");
+      const states=castOrders.map(order=>({
+        order,
+        state:orderVisualState(order,date,now)
+      }));
+      const rankForState=(state:string)=>{
+        if(state==="in") return 0;
+        if(state==="afterDispatch") return 1;
+        if(state==="beforeDispatch") return 2;
+        return 3;
+      };
+      let rank=3;
+      for(const row of states) rank=Math.min(rank,rankForState(row.state));
+      const relevantTimes=states
+        .filter(row=>rankForState(row.state)===rank && rank<3)
+        .map(row=>businessMinutes(row.order.scheduledStart,storeSettings.openTime));
+      return {
+        rank,
+        time:relevantTimes.length ? Math.min(...relevantTimes) : Number.POSITIVE_INFINITY
+      };
+    };
 
     return workingCasts.slice().sort((a,b)=>{
       const finishedRank=Number(isFinished(a))-Number(isFinished(b));
       if(finishedRank!==0) return finishedRank;
 
-      if(castSortMode==="countDesc"){
+      if(castSortMode==="activity"){
+        const aMeta=activityMeta(a);
+        const bMeta=activityMeta(b);
+        const rankDiff=aMeta.rank-bMeta.rank;
+        if(rankDiff!==0) return rankDiff;
+        const timeDiff=aMeta.time-bMeta.time;
+        if(Number.isFinite(timeDiff) && timeDiff!==0) return timeDiff;
+      }else if(castSortMode==="countDesc"){
         const diff=orderCount(b)-orderCount(a);
         if(diff!==0) return diff;
       }else if(castSortMode==="countAsc"){
@@ -1646,6 +1675,7 @@ export default function DashboardPage(){
             <span>並び替え</span>
             <select value={castSortMode} onChange={e=>setCastSortMode(e.target.value as typeof castSortMode)}>
               <option value="default">基本順</option>
+              <option value="activity">接客・送迎・予約順</option>
               <option value="countDesc">本数 多い順</option>
               <option value="countAsc">本数 少ない順</option>
               <option value="shiftStart">出勤時間順</option>
