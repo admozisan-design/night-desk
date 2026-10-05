@@ -6378,3 +6378,34 @@ button{
   .operationAlertOpen{grid-column:2}
   .operationAlertBody small{white-space:normal}
 }
+
+
+/* ===== Alert placement in right dispatch column ===== */
+.dispatchWidgetRightWidgets{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-width:0;
+}
+.dispatchWidgetSlotRight .operationAlerts{
+  width:100%;
+  margin:0;
+}
+.dispatchWidgetSlotRight .operationAlertsHeader{
+  align-items:flex-start;
+}
+.dispatchWidgetSlotRight .operationAlertsHeader>div{
+  flex-wrap:wrap;
+}
+.dispatchWidgetSlotRight .operationAlertsHint{
+  display:none;
+}
+.dispatchWidgetSlotRight .operationAlertItem{
+  grid-template-columns:32px minmax(0,1fr);
+}
+.dispatchWidgetSlotRight .operationAlertOpen{
+  grid-column:2;
+}
+.dispatchWidgetSlotRight .operationAlertBody small{
+  white-space:normal;
+}
