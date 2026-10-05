@@ -62,6 +62,7 @@ export type CastSettlementDailyConfig = {
 };
 export type Expense = {id:string;date:string;category:string;description:string;amount:number;notes?:string};
 export type Customer = { id:string; phone:string; name?:string; notes?:string; ngInfo?:string; active?:boolean; };
+export type SharedMemoItem = { id:string; text:string; createdAt:string; completed?:boolean; };
 export type FreeReservationHold = {
   id:string;
   createdAt:string;

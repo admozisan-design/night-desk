@@ -2734,24 +2734,76 @@ button{
   font-size:10px;
   font-weight:900;
 }
-.sharedMemoPanel textarea{
-  min-height:180px;
-  margin-top:10px;
+.sharedMemoComposer{display:grid;gap:7px;margin-top:10px}
+.sharedMemoComposer textarea{
+  min-height:76px;
   resize:vertical;
-  line-height:1.6;
+  line-height:1.55;
   background:#fffdf3;
   border-color:#e7dba4;
 }
-.sharedMemoPanel>button{
-  width:100%;
-  min-height:38px;
-  margin-top:8px;
+.sharedMemoComposer button{
+  min-height:34px;
   border:1px solid #d3b95b;
   border-radius:7px;
   background:#fff4c8;
   color:#6f5b15;
+  font-size:10px;
   font-weight:900;
   cursor:pointer;
+}
+.sharedMemoComposer button:disabled{opacity:.45;cursor:not-allowed}
+.sharedMemoList{display:grid;gap:6px;margin-top:9px;max-height:330px;overflow:auto}
+.sharedMemoList article{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr) 26px;
+  gap:7px;
+  align-items:start;
+  padding:8px;
+  border:1px solid #e0e5e9;
+  border-radius:8px;
+  background:#fff;
+}
+.sharedMemoList article.isCompleted{background:#f4f6f7;opacity:.68}
+.sharedMemoCheck,.sharedMemoDelete{
+  width:26px;
+  height:26px;
+  padding:0;
+  border:1px solid #d5dce2;
+  border-radius:7px;
+  background:#fff;
+  color:#66727c;
+  font-size:13px;
+  font-weight:900;
+  cursor:pointer;
+}
+.sharedMemoCheck{border-color:#b8d18f;background:#f2f8e8;color:#5d7f28}
+.sharedMemoItemBody{min-width:0}
+.sharedMemoItemBody p{
+  margin:0;
+  color:#394652;
+  font-size:10px;
+  font-weight:800;
+  line-height:1.5;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.sharedMemoItemBody small{
+  display:block;
+  margin-top:4px;
+  color:#9aa3ab;
+  font-size:8px;
+}
+.sharedMemoList article.isCompleted .sharedMemoItemBody p{text-decoration:line-through}
+.sharedMemoDelete{color:#9a6060}
+.sharedMemoEmpty{
+  margin:0;
+  padding:14px 8px;
+  border:1px dashed #d8dee3;
+  border-radius:8px;
+  color:#97a0a8;
+  font-size:9px;
+  text-align:center;
 }
 
 .selectedCastInfo .selectedCastAdCell a{
