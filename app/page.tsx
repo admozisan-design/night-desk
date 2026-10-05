@@ -781,6 +781,7 @@ export default function DashboardPage(){
           `コース：${selectedOrder.courseMinutes+(selectedOrder.extensionMinutes??0)}分（${nomination}）`,
           `場所：${selectedOrder.locationName||"未入力"}${roomText}`,
           selectedOrder.address ? `住所：${selectedOrder.address}` : null,
+          selectedOrder.customerPhone ? `電話番号：${selectedOrder.customerPhone}` : null,
           options ? `OP：${options}` : null,
           `料金：${formatYen(selectedOrder.total)}（${payment}）`,
           selectedOrder.note ? `備考：${selectedOrder.note}` : null
@@ -796,6 +797,7 @@ export default function DashboardPage(){
           `キャスト：${selectedOrder.castName}`,
           `場所：${selectedOrder.locationName||"未入力"}${roomText}`,
           selectedOrder.address ? `住所：${selectedOrder.address}` : null,
+          selectedOrder.customerPhone ? `電話番号：${selectedOrder.customerPhone}` : null,
           `コース：${selectedOrder.courseMinutes+(selectedOrder.extensionMinutes??0)}分（${nomination}）`,
           selectedOrder.note ? `備考：${selectedOrder.note}` : null
         ];
