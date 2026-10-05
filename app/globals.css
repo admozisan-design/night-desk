@@ -6260,3 +6260,88 @@ button{
 .castCompactCard.isExpanded .castVerticalHeader{
   border-bottom:1px solid #e6eaee!important;
 }
+
+
+/* ===== Discount / surcharge presets ===== */
+.storePresetGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:12px;
+}
+.storePresetBox{
+  display:grid;
+  gap:9px;
+  padding:12px;
+  border:1px solid #dde4e9;
+  border-radius:10px;
+  background:#fff;
+}
+.storePresetBox>strong{
+  color:#3d4b56;
+  font-size:12px;
+}
+.storePresetAdd{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:7px;
+}
+.storePresetAdd input{
+  min-height:40px;
+}
+.storePresetAdd button{
+  min-width:64px;
+  border:1px solid #b8d68d;
+  border-radius:8px;
+  background:#edf7df;
+  color:#4c711d;
+  font-size:11px;
+  font-weight:900;
+  cursor:pointer;
+}
+.storePresetAdd button:hover{
+  background:#e4f3d1;
+}
+.storePresetChips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.storePresetChips>span{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  min-height:28px;
+  padding:4px 8px;
+  border:1px solid #d8e0e5;
+  border-radius:999px;
+  background:#f7f9fa;
+  color:#4d5b66;
+  font-size:10px;
+  font-weight:900;
+}
+.storePresetChips button{
+  width:18px;
+  height:18px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:#e7ebee;
+  color:#6d7881;
+  font-size:12px;
+  line-height:18px;
+  cursor:pointer;
+}
+.moneyPresetControl{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(110px,.65fr);
+  gap:5px;
+}
+.moneyPresetControl select,
+.moneyPresetControl input{
+  width:100%;
+}
+@media(max-width:700px){
+  .storePresetGrid{grid-template-columns:1fr}
+  .moneyPresetControl{grid-template-columns:1fr}
+}
