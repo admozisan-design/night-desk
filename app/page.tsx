@@ -917,7 +917,6 @@ export default function DashboardPage(){
   }
 
   function removeFreeHold(id:string){
-    if(!window.confirm("このフリー予約の保管を削除しますか？")) return;
     setFreeReservationHolds(deleteFreeReservationHold(id));
     if(activeFreeHoldId===id) setActiveFreeHoldId(null);
   }
@@ -1666,18 +1665,32 @@ export default function DashboardPage(){
               {selectedDateFreeHolds.map(item=>{
                 const pos=freeHoldPosition(item,boardStartMinute,boardMinutes);
                 if(!pos) return null;
-                return <button
-                  type="button"
+                return <div
                   key={item.id}
                   className="timelineFreeHold"
                   style={pos}
-                  onClick={()=>loadFreeHoldIntoOrderForm(item)}
                   title="クリックしてキャストを決めてオーダー化"
                 >
-                  <strong>{item.scheduledStart}〜{addMinutes(item.scheduledStart,item.courseMinutes+(item.extensionMinutes??0))}</strong>
-                  <span>{item.courseMinutes+(item.extensionMinutes??0)}分 / フリー</span>
-                  <small>{item.locationName || "場所未入力"}{item.room ? ` / ${item.room}号室` : ""}</small>
-                </button>;
+                  <button
+                    type="button"
+                    className="timelineFreeHoldMain"
+                    onClick={()=>loadFreeHoldIntoOrderForm(item)}
+                  >
+                    <strong>{item.scheduledStart}〜{addMinutes(item.scheduledStart,item.courseMinutes+(item.extensionMinutes??0))}</strong>
+                    <span>{item.courseMinutes+(item.extensionMinutes??0)}分 / フリー</span>
+                    <small>{item.locationName || "場所未入力"}{item.room ? ` / ${item.room}号室` : ""}</small>
+                  </button>
+                  <button
+                    type="button"
+                    className="timelineFreeHoldDelete"
+                    onClick={e=>{
+                      e.stopPropagation();
+                      removeFreeHold(item.id);
+                    }}
+                    title="フリー予約を削除"
+                    aria-label="フリー予約を削除"
+                  >×</button>
+                </div>;
               })}
               {!selectedDateFreeHolds.length && <span className="freeHoldBoardEmpty">保管中のフリー予約なし</span>}
             </div>
