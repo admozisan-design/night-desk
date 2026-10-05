@@ -6349,3 +6349,52 @@ button{
   .storePresetGrid{grid-template-columns:1fr}
   .moneyPresetControl{grid-template-columns:1fr}
 }
+
+
+/* ===== Network reservation trial notification ===== */
+.networkReservationTestDock{position:fixed;right:18px;bottom:18px;z-index:940;display:grid;justify-items:end;gap:10px;pointer-events:none}
+.networkReservationTestTrigger{pointer-events:auto;display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:9px 13px;border:1px solid #b9d58d;border-radius:999px;background:#f7ffe9;color:#45631d;font-size:12px;font-weight:900;box-shadow:0 8px 24px rgba(30,45,20,.12);cursor:pointer}
+.networkReservationTestTrigger:hover{background:#efffd7}
+.networkReservationToast{pointer-events:auto;width:min(380px,calc(100vw - 28px));padding:15px;border:1px solid #d8e0e6;border-radius:14px;background:#fff;box-shadow:0 18px 50px rgba(20,30,40,.22)}
+.networkReservationToast.isUnread{border-color:#a8cf6d;box-shadow:0 18px 50px rgba(70,110,25,.22)}
+.networkReservationToastHead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.networkReservationSource{display:inline-flex;align-items:center;min-height:25px;padding:4px 8px;border-radius:999px;background:#eef7df;color:#52751f;font-size:10px;font-weight:900}
+.networkReservationClose{width:30px;height:30px;border:1px solid #dce2e7;border-radius:8px;background:#fff;color:#6d7882;font-size:18px;line-height:1;cursor:pointer}
+.networkReservationToastTitle{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}
+.networkReservationToastTitle strong{font-size:18px}
+.networkReservationToastTitle span{padding:4px 8px;border-radius:999px;background:#edf0f2;color:#76818b;font-size:10px;font-weight:900}
+.networkReservationToast.isUnread .networkReservationToastTitle span{background:#ffe7b8;color:#8a5b00}
+.networkReservationToast p{margin:7px 0 3px;color:#47535f;font-size:13px;font-weight:900}
+.networkReservationToast small{display:block;color:#929ba4;font-size:10px;line-height:1.55}
+.networkReservationToastActions{display:flex;justify-content:flex-end;gap:8px;margin-top:13px}
+.networkReservationToastActions button{min-height:38px;padding:8px 12px;border:1px solid #d6dde3;border-radius:8px;background:#fff;color:#5f6b76;font-size:11px;font-weight:900;cursor:pointer}
+.networkReservationToastActions button.primary{border-color:#85ba3a;background:#84cc16;color:#17200b}
+.networkReservationModalBackdrop{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:20px;background:rgba(18,27,35,.48)}
+.networkReservationModal{width:min(620px,96vw);overflow:hidden;border:1px solid #d7dee4;border-radius:16px;background:#fff;box-shadow:0 30px 90px rgba(15,25,35,.30)}
+.networkReservationModal>header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:19px 21px;border-bottom:1px solid #e8ecef;background:#fbfcfd}
+.networkReservationModal>header span{display:block;color:#739b3d;font-size:10px;font-weight:900;letter-spacing:.08em}
+.networkReservationModal>header h2{margin:4px 0 0;font-size:22px}
+.networkReservationModal>header button{width:36px;height:36px;border:1px solid #d7dde3;border-radius:9px;background:#fff;color:#64707b;font-size:20px;cursor:pointer}
+.networkReservationModalNotice{margin:16px 20px 0;padding:10px 12px;border:1px solid #dce9c8;border-radius:9px;background:#f7fdea;color:#58752d;font-size:11px;font-weight:900}
+.networkReservationDetailGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin:16px 20px;border:1px solid #e2e7eb;border-radius:11px;overflow:hidden}
+.networkReservationDetailGrid>div{padding:12px 14px;border-bottom:1px solid #edf0f3}
+.networkReservationDetailGrid>div:nth-child(odd){border-right:1px solid #edf0f3}
+.networkReservationDetailGrid>div:nth-last-child(-n+2){border-bottom:0}
+.networkReservationDetailGrid span,.networkReservationDetailGrid strong{display:block}
+.networkReservationDetailGrid span{color:#929aa2;font-size:9px;font-weight:900}
+.networkReservationDetailGrid strong{margin-top:4px;color:#35414c;font-size:13px}
+.networkReservationModalMemo{margin:0 20px 18px;padding:13px 14px;border-radius:10px;background:#f7f8f9}
+.networkReservationModalMemo span{display:block;color:#8b959e;font-size:9px;font-weight:900}
+.networkReservationModalMemo p{margin:5px 0 0;color:#596570;font-size:12px;line-height:1.6}
+.networkReservationModal>footer{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid #edf0f3;background:#fbfcfd}
+.networkReservationModal>footer button{min-height:40px;padding:8px 15px;border:1px solid #d4dbe1;border-radius:8px;background:#fff;font-size:12px;font-weight:900;cursor:pointer}
+.networkReservationModal>footer .primaryButton{border-color:#79b91c;background:#84cc16;color:#17200b}
+@media(max-width:600px){
+  .networkReservationTestDock{right:10px;bottom:10px}
+  .networkReservationToast{width:calc(100vw - 20px)}
+  .networkReservationDetailGrid{grid-template-columns:1fr}
+  .networkReservationDetailGrid>div:nth-child(odd){border-right:0}
+  .networkReservationDetailGrid>div:nth-last-child(2){border-bottom:1px solid #edf0f3}
+  .networkReservationModal>footer{flex-direction:column-reverse}
+  .networkReservationModal>footer button{width:100%}
+}
