@@ -1399,14 +1399,21 @@ export default function DashboardPage(){
                       <span>利用 <strong>{customerHistory.length}回</strong></span>
                       <span>最終 <strong>{customerHistory[0] ? orderServiceDate(customerHistory[0]) : "—"}</strong></span>
                     </div>
-                    {editingOrderId && selectedCast && <button type="button" className="customerNgRegisterButton" onClick={registerSelectedCastAsCustomerNg}>
-                      {selectedCast.name}をNG登録
-                    </button>}
                     <button type="button" className="customerPanelToggle" onClick={()=>setCustomerPanelOpen(value=>!value)}>
                       {customerPanelOpen?"閉じる":"開く"}
                     </button>
                   </div>
                 </div>
+
+                {editingOrderId && selectedCast && <div className="customerNgActionRow">
+                  <div className="customerNgActionText">
+                    <strong>このキャストをNG登録</strong>
+                    <span>このお客様を「{selectedCast.name}」のNGとして登録します</span>
+                  </div>
+                  <button type="button" className="customerNgRegisterButton customerNgRegisterButtonLarge" onClick={registerSelectedCastAsCustomerNg}>
+                    {selectedCast.name}をNG登録
+                  </button>
+                </div>}
 
                 {customerPanelOpen && <div className="customerLookupExpanded">
                   {customerNotice && <div className="customerLookupNotice">{customerNotice}</div>}

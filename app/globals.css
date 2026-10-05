@@ -6169,3 +6169,56 @@ button{
   background:#fde8e8!important;
   color:#842f2f!important;
 }
+
+
+/* ===== Prominent customer NG action ===== */
+.customerNgActionRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:11px 13px;
+  border-bottom:1px solid #efc7cd;
+  background:linear-gradient(180deg,#fff7f8 0%,#fff1f3 100%);
+}
+.customerNgActionText{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+.customerNgActionText strong{
+  color:#a22538;
+  font-size:12px;
+  font-weight:900;
+}
+.customerNgActionText span{
+  color:#7d5b61;
+  font-size:10px;
+  font-weight:700;
+  line-height:1.4;
+}
+.customerNgRegisterButtonLarge{
+  flex:0 0 auto;
+  min-width:150px;
+  min-height:40px!important;
+  padding:8px 14px!important;
+  border:1px solid #d76373!important;
+  border-radius:8px!important;
+  background:#c93f55!important;
+  color:#fff!important;
+  font-size:11px!important;
+  box-shadow:0 3px 8px rgba(167,39,59,.14);
+}
+.customerNgRegisterButtonLarge:hover{
+  border-color:#b83247!important;
+  background:#b83247!important;
+}
+@media(max-width:700px){
+  .customerNgActionRow{
+    align-items:stretch;
+    flex-direction:column;
+  }
+  .customerNgRegisterButtonLarge{
+    width:100%;
+  }
+}
