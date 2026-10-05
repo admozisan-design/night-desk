@@ -37,6 +37,7 @@ function labelForDate(value:string){
 export default function CastSchedulePage(){
   const [casts,setCasts]=useState<Cast[]>(defaultCasts);
   const [selectedId,setSelectedId]=useState("");
+  const [castSearch,setCastSearch]=useState("");
   const [weekStart,setWeekStart]=useState(()=>startOfWeek());
   const [drafts,setDrafts]=useState<Record<string,CastShift>>({});
   const [saved,setSaved]=useState(false);
@@ -50,6 +51,12 @@ export default function CastSchedulePage(){
   },[]);
 
   const selected=casts.find(c=>c.id===selectedId);
+  const visibleCasts=useMemo(()=>casts.filter(c=>c.visible!==false),[casts]);
+  const filteredCasts=useMemo(()=>{
+    const query=castSearch.trim().toLocaleLowerCase("ja");
+    if(!query) return visibleCasts;
+    return visibleCasts.filter(cast=>cast.name.toLocaleLowerCase("ja").includes(query));
+  },[castSearch,visibleCasts]);
   const weekDates=useMemo(()=>Array.from({length:7},(_,index)=>addDays(weekStart,index)),[weekStart]);
 
   useEffect(()=>{
@@ -109,10 +116,19 @@ export default function CastSchedulePage(){
       <aside className="castScheduleCastList">
         <div className="castScheduleCastListHead">
           <strong>キャスト</strong>
-          <span>{casts.filter(c=>c.visible!==false).length}人</span>
+          <span>{castSearch.trim()?`${filteredCasts.length}/${visibleCasts.length}人`:`${visibleCasts.length}人`}</span>
+        </div>
+        <div className="castScheduleCastSearch">
+          <input
+            type="search"
+            value={castSearch}
+            onChange={event=>setCastSearch(event.target.value)}
+            placeholder="キャスト名で検索"
+            aria-label="キャスト名で検索"
+          />
         </div>
         <div className="castScheduleCastButtons">
-          {casts.filter(c=>c.visible!==false).map(cast=><button
+          {filteredCasts.map(cast=><button
             type="button"
             key={cast.id}
             className={cast.id===selectedId?"active":""}
@@ -121,7 +137,8 @@ export default function CastSchedulePage(){
             <span>{cast.name}</span>
             <small>{cast.id===selectedId?"編集中":"選択"}</small>
           </button>)}
-          {!casts.length && <p className="masterEmpty compact">キャストが登録されていません</p>}
+          {!visibleCasts.length && <p className="masterEmpty compact">キャストが登録されていません</p>}
+          {!!visibleCasts.length && !filteredCasts.length && <p className="masterEmpty compact">該当するキャストがいません</p>}
         </div>
       </aside>
 
