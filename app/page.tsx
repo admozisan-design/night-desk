@@ -236,6 +236,8 @@ export default function DashboardPage(){
   const [travelFee,setTravelFee] = useState(defaultPricingConfig.defaultTravelFee);
   const [discount,setDiscount] = useState(0);
   const [surcharge,setSurcharge] = useState(0);
+  const discountPresets=storeSettings.discountPresets??[0];
+  const surchargePresets=storeSettings.surchargePresets??[0];
   const [paymentMethod,setPaymentMethod] = useState<"cash"|"card">("cash");
   const [selectedOptionIds,setSelectedOptionIds] = useState<string[]>([]);
   const boardScrollRef=useRef<HTMLDivElement|null>(null);
@@ -1580,8 +1582,30 @@ export default function DashboardPage(){
 
             <div className="workGrid three">
               <label>交通費<input type="number" step={storeSettings.priceUnit??100} value={travelFee} onChange={e=>setTravelFee(Number(e.target.value))}/></label>
-              <label>割引<input type="number" step={storeSettings.priceUnit??100} value={discount} onChange={e=>setDiscount(Number(e.target.value))}/></label>
-              <label>割増<input type="number" step={storeSettings.priceUnit??100} value={surcharge} onChange={e=>setSurcharge(Number(e.target.value))}/></label>
+              <label>割引
+                <div className="moneyPresetControl">
+                  <select
+                    value={discountPresets.includes(discount)?String(discount):"__custom__"}
+                    onChange={e=>{if(e.target.value!=="__custom__") setDiscount(Number(e.target.value));}}
+                  >
+                    {discountPresets.map(value=><option key={value} value={value}>{new Intl.NumberFormat("ja-JP").format(value)}円</option>)}
+                    <option value="__custom__">手入力</option>
+                  </select>
+                  <input type="number" min="0" step={storeSettings.priceUnit??100} value={discount} onChange={e=>setDiscount(Math.max(0,Number(e.target.value)))}/>
+                </div>
+              </label>
+              <label>割増
+                <div className="moneyPresetControl">
+                  <select
+                    value={surchargePresets.includes(surcharge)?String(surcharge):"__custom__"}
+                    onChange={e=>{if(e.target.value!=="__custom__") setSurcharge(Number(e.target.value));}}
+                  >
+                    {surchargePresets.map(value=><option key={value} value={value}>{new Intl.NumberFormat("ja-JP").format(value)}円</option>)}
+                    <option value="__custom__">手入力</option>
+                  </select>
+                  <input type="number" min="0" step={storeSettings.priceUnit??100} value={surcharge} onChange={e=>setSurcharge(Math.max(0,Number(e.target.value)))}/>
+                </div>
+              </label>
             </div>
 
             <div className="paymentAndTimeGrid">
