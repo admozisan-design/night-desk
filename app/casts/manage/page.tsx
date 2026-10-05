@@ -44,6 +44,7 @@ export default function CastsPage(){
   const [newNgItems,setNewNgItems] = useState<string[]>([]);
   const [newOptions,setNewOptions] = useState<string[]>([]);
   const [expandedCastIds,setExpandedCastIds] = useState<string[]>([]);
+  const [castSearchQuery,setCastSearchQuery] = useState("");
 
   useEffect(()=>{
     const refresh=()=>{
@@ -184,6 +185,13 @@ export default function CastsPage(){
     closeAddModal();
   }
 
+  const normalizedCastSearch=castSearchQuery.trim().toLocaleLowerCase("ja");
+  const filteredCasts=casts.filter(cast=>{
+    if(!normalizedCastSearch) return true;
+    const current=isEditing ? (drafts[cast.id] ?? cast) : cast;
+    return current.name.toLocaleLowerCase("ja").includes(normalizedCastSearch);
+  });
+
   return <div className="castManagementPage">
     <header className="pageHeader castRegistryHeader">
       <div>
@@ -204,8 +212,23 @@ export default function CastsPage(){
       <div><span>表示中</span><strong>{casts.filter(c=>c.visible!==false).length}</strong><small>人</small></div>
     </section>
 
+    <section className="castSearchBar">
+      <div className="castSearchField">
+        <span className="castSearchIcon" aria-hidden="true">⌕</span>
+        <input
+          type="search"
+          value={castSearchQuery}
+          onChange={e=>setCastSearchQuery(e.target.value)}
+          placeholder="キャスト名で検索"
+          aria-label="キャスト名で検索"
+        />
+        {castSearchQuery && <button type="button" onClick={()=>setCastSearchQuery("")}>クリア</button>}
+      </div>
+      <span className="castSearchResult">{normalizedCastSearch ? filteredCasts.length+"件" : "全件表示"}</span>
+    </section>
+
     <section className="castCardGrid">
-      {casts.map(cast=>{
+      {filteredCasts.map(cast=>{
         const current=isEditing ? (drafts[cast.id] ?? cloneCast(cast)) : cast;
         const isExpanded=expandedCastIds.includes(cast.id);
 
@@ -357,6 +380,7 @@ export default function CastsPage(){
           </>}
         </article>
       })}
+      {filteredCasts.length===0 && <div className="castSearchEmpty">該当するキャストが見つかりません</div>}
     </section>
 
     {addOpen && <div className="castModalBackdrop" onMouseDown={e=>{if(e.currentTarget===e.target) closeAddModal();}}>
