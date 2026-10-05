@@ -8,7 +8,7 @@ import { defaultDispatchWidgets } from "@/lib/dispatch-widgets";
 import { calculateOrderTotal, formatYen } from "@/lib/pricing";
 import {checkCastAvailability,suggestDrivers,activeBusinessDate,businessMinutes} from "@/lib/operations";
 import { addFreeReservationHold, deleteFreeReservationHold, deleteOrder, loadCasts, loadCustomers, loadDrivers, loadFreeReservationHolds, loadHotels, loadOptions, loadOrders, loadPricing, loadSharedMemo, loadStoreSettings, saveCasts, saveCustomers, confirmReservation, saveSharedMemo, updateOrder } from "@/lib/storage";
-import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, DispatchWidgetId, Driver, FreeReservationHold, Hotel, Order, OrderStatus, PricingConfig, StoreOption } from "@/lib/types";
+import type { Cast, CastAttendanceStatus, CastShiftEndType, CastStatus, Customer, DispatchWidgetId, Driver, FreeReservationHold, Hotel, Order, OrderStatus, PricingConfig, SharedMemoItem, StoreOption } from "@/lib/types";
 
 function clockMinutes(time:string){
   const [hour,minute]=time.split(":").map(Number);
@@ -226,8 +226,8 @@ export default function DashboardPage(){
   const [customerPanelOpen,setCustomerPanelOpen] = useState(false);
   const [optionModalOpen,setOptionModalOpen] = useState(false);
   const [castNotesExpanded,setCastNotesExpanded] = useState(false);
-  const [sharedMemo,setSharedMemo] = useState("");
-  const [sharedMemoSaved,setSharedMemoSaved] = useState(false);
+  const [sharedMemos,setSharedMemos] = useState<SharedMemoItem[]>([]);
+  const [sharedMemoDraft,setSharedMemoDraft] = useState("");
   const dispatchWidgets=defaultDispatchWidgets;
   const [castSortMode,setCastSortMode] = useState<"default"|"activity"|"countDesc"|"countAsc"|"shiftStart"|"name">("default");
 
@@ -274,8 +274,9 @@ export default function DashboardPage(){
       setPricing(loadPricing(defaultPricingConfig));
       setStoreSettings(loadStoreSettings(defaultStoreSettings));
     };
+    const refreshSharedMemo=()=>setSharedMemos(loadSharedMemo());
     refresh();
-    setSharedMemo(loadSharedMemo());
+    setSharedMemos(loadSharedMemo());
     setNow(new Date());
     const searchParams=new URLSearchParams(window.location.search);
     setPendingEditOrderId(searchParams.get("editOrder"));
@@ -291,6 +292,7 @@ export default function DashboardPage(){
     window.addEventListener("nightdesk:pricing",refresh);
     window.addEventListener("nightdesk:customers",refresh);
     window.addEventListener("nightdesk:store-settings",refresh);
+    window.addEventListener("nightdesk:shared-memo",refreshSharedMemo);
     return ()=>{
       window.clearInterval(timer);
       window.removeEventListener("storage",refresh);
@@ -303,6 +305,7 @@ export default function DashboardPage(){
       window.removeEventListener("nightdesk:pricing",refresh);
       window.removeEventListener("nightdesk:customers",refresh);
       window.removeEventListener("nightdesk:store-settings",refresh);
+      window.removeEventListener("nightdesk:shared-memo",refreshSharedMemo);
     };
   },[]);
 
@@ -1215,10 +1218,28 @@ export default function DashboardPage(){
     }
   }
 
-  function saveSharedMemoNow(){
-    saveSharedMemo(sharedMemo);
-    setSharedMemoSaved(true);
-    window.setTimeout(()=>setSharedMemoSaved(false),1200);
+  function addSharedMemoItem(){
+    const text=sharedMemoDraft.trim();
+    if(!text) return;
+    const next:SharedMemoItem[]=[
+      {id:crypto.randomUUID(),text,createdAt:new Date().toISOString(),completed:false},
+      ...sharedMemos
+    ];
+    setSharedMemos(next);
+    saveSharedMemo(next);
+    setSharedMemoDraft("");
+  }
+
+  function toggleSharedMemoItem(id:string){
+    const next=sharedMemos.map(item=>item.id===id?{...item,completed:!item.completed}:item);
+    setSharedMemos(next);
+    saveSharedMemo(next);
+  }
+
+  function deleteSharedMemoItem(id:string){
+    const next=sharedMemos.filter(item=>item.id!==id);
+    setSharedMemos(next);
+    saveSharedMemo(next);
   }
 
   function openDriverMail(){
@@ -1436,16 +1457,39 @@ export default function DashboardPage(){
         {widgetPortal("sharedMemo", <section className={`deskPanel sharedMemoPanel dispatchWidget ${widgetAreaClass("sharedMemo")}`} style={{order:widgetOrder("sharedMemo")}}>
           <div className="sharedMemoHead">
             <h2>共有メモ</h2>
-            {sharedMemoSaved && <span>保存済み</span>}
+            <span>{sharedMemos.filter(item=>!item.completed).length}件</span>
           </div>
-          <textarea
-            rows={9}
-            value={sharedMemo}
-            onChange={e=>setSharedMemo(e.target.value)}
-            onBlur={saveSharedMemoNow}
-            placeholder="送迎状況、注意事項、次のスタッフへの引継ぎなどを共有"
-          />
-          <button type="button" onClick={saveSharedMemoNow}>共有メモを保存</button>
+
+          <div className="sharedMemoComposer">
+            <textarea
+              rows={3}
+              value={sharedMemoDraft}
+              onChange={e=>setSharedMemoDraft(e.target.value)}
+              onKeyDown={e=>{
+                if((e.ctrlKey || e.metaKey) && e.key==="Enter"){
+                  e.preventDefault();
+                  addSharedMemoItem();
+                }
+              }}
+              placeholder="1件ずつメモを追加"
+            />
+            <button type="button" onClick={addSharedMemoItem} disabled={!sharedMemoDraft.trim()}>＋ メモを追加</button>
+          </div>
+
+          <div className="sharedMemoList">
+            {sharedMemos.length===0
+              ? <p className="sharedMemoEmpty">共有メモはありません</p>
+              : sharedMemos.map(item=><article key={item.id} className={item.completed?"isCompleted":""}>
+                  <button type="button" className="sharedMemoCheck" onClick={()=>toggleSharedMemoItem(item.id)} title={item.completed?"未完了に戻す":"完了にする"}>
+                    {item.completed?"✓":"○"}
+                  </button>
+                  <div className="sharedMemoItemBody">
+                    <p>{item.text}</p>
+                    <small>{new Date(item.createdAt).toLocaleString("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})}</small>
+                  </div>
+                  <button type="button" className="sharedMemoDelete" onClick={()=>deleteSharedMemoItem(item.id)} aria-label="メモを削除">×</button>
+                </article>)}
+          </div>
         </section>)}
       </aside>
 
