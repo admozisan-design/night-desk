@@ -1,6 +1,6 @@
 import { cloudConfigured, cloudClient, cloudStoreId, cloudStatus, writeCloudManaged } from "./cloud";
 import {checkCastAvailability,orderDate,orderDuration} from "./operations";
-import type { AuditLog, Expense, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, DispatchWidgetSetting, Driver, FreeReservationHold, Hotel, Order, PricingConfig, Staff, StaffPermission, StoreOption, StoreSettings, TopNavItem } from "./types";
+import type { AuditLog, Expense, Cast, CastSettlementAdjustment, CastSettlementDailyConfig, Customer, DispatchWidgetSetting, Driver, FreeReservationHold, Hotel, Order, PricingConfig, SharedMemoItem, Staff, StaffPermission, StoreOption, StoreSettings, TopNavItem } from "./types";
 import {
   casts as demoCasts,
   defaultPricingConfig as demoPricing,
@@ -643,16 +643,33 @@ export function saveCastSettlementDailyConfig(config:CastSettlementDailyConfig){
 }
 
 
-export function loadSharedMemo():string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem(SHARED_MEMO_KEY) ?? "送迎・予約・引継ぎで全員に共有したい内容を入力してください。";
+export function loadSharedMemo():SharedMemoItem[] {
+  if (typeof window === "undefined") return [];
+  const raw=localStorage.getItem(SHARED_MEMO_KEY);
+  if(!raw) return [];
+  try{
+    const parsed=JSON.parse(raw) as unknown;
+    if(Array.isArray(parsed)){
+      return parsed.filter((item):item is SharedMemoItem=>
+        Boolean(item) &&
+        typeof item==="object" &&
+        typeof (item as SharedMemoItem).id==="string" &&
+        typeof (item as SharedMemoItem).text==="string"
+      );
+    }
+  }catch{
+    // Legacy shared memo was a plain string.
+  }
+  const text=raw.trim();
+  if(!text || text==="送迎・予約・引継ぎで全員に共有したい内容を入力してください。") return [];
+  return [{id:"legacy-shared-memo",text,createdAt:new Date().toISOString(),completed:false}];
 }
 
-export function saveSharedMemo(memo:string){
+export function saveSharedMemo(items:SharedMemoItem[]){
   if (typeof window === "undefined") return;
-  writeManaged(SHARED_MEMO_KEY,memo);
+  writeManaged(SHARED_MEMO_KEY,JSON.stringify(items));
   window.dispatchEvent(new Event("nightdesk:shared-memo"));
-  appendAuditLog("共有","共有メモを保存",memo.slice(0,80));
+  appendAuditLog("共有","共有メモを更新",`${items.filter(item=>!item.completed).length}件`);
 }
 
 
