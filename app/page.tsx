@@ -330,7 +330,7 @@ export default function DashboardPage(){
 
   useEffect(()=>{
     if(editingOrderId) return;
-    if(!selectableCasts.some(c=>c.id===castId)) setCastId(selectableCasts[0]?.id ?? "");
+    if(castId && !selectableCasts.some(c=>c.id===castId)) setCastId("");
   },[selectableCasts,castId,editingOrderId]);
 
   useEffect(()=>{
@@ -493,6 +493,30 @@ export default function DashboardPage(){
   const timelineMinorPercent=timelineMajorPercent/4;
   const timelineMinWidth=Math.max(1100,Math.round(boardHourCount*108));
   const timelineGridStyle={backgroundSize:`${timelineMajorPercent}% 100%,${timelineMinorPercent}% 100%`};
+  const freeHoldBoardLayout=useMemo(()=>{
+    const rows=selectedDateFreeHolds.map(item=>{
+      const start=boardRelativeMinutes(item.scheduledStart,boardStartMinute);
+      const end=start+Math.max(1,item.courseMinutes+(item.extensionMinutes??0));
+      return {item,start,end,lane:0,overlapCount:1};
+    }).sort((a,b)=>a.start-b.start || a.end-b.end || a.item.createdAt.localeCompare(b.item.createdAt));
+
+    const laneEnds:number[]=[];
+    for(const row of rows){
+      let lane=laneEnds.findIndex(end=>end<=row.start);
+      if(lane<0){
+        lane=laneEnds.length;
+        laneEnds.push(row.end);
+      }else{
+        laneEnds[lane]=row.end;
+      }
+      row.lane=lane;
+    }
+    for(const row of rows){
+      row.overlapCount=rows.filter(other=>row.start<other.end && row.end>other.start).length;
+    }
+    return {rows,laneCount:Math.max(1,laneEnds.length)};
+  },[selectedDateFreeHolds,boardStartMinute]);
+  const freeHoldRowHeight=Math.max(72,14+freeHoldBoardLayout.laneCount*54);
   const nowPosition = now && date===todayValue ? currentTimePosition(now,boardStartMinute,boardMinutes) : null;
   const detailCast = detailCastId ? castList.find(c=>c.id===detailCastId) : undefined;
   const detailShift = detailCast ? castShiftForDate(detailCast,date) : undefined;
@@ -831,7 +855,7 @@ export default function DashboardPage(){
   function resetOrderForm(){
     setEditingOrderId(null);
     setActiveFreeHoldId(null);
-    setCastId(selectableCasts[0]?.id ?? "");
+    setCastId("");
     setDriverId("");
     setCourseId(pricing.courses[0]?.id ?? "");
     setNominationType("free");
@@ -887,6 +911,7 @@ export default function DashboardPage(){
   function loadFreeHoldIntoOrderForm(item:FreeReservationHold){
     setEditingOrderId(null);
     setActiveFreeHoldId(item.id);
+    setCastId("");
     setDate(item.serviceDate);
     setDriverId("");
     const savedCourse=pricing.courses.find(course=>course.id===item.courseId)
@@ -917,6 +942,7 @@ export default function DashboardPage(){
   }
 
   function removeFreeHold(id:string){
+    if(!window.confirm("このフリー予約を削除しますか？")) return;
     setFreeReservationHolds(deleteFreeReservationHold(id));
     if(activeFreeHoldId===id) setActiveFreeHoldId(null);
   }
@@ -1392,6 +1418,7 @@ export default function DashboardPage(){
 
             <label>キャスト
               <select value={castId} onChange={e=>setCastId(e.target.value)} disabled={!formCastChoices.length}>
+                <option value="">未設定</option>
                 {formCastChoices.map(c=><option key={c.id} value={c.id}>{c.name} / {statusLabels[castOperationalStatus(c,selectedDateOrders,date,now,storeSettings.closeTime)]}</option>)}
               </select>
             </label>
@@ -1647,29 +1674,29 @@ export default function DashboardPage(){
           {globalNowLineLeft!==null && <span className="globalNowLine" style={{left:globalNowLineLeft}}><b>現在</b></span>}
 
           <div className="dispatchRowContents freeHoldBoardRow">
-            <div className="dispatchName freeHoldBoardName">
+            <div className="dispatchName freeHoldBoardName" style={{minHeight:freeHoldRowHeight}}>
               <span className="freeHoldBoardDot"/>
               <div>
                 <strong>フリー予約</strong>
                 <small>キャスト未定</small>
               </div>
             </div>
-            <div className="dispatchShift freeHoldBoardShift">
+            <div className="dispatchShift freeHoldBoardShift" style={{minHeight:freeHoldRowHeight}}>
               <strong>一時保管</strong>
               <span>決まり次第オーダー化</span>
             </div>
-            <div className="dispatchCount freeHoldBoardCount">
+            <div className="dispatchCount freeHoldBoardCount" style={{minHeight:freeHoldRowHeight}}>
               <strong>{selectedDateFreeHolds.length}</strong><span>件</span>
             </div>
-            <div className="timelineCell longCell freeHoldBoardTimeline" style={timelineGridStyle}>
-              {selectedDateFreeHolds.map(item=>{
+            <div className="timelineCell longCell freeHoldBoardTimeline" style={{...timelineGridStyle,minHeight:freeHoldRowHeight}}>
+              {freeHoldBoardLayout.rows.map(({item,lane,overlapCount})=>{
                 const pos=freeHoldPosition(item,boardStartMinute,boardMinutes);
                 if(!pos) return null;
                 return <div
                   key={item.id}
-                  className="timelineFreeHold"
-                  style={pos}
-                  title="クリックしてキャストを決めてオーダー化"
+                  className={`timelineFreeHold ${overlapCount>1?"hasOverlap":""}`}
+                  style={{...pos,top:7+lane*54,height:48}}
+                  title={overlapCount>1 ? `同時間帯に${overlapCount}件のフリー予約があります` : "クリックしてキャストを決めてオーダー化"}
                 >
                   <button
                     type="button"
@@ -1678,6 +1705,7 @@ export default function DashboardPage(){
                   >
                     <strong>{item.scheduledStart}〜{addMinutes(item.scheduledStart,item.courseMinutes+(item.extensionMinutes??0))}</strong>
                     <span>{item.courseMinutes+(item.extensionMinutes??0)}分 / フリー</span>
+                    {overlapCount>1 && <em className="freeHoldOverlapBadge">重複 {overlapCount}件</em>}
                     <small>{item.locationName || "場所未入力"}{item.room ? ` / ${item.room}号室` : ""}</small>
                   </button>
                   <button
