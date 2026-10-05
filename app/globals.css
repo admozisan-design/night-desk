@@ -6244,3 +6244,19 @@ button{
 .timelineOrder.orderVisual-cancelled{
   z-index:2!important;
 }
+
+
+/* ===== Cast list: header-only when collapsed ===== */
+.castCompactCard:not(.isExpanded){
+  min-height:0!important;
+}
+.castCompactCard:not(.isExpanded) .castVerticalHeader{
+  min-height:58px;
+  padding:10px 14px!important;
+}
+.castCompactCard:not(.isExpanded) .castVerticalName{
+  min-height:36px!important;
+}
+.castCompactCard.isExpanded .castVerticalHeader{
+  border-bottom:1px solid #e6eaee!important;
+}
