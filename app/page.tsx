@@ -220,6 +220,8 @@ export default function DashboardPage(){
   const [castNotesExpanded,setCastNotesExpanded] = useState(false);
   const [sharedMemo,setSharedMemo] = useState("");
   const [sharedMemoSaved,setSharedMemoSaved] = useState(false);
+  const [networkReservationState,setNetworkReservationState] = useState<"idle"|"unread"|"seen">("idle");
+  const [networkReservationDetailOpen,setNetworkReservationDetailOpen] = useState(false);
   const dispatchWidgets=defaultDispatchWidgets;
   const [castSortMode,setCastSortMode] = useState<"default"|"activity"|"countDesc"|"countAsc"|"shiftStart"|"name">("default");
 
@@ -1314,7 +1316,118 @@ export default function DashboardPage(){
     }
   }
 
+  function playTestReservationSound(){
+    try{
+      const AudioContextCtor=window.AudioContext || (window as typeof window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
+      if(!AudioContextCtor) return;
+      const audioContext=new AudioContextCtor();
+      const oscillator=audioContext.createOscillator();
+      const gain=audioContext.createGain();
+      oscillator.type="sine";
+      oscillator.frequency.setValueAtTime(880,audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(660,audioContext.currentTime+0.2);
+      gain.gain.setValueAtTime(0.0001,audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.16,audioContext.currentTime+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001,audioContext.currentTime+0.22);
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime+0.22);
+      window.setTimeout(()=>void audioContext.close(),320);
+    }catch{
+      // Sound is optional in the trial notification.
+    }
+  }
+
+  function showTestNetworkReservation(){
+    setNetworkReservationState("unread");
+    setNetworkReservationDetailOpen(false);
+    playTestReservationSound();
+  }
+
+  function openTestNetworkReservation(){
+    setNetworkReservationState("seen");
+    setNetworkReservationDetailOpen(true);
+  }
+
+  function dismissTestNetworkReservation(){
+    setNetworkReservationState("idle");
+    setNetworkReservationDetailOpen(false);
+  }
+
+  function loadTestNetworkReservationIntoOrderForm(){
+    resetOrderForm();
+    const sampleCourse=pricing.courses.find(item=>item.minutes===60) ?? pricing.courses[0];
+    if(sampleCourse) setCourseId(sampleCourse.id);
+    setNominationType("free");
+    setScheduledStart("22:30");
+    setPhone("090-0000-0000");
+    setCustomerPanelOpen(true);
+    setNote("【テスト】ヘブンネット仮予約 / お客様名：テスト予約");
+    setNetworkReservationState("seen");
+    setNetworkReservationDetailOpen(false);
+    setCopyNotice("ヘブンネットのテスト予約を仕事登録に反映しました");
+    window.setTimeout(()=>{
+      document.getElementById("work-register")?.scrollIntoView({behavior:"smooth",block:"start"});
+    },60);
+  }
+
   return <div className="deskDashboard">
+    <div className="networkReservationTestDock">
+      <button type="button" className="networkReservationTestTrigger" onClick={showTestNetworkReservation}>
+        <span aria-hidden="true">🔔</span>
+        予約通知テスト
+      </button>
+
+      {networkReservationState!=="idle" && <section className={`networkReservationToast ${networkReservationState==="unread"?"isUnread":"isSeen"}`}>
+        <div className="networkReservationToastHead">
+          <span className="networkReservationSource">ヘブンネット</span>
+          <button type="button" className="networkReservationClose" onClick={dismissTestNetworkReservation} aria-label="テスト通知を閉じる">×</button>
+        </div>
+        <div className="networkReservationToastTitle">
+          <strong>新規仮予約</strong>
+          <span>{networkReservationState==="unread"?"未確認":"確認済み"}</span>
+        </div>
+        <p>{date} 22:30 / 60分 / 指名なし</p>
+        <small>テストデータです。実際の予約には影響しません。</small>
+        <div className="networkReservationToastActions">
+          <button type="button" onClick={openTestNetworkReservation}>詳細</button>
+          <button type="button" className="primary" onClick={loadTestNetworkReservationIntoOrderForm}>仕事登録に反映</button>
+        </div>
+      </section>}
+    </div>
+
+    {networkReservationDetailOpen && <div className="networkReservationModalBackdrop" onMouseDown={e=>{if(e.currentTarget===e.target)setNetworkReservationDetailOpen(false);}}>
+      <section className="networkReservationModal">
+        <header>
+          <div>
+            <span>HEAVEN NET / TEST</span>
+            <h2>ネット予約詳細</h2>
+          </div>
+          <button type="button" onClick={()=>setNetworkReservationDetailOpen(false)} aria-label="閉じる">×</button>
+        </header>
+        <div className="networkReservationModalNotice">これは動作確認用のサンプル予約です。</div>
+        <div className="networkReservationDetailGrid">
+          <div><span>店舗</span><strong>ポラリス（テスト）</strong></div>
+          <div><span>来店日時</span><strong>{date} 22:30</strong></div>
+          <div><span>キャスト</span><strong>指名なし</strong></div>
+          <div><span>コース</span><strong>60分</strong></div>
+          <div><span>お客様名</span><strong>テスト予約</strong></div>
+          <div><span>電話番号</span><strong>090-0000-0000</strong></div>
+          <div><span>利用場所</span><strong>自宅（テスト）</strong></div>
+          <div><span>媒体</span><strong>ヘブンネット</strong></div>
+        </div>
+        <div className="networkReservationModalMemo">
+          <span>備考</span>
+          <p>ヘブンネットの仮予約通知を想定した試験データです。実際の予約情報は登録されません。</p>
+        </div>
+        <footer>
+          <button type="button" onClick={()=>setNetworkReservationDetailOpen(false)}>閉じる</button>
+          <button type="button" className="primaryButton" onClick={loadTestNetworkReservationIntoOrderForm}>仕事登録に反映</button>
+        </footer>
+      </section>
+    </div>}
+
     <div className="dispatchWidgetCanvas">
       <div className="dispatchWidgetTopSlots">
         <div className="dispatchWidgetSlot dispatchWidgetSlotLeft" ref={widgetLeftRef}/>
