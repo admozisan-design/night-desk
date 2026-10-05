@@ -6235,3 +6235,12 @@ button{
 .castSearchResult{flex:0 0 auto;color:#7c8791;font-size:11px;font-weight:800}
 .castSearchEmpty{grid-column:1/-1;padding:36px 20px;border:1px dashed #d6dee4;border-radius:12px;background:#fafbfc;color:#8a949d;font-size:13px;font-weight:800;text-align:center}
 @media(max-width:650px){.castSearchBar{align-items:stretch;flex-direction:column}.castSearchField{width:100%}.castSearchResult{align-self:flex-end}}
+
+
+/* ===== Cancelled order card layer ===== */
+.timelineOrder:not(.orderVisual-cancelled){
+  z-index:4!important;
+}
+.timelineOrder.orderVisual-cancelled{
+  z-index:2!important;
+}
