@@ -562,6 +562,11 @@ export function loadAuditLogs():AuditLog[] {
   }
 }
 
+function normalizeMoneyPresets(values:number[]){
+  return Array.from(new Set([0,...values.map(value=>Math.max(0,Math.round(Number(value)||0)))]))
+    .sort((a,b)=>a-b);
+}
+
 export function loadStoreSettings(defaultSettings:StoreSettings):StoreSettings {
   ensureDemoDataSeeded();
   if (typeof window === "undefined") return defaultSettings;
@@ -580,6 +585,8 @@ export function loadStoreSettings(defaultSettings:StoreSettings):StoreSettings {
       cancelFee:parsed.cancelFee ?? defaultSettings.cancelFee ?? 0,
       bookingBufferMinutes:parsed.bookingBufferMinutes ?? defaultSettings.bookingBufferMinutes ?? 15,
       dispatchBufferMinutes:parsed.dispatchBufferMinutes ?? defaultSettings.dispatchBufferMinutes ?? 30,
+      discountPresets:normalizeMoneyPresets(parsed.discountPresets ?? defaultSettings.discountPresets ?? [0]),
+      surchargePresets:normalizeMoneyPresets(parsed.surchargePresets ?? defaultSettings.surchargePresets ?? [0]),
     };
   } catch {
     return defaultSettings;

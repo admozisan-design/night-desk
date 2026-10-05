@@ -49,7 +49,9 @@ export const defaultStoreSettings: StoreSettings = {
   changeFee:0,
   cancelFee:0,
   bookingBufferMinutes:15,
-  dispatchBufferMinutes:30
+  dispatchBufferMinutes:30,
+  discountPresets:[0,1000,2000,3000],
+  surchargePresets:[0,1000,2000,3000]
 };
 
 export const options: StoreOption[] = [
