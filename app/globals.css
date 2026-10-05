@@ -6152,3 +6152,20 @@ button{
   position:relative;
   z-index:1;
 }
+
+
+/* ===== Hard delete order action ===== */
+.orderActionButtonsSimple .orderActionDelete{
+  grid-column:1/-1;
+  min-height:38px!important;
+  border-color:#dfb7b7!important;
+  background:#fff4f4!important;
+  color:#9a4141!important;
+  font-size:12px!important;
+  font-weight:900;
+}
+.orderActionButtonsSimple .orderActionDelete:hover{
+  border-color:#c98e8e!important;
+  background:#fde8e8!important;
+  color:#842f2f!important;
+}

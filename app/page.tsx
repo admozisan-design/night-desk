@@ -1072,6 +1072,15 @@ export default function DashboardPage(){
     setCopyNotice("");
   }
 
+  function deleteSelectedOrder(){
+    if(!selectedOrder) return;
+    if(!window.confirm("このオーダーを完全に削除しますか？")) return;
+    setOrders(deleteOrder(selectedOrder.id));
+    setSelectedOrderId(null);
+    setOrderMode("menu");
+    setCopyNotice("");
+  }
+
   function beginExtension(){
     setExtensionCount(1);
     setOrderMode("extend");
@@ -1960,6 +1969,7 @@ export default function DashboardPage(){
             >キャンセル</button>
             <button type="button" className="orderActionEdit" onClick={beginOrderEdit}>編集</button>
             <button type="button" className="orderActionClose" onClick={closeOrderMenu}>閉じる</button>
+            <button type="button" className="orderActionDelete" onClick={deleteSelectedOrder}>オーダー削除</button>
           </div>
         </>}
 
