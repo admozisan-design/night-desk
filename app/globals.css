@@ -6078,3 +6078,34 @@ button{
   background:rgba(139,37,37,.78);
   border-color:#fff;
 }
+
+
+/* ===== Free hold overlap lanes + clearer delete ===== */
+.timelineFreeHold{
+  bottom:auto!important;
+}
+.timelineFreeHold.hasOverlap{
+  border-color:#c88a12;
+  box-shadow:0 2px 7px rgba(131,94,17,.22),inset 3px 0 0 #fff2b6;
+}
+.timelineFreeHoldMain{
+  position:relative;
+}
+.freeHoldOverlapBadge{
+  position:absolute;
+  right:28px;
+  bottom:4px;
+  max-width:72px;
+  padding:2px 5px;
+  border-radius:999px;
+  background:rgba(101,66,0,.36);
+  color:#fff;
+  font-size:8px;
+  font-style:normal;
+  font-weight:900;
+  line-height:1.2;
+  white-space:nowrap;
+}
+.timelineFreeHold.hasOverlap .timelineFreeHoldMain{
+  padding-right:34px;
+}
