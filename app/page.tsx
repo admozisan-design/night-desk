@@ -283,6 +283,7 @@ export default function DashboardPage(){
     setPendingActionOrderId(searchParams.get("orderAction"));
     const timer = window.setInterval(()=>setNow(new Date()),60000);
     window.addEventListener("storage",refresh);
+    window.addEventListener("storage",refreshSharedMemo);
     window.addEventListener("nightdesk:orders",refresh);
     window.addEventListener("nightdesk:free-reservation-holds",refresh);
     window.addEventListener("nightdesk:casts",refresh);
@@ -296,6 +297,7 @@ export default function DashboardPage(){
     return ()=>{
       window.clearInterval(timer);
       window.removeEventListener("storage",refresh);
+      window.removeEventListener("storage",refreshSharedMemo);
       window.removeEventListener("nightdesk:orders",refresh);
       window.removeEventListener("nightdesk:free-reservation-holds",refresh);
       window.removeEventListener("nightdesk:casts",refresh);
