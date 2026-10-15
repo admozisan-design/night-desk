@@ -12,8 +12,9 @@ type StoreRow={id:string;name:string};
 type BackupConnectionDetail=
   "ok"|"missing_key"|"invalid_key"|"insufficient_privileges"|
   "database_unreachable"|"table_unavailable"|"unknown_error";
-function classifyBackupError(code?:string,message?:string):BackupConnectionDetail{
+function classifyBackupError(code?:string,message?:string,status?:number):BackupConnectionDetail{
   const text=(message??"").toLowerCase();
+  if(status===401 || status===403)return "invalid_key";
   if(code==="42501" || text.includes("permission denied") ||
      text.includes("row-level security") || text.includes("row level security"))
     return "insufficient_privileges";
@@ -27,6 +28,22 @@ function classifyBackupError(code?:string,message?:string):BackupConnectionDetai
      text.includes("network") || text.includes("timeout") || text.includes("connect"))
     return "database_unreachable";
   return "unknown_error";
+}
+
+type KeyKind="missing"|"modern_secret"|"modern_publishable"|
+  "legacy_service_role"|"legacy_other_role"|"malformed";
+function classifyKey(value:string|undefined):KeyKind{
+  if(!value)return "missing";
+  if(value.startsWith("sb_secret_"))return "modern_secret";
+  if(value.startsWith("sb_publishable_"))return "modern_publishable";
+  if(value.split(".").length!==3)return "malformed";
+  try{
+    const payload=JSON.parse(Buffer.from(value.split(".")[1],"base64url").toString("utf8")) as {role?:string};
+    return payload.role==="service_role"?"legacy_service_role":"legacy_other_role";
+  }catch{return "malformed";}
+}
+function safeProviderCode(value:unknown){
+  return typeof value==="string" && /^[A-Z0-9_]{1,30}$/i.test(value)?value:null;
 }
 
 /** Read-only backup diagnostics, accessible to the verified platform owner only. */
@@ -71,6 +88,9 @@ export async function GET(request:NextRequest){
     if(localNow.getUTCHours()<7)expected.setUTCDate(expected.getUTCDate()-1);
     const expectedDate=expected.toISOString().slice(0,10);
     const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const backupKeyKind=classifyKey(serviceKey);
+    let backupProviderCode:string|null=null;
+    let backupHttpStatus:number|null=null;
     let backupConnection:"ok"|"missing"|"error"=serviceKey?"error":"missing";
     let backupConnectionDetail:BackupConnectionDetail=serviceKey?"unknown_error":"missing_key";
     if(serviceKey){
@@ -78,11 +98,13 @@ export async function GET(request:NextRequest){
         const serviceClient=createClient(url,serviceKey,{
           auth:{persistSession:false,autoRefreshToken:false}
         });
-        const {error}=await serviceClient.from("nightdesk_stores")
+        const {error,status}=await serviceClient.from("nightdesk_stores")
           .select("id",{head:true,count:"exact"});
+        backupHttpStatus=status;
+        backupProviderCode=safeProviderCode(error?.code);
         backupConnection=error?"error":"ok";
         backupConnectionDetail=error
-          ?classifyBackupError(error.code,error.message)
+          ?classifyBackupError(error.code,error.message,status)
           :"ok";
       }catch(error){
         backupConnection="error";
@@ -97,6 +119,9 @@ export async function GET(request:NextRequest){
       cronSecretConfigured:Boolean(process.env.CRON_SECRET),
       backupConnection,
       backupConnectionDetail,
+      backupKeyKind,
+      backupProviderCode,
+      backupHttpStatus,
       backupHistoryTruncated:(backups??[]).length===1000,
       stores:((stores??[]) as StoreRow[]).map(store=>({
         id:store.id,
