@@ -10,6 +10,8 @@ type BackupHealth={
   expectedDate:string;
   cronSecretConfigured:boolean;
   backupConnection:"ok"|"missing"|"error";
+  backupConnectionDetail:"ok"|"missing_key"|"invalid_key"|
+    "insufficient_privileges"|"database_unreachable"|"table_unavailable"|"unknown_error";
   backupHistoryTruncated:boolean;
   stores:Array<{id:string;name:string;latestBackup:string|null;latestSavedAt:string|null}>;
 };
@@ -133,6 +135,17 @@ export default function OwnerDashboard(){
             <div className="ownerStoreInfo">
               <strong>バックアップ用データベース接続</strong>
               <small>サーバー内で接続確認（認証情報は表示しません）</small>
+              {backupHealth.backupConnection!=="ok" && <small>{
+                ({
+                  missing_key:"管理用キーの環境変数が未設定です",
+                  invalid_key:"認証エラー：接続先プロジェクトの管理用キーを確認してください",
+                  insufficient_privileges:"権限不足：管理用キーのロールを確認してください",
+                  database_unreachable:"通信エラー：データベースへの接続を確認してください",
+                  table_unavailable:"対象テーブルを参照できません",
+                  unknown_error:"原因を特定できません。管理者によるサーバー設定の確認が必要です",
+                  ok:"正常"
+                } as Record<BackupHealth["backupConnectionDetail"],string>)[backupHealth.backupConnectionDetail]
+              }</small>}
             </div>
             <strong>{backupHealth.backupConnection==="ok"?"正常":backupHealth.backupConnection==="missing"?"未設定・要対応":"接続エラー・要対応"}</strong>
           </article>
