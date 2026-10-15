@@ -5,6 +5,14 @@ import Link from "next/link";
 import {cloudClient,cloudConfigured,cloudRole,cloudStoreId,stopCloudSync} from "@/lib/cloud";
 
 type Store={id:string;name:string;created_at:string};
+type BackupHealth={
+  checkedAt:string;
+  expectedDate:string;
+  cronSecretConfigured:boolean;
+  backupConnection:"ok"|"missing"|"error";
+  backupHistoryTruncated:boolean;
+  stores:Array<{id:string;name:string;latestBackup:string|null;latestSavedAt:string|null}>;
+};
 
 export default function OwnerDashboard(){
   const [stores,setStores]=useState<Store[]>([]);
@@ -13,6 +21,9 @@ export default function OwnerDashboard(){
   const [storeName,setStoreName]=useState("");
   const [error,setError]=useState("");
   const [notice,setNotice]=useState("");
+  const [backupHealth,setBackupHealth]=useState<BackupHealth|null>(null);
+  const [backupBusy,setBackupBusy]=useState(false);
+  const [backupError,setBackupError]=useState("");
   const isOwner=cloudConfigured && cloudRole()==="owner";
 
   const refresh=useCallback(async()=>{
@@ -31,7 +42,28 @@ export default function OwnerDashboard(){
     setLoading(false);
   },[]);
 
-  useEffect(()=>{if(isOwner)void refresh();else setLoading(false);},[isOwner,refresh]);
+  const refreshBackupHealth=useCallback(async()=>{
+    if(!cloudClient)return;
+    setBackupBusy(true);setBackupError("");
+    try{
+      const {data:{session},error:sessionError}=await cloudClient.auth.getSession();
+      if(sessionError || !session)throw new Error("もう一度ログインしてください");
+      const response=await fetch("/api/owner/backup-health",{
+        headers:{Authorization:`Bearer ${session.access_token}`},
+        cache:"no-store"
+      });
+      const data=await response.json() as BackupHealth&{error?:string};
+      if(!response.ok)throw new Error(data.error??"バックアップ状態を取得できません");
+      setBackupHealth(data);
+    }catch(e){
+      setBackupError(e instanceof Error?e.message:"バックアップ診断に失敗しました");
+    }finally{setBackupBusy(false);}
+  },[]);
+
+  useEffect(()=>{
+    if(isOwner){void refresh();void refreshBackupHealth();}
+    else setLoading(false);
+  },[isOwner,refresh,refreshBackupHealth]);
 
   async function createStore(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
@@ -44,6 +76,7 @@ export default function OwnerDashboard(){
       setStoreName("");
       setNotice("空の店舗を作成しました。必要なら「この店舗を開く」から設定を始められます。");
       await refresh();
+      await refreshBackupHealth();
     }catch(e){
       setError(e instanceof Error?e.message:"店舗の作成に失敗しました");
     }finally{setBusy(false);}
@@ -73,6 +106,47 @@ export default function OwnerDashboard(){
     <section className="ownerConsoleNotice">
       <strong>システムオーナー</strong>
       <span>各店舗の管理者からは、この画面を開いたりオーナー権限を付与したりできません。</span>
+    </section>
+
+
+    <section className="panel ownerConsolePanel">
+      <div className="ownerConsoleHead">
+        <h2>バックアップ監視</h2>
+        <button type="button" disabled={backupBusy} onClick={()=>void refreshBackupHealth()}>
+          {backupBusy?"確認中…":"状態を更新"}
+        </button>
+      </div>
+      <p>毎朝5時（日本時間）に実行予定。ここでは保存履歴とサーバー設定を確認できます。</p>
+      {!backupHealth && backupBusy && <p>バックアップの状態を読み込み中…</p>}
+      {backupError && <div className="cloudGateError" role="alert">{backupError}</div>}
+      {backupHealth && <>
+        <p>確認日時：{new Date(backupHealth.checkedAt).toLocaleString("ja-JP")} ／ 判定対象：{backupHealth.expectedDate}分</p>
+        <div className="ownerStoreList">
+          <article>
+            <div className="ownerStoreInfo">
+              <strong>定期実行の認証設定</strong>
+              <small>CRON_SECRET</small>
+            </div>
+            <strong>{backupHealth.cronSecretConfigured?"設定あり":"未設定・要対応"}</strong>
+          </article>
+          <article>
+            <div className="ownerStoreInfo">
+              <strong>バックアップ用データベース接続</strong>
+              <small>サーバー内で接続確認（認証情報は表示しません）</small>
+            </div>
+            <strong>{backupHealth.backupConnection==="ok"?"正常":backupHealth.backupConnection==="missing"?"未設定・要対応":"接続エラー・要対応"}</strong>
+          </article>
+          {backupHealth.stores.map(store=><article key={store.id}>
+            <div className="ownerStoreInfo">
+              <strong>{store.name}</strong>
+              <small>最新バックアップ：{store.latestBackup??"なし"}{store.latestSavedAt?`（${new Date(store.latestSavedAt).toLocaleString("ja-JP")}作成）`:""}</small>
+            </div>
+            <strong>{store.latestBackup && store.latestBackup>=backupHealth.expectedDate?"保存済み":"未保存・要確認"}</strong>
+          </article>)}
+        </div>
+        {backupHealth.backupHistoryTruncated && <p>保存履歴が多いため一部の店舗を確認できない場合があります。</p>}
+        <p>※「保存済み」はその日のデータコピーが存在することを示します。自動実行が成功した証明ではありません。翌朝以降の記録も確認してください。</p>
+      </>}
     </section>
 
     <section className="panel ownerConsolePanel">
