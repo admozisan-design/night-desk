@@ -12,6 +12,10 @@ type BackupHealth={
   backupConnection:"ok"|"missing"|"error";
   backupConnectionDetail:"ok"|"missing_key"|"invalid_key"|
     "insufficient_privileges"|"database_unreachable"|"table_unavailable"|"unknown_error";
+  backupKeyKind:"missing"|"modern_secret"|"modern_publishable"|
+    "legacy_service_role"|"legacy_other_role"|"malformed";
+  backupProviderCode:string|null;
+  backupHttpStatus:number|null;
   backupHistoryTruncated:boolean;
   stores:Array<{id:string;name:string;latestBackup:string|null;latestSavedAt:string|null}>;
 };
@@ -146,6 +150,18 @@ export default function OwnerDashboard(){
                   ok:"正常"
                 } as Record<BackupHealth["backupConnectionDetail"],string>)[backupHealth.backupConnectionDetail]
               }</small>}
+              {backupHealth.backupConnection!=="ok" && <>
+                <small>管理用キーの形式：{({
+                  missing:"未設定",
+                  modern_secret:"Supabase Secret key形式",
+                  modern_publishable:"Publishable key（管理用途には使用不可）",
+                  legacy_service_role:"従来のservice_role形式",
+                  legacy_other_role:"service_role以外のJWT（要修正）",
+                  malformed:"認識できない形式（要修正）"
+                } as Record<BackupHealth["backupKeyKind"],string>)[backupHealth.backupKeyKind]}</small>
+                {(backupHealth.backupProviderCode || backupHealth.backupHttpStatus) &&
+                  <small>診断コード：{backupHealth.backupProviderCode??"なし"} ／ HTTP {backupHealth.backupHttpStatus??"なし"}</small>}
+              </>}
             </div>
             <strong>{backupHealth.backupConnection==="ok"?"正常":backupHealth.backupConnection==="missing"?"未設定・要対応":"接続エラー・要対応"}</strong>
           </article>
