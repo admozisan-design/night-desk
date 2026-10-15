@@ -9,6 +9,25 @@ function json(body:unknown,status=200){
 
 type BackupRow={store_id:string;backup_date:string;created_at:string};
 type StoreRow={id:string;name:string};
+type BackupConnectionDetail=
+  "ok"|"missing_key"|"invalid_key"|"insufficient_privileges"|
+  "database_unreachable"|"table_unavailable"|"unknown_error";
+function classifyBackupError(code?:string,message?:string):BackupConnectionDetail{
+  const text=(message??"").toLowerCase();
+  if(code==="42501" || text.includes("permission denied") ||
+     text.includes("row-level security") || text.includes("row level security"))
+    return "insufficient_privileges";
+  if(code==="PGRST301" || code==="PGRST302" || code==="401" || code==="403" ||
+     text.includes("invalid api key") || text.includes("invalid jwt") ||
+     text.includes("jwt") || text.includes("authentication failed"))
+    return "invalid_key";
+  if(code==="42P01" || code==="PGRST205" || text.includes("does not exist") ||
+     text.includes("could not find the table"))return "table_unavailable";
+  if(text.includes("fetch failed") || text.includes("failed to fetch") ||
+     text.includes("network") || text.includes("timeout") || text.includes("connect"))
+    return "database_unreachable";
+  return "unknown_error";
+}
 
 /** Read-only backup diagnostics, accessible to the verified platform owner only. */
 export async function GET(request:NextRequest){
@@ -53,6 +72,7 @@ export async function GET(request:NextRequest){
     const expectedDate=expected.toISOString().slice(0,10);
     const serviceKey=process.env.SUPABASE_SERVICE_ROLE_KEY;
     let backupConnection:"ok"|"missing"|"error"=serviceKey?"error":"missing";
+    let backupConnectionDetail:BackupConnectionDetail=serviceKey?"unknown_error":"missing_key";
     if(serviceKey){
       try{
         const serviceClient=createClient(url,serviceKey,{
@@ -61,7 +81,14 @@ export async function GET(request:NextRequest){
         const {error}=await serviceClient.from("nightdesk_stores")
           .select("id",{head:true,count:"exact"});
         backupConnection=error?"error":"ok";
-      }catch{backupConnection="error";}
+        backupConnectionDetail=error
+          ?classifyBackupError(error.code,error.message)
+          :"ok";
+      }catch(error){
+        backupConnection="error";
+        backupConnectionDetail=classifyBackupError(
+          undefined,error instanceof Error?error.message:"");
+      }
     }
 
     return json({
@@ -69,6 +96,7 @@ export async function GET(request:NextRequest){
       expectedDate,
       cronSecretConfigured:Boolean(process.env.CRON_SECRET),
       backupConnection,
+      backupConnectionDetail,
       backupHistoryTruncated:(backups??[]).length===1000,
       stores:((stores??[]) as StoreRow[]).map(store=>({
         id:store.id,
