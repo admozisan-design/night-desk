@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import {cloudClient,cloudConfigured,cloudStoreId,startCloudSync,stopCloudSync,cloudRole,setCloudRole} from "@/lib/cloud";
 
-type Step="loading"|"login"|"waiting"|"ready"|"error";
+type Step="loading"|"login"|"forgot"|"reset"|"waiting"|"ready"|"error";
 type Member={store_id:string;role:"admin"|"staff"};
 export function CloudGate({children}:{children:ReactNode}){
   const path=usePathname();
@@ -16,6 +16,7 @@ export function CloudGate({children}:{children:ReactNode}){
   const [register,setRegister]=useState(false);
   const [busy,setBusy]=useState(false);
   const [retry,setRetry]=useState(0);
+  const recoveryRef=useRef(false);
   const [storeName,setStoreName]=useState("");
   const [memberships,setMemberships]=useState<Member[]>([]);
   const [isOwner,setIsOwner]=useState(false);
@@ -24,7 +25,7 @@ export function CloudGate({children}:{children:ReactNode}){
     if(!cloudConfigured || !cloudClient) return;
     let alive=true;
     cloudClient.auth.getUser().then(({data,error})=>{
-      if(!alive) return;
+      if(!alive || recoveryRef.current) return;
       if(error && error.status!==400) setError(error.message);
       setUser(data.user??null);
       if(!data.user) setStep("login");
@@ -33,6 +34,14 @@ export function CloudGate({children}:{children:ReactNode}){
     });
     const {data:{subscription}}=cloudClient.auth.onAuthStateChange((event,session)=>{
       if(!alive) return;
+      if(event==="PASSWORD_RECOVERY"){
+        recoveryRef.current=true;
+        setError("");setNotice("");
+        setUser(session?.user??null);
+        setStep("reset");
+        return;
+      }
+      if(recoveryRef.current) return;
       if(event==="SIGNED_OUT"){
         setUser(null);setStep("login");setMemberships([]);setIsOwner(false);
         void stopCloudSync(true);
@@ -44,7 +53,7 @@ export function CloudGate({children}:{children:ReactNode}){
   },[]);
 
   useEffect(()=>{
-    if(!cloudConfigured || !cloudClient || !user) return;
+    if(!cloudConfigured || !cloudClient || !user || recoveryRef.current) return;
     const client=cloudClient;
     let alive=true;
     setStep("loading");setError("");
@@ -72,7 +81,7 @@ export function CloudGate({children}:{children:ReactNode}){
         // among unexpected extra memberships, even if RLS is misconfigured.
         if(memberships.length>1) throw new Error("複数店舗のアクセス権が検出されました。管理者にお問い合わせください。");
       }
-      if(!alive) return;
+      if(!alive || recoveryRef.current) return;
       setMemberships(memberships);
       if(!memberships.length){
         // A removed employee must never keep seeing a previous store cache.
@@ -85,9 +94,9 @@ export function CloudGate({children}:{children:ReactNode}){
       localStorage.setItem("nightdesk-current-store",member.store_id);
       await startCloudSync(member.store_id);
       setCloudRole(isPlatformOwner?"owner":member.role);
-      if(alive)setStep("ready");
+      if(alive && !recoveryRef.current)setStep("ready");
     })().catch(err=>{
-      if(alive){setError(err instanceof Error?err.message:"店舗データを読み込めませんでした");setStep("error");}
+      if(alive && !recoveryRef.current){setError(err instanceof Error?err.message:"店舗データを読み込めませんでした");setStep("error");}
     });
     return ()=>{alive=false;};
   },[user?.id,retry]);
@@ -156,6 +165,43 @@ export function CloudGate({children}:{children:ReactNode}){
     }finally{setBusy(false);}
   }
 
+  async function sendResetEmail(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();if(!cloudClient)return;
+    setBusy(true);setError("");setNotice("");
+    const form=new FormData(e.currentTarget);
+    const email=String(form.get("email")??"").trim();
+    try{
+      const {error}=await cloudClient.auth.resetPasswordForEmail(email,{
+        redirectTo:window.location.origin+"/"
+      });
+      if(error) throw error;
+      setNotice("登録済みのメールアドレスなら再設定メールが届きます。受信トレイや迷惑メールフォルダをご確認ください。");
+    }catch(err){
+      setError(err instanceof Error?err.message:"再設定メールを送信できませんでした");
+    }finally{setBusy(false);}
+  }
+
+  async function changePassword(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();if(!cloudClient)return;
+    setBusy(true);setError("");setNotice("");
+    const form=new FormData(e.currentTarget);
+    const password=String(form.get("password")??"");
+    const confirmation=String(form.get("confirmation")??"");
+    try{
+      if(password.length<8) throw new Error("パスワードは8文字以上にしてください。");
+      if(password!==confirmation) throw new Error("確認用パスワードが一致しません。");
+      const {error}=await cloudClient.auth.updateUser({password});
+      if(error) throw error;
+      recoveryRef.current=false;
+      const {error:signOutError}=await cloudClient.auth.signOut();
+      if(signOutError) throw signOutError;
+      setUser(null);setStep("login");
+      setNotice("パスワードを更新しました。新しいパスワードでログインしてください。");
+    }catch(err){
+      setError(err instanceof Error?err.message:"パスワードを更新できませんでした");
+    }finally{setBusy(false);}
+  }
+
   async function createStore(e:FormEvent<HTMLFormElement>){
     e.preventDefault();if(!cloudClient)return;
     setBusy(true);setError("");
@@ -209,9 +255,28 @@ export function CloudGate({children}:{children:ReactNode}){
           <label>パスワード<input name="password" type="password" required minLength={8} autoComplete={register?"new-password":"current-password"} placeholder="8文字以上"/></label>
           <button type="submit" className="cloudGatePrimary" disabled={busy}>{busy?"処理中…":register?"アカウント登録":"ログイン"}</button>
         </form>
+        {!register && <button type="button" className="cloudGateTextButton" onClick={()=>{setStep("forgot");setError("");setNotice("");}}>パスワードを忘れた方</button>}
         <button type="button" className="cloudGateTextButton" onClick={()=>{setRegister(!register);setError("");setNotice("");}}>
           {register?"ログイン画面に戻る":"初めて利用する方：アカウント登録"}
         </button>
+      </>}
+      {step==="forgot" && <>
+        <h2>パスワードの再設定</h2>
+        <p>以前登録したメールアドレスに再設定用リンクを送信します。</p>
+        <form onSubmit={e=>void sendResetEmail(e)}>
+          <label>メールアドレス<input name="email" type="email" required autoComplete="email" placeholder="登録済みのメールアドレス"/></label>
+          <button type="submit" className="cloudGatePrimary" disabled={busy}>{busy?"送信中…":"再設定メールを送信"}</button>
+        </form>
+        <button type="button" className="cloudGateTextButton" onClick={()=>{setStep("login");setError("");setNotice("");}}>ログイン画面に戻る</button>
+      </>}
+      {step==="reset" && <>
+        <h2>新しいパスワードを設定</h2>
+        <p>メール内のリンクを確認しました。新しいパスワードを入力してください。</p>
+        <form onSubmit={e=>void changePassword(e)}>
+          <label>新しいパスワード<input name="password" type="password" required minLength={8} autoComplete="new-password" placeholder="8文字以上"/></label>
+          <label>確認用パスワード<input name="confirmation" type="password" required minLength={8} autoComplete="new-password" placeholder="もう一度入力"/></label>
+          <button type="submit" className="cloudGatePrimary" disabled={busy}>{busy?"更新中…":"パスワードを変更"}</button>
+        </form>
       </>}
       {step==="waiting" && <>
         <h2>店舗へのアクセス設定</h2>
